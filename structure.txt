@@ -1,0 +1,219 @@
+Folder PATH listing
+Volume serial number is 54AB-7D3C
+C:.
+|   .gitignore
+|   README.md
+|   structure.txt
+|   
++---MiniTransportTycoon
+|       MiniTransportTycoon.sln
+|       
+\---src
+    |   hello_world.txt
+    |   
+    +---Core
+    |   +---Buildings
+    |   |       Building.cs
+    |   |       Garage.cs
+    |   |       Stop.cs
+    |   |       
+    |   +---Cargo
+    |   |       CargoType.cs
+    |   |       
+    |   +---Facilities
+    |   |       City.cs
+    |   |       Facility.cs
+    |   |       Industry.cs
+    |   |       
+    |   +---Map
+    |   |       Field.cs
+    |   |       FieldType.cs
+    |   |       
+    |   +---MiniTransportTycoon.Core
+    |   |   |   Class1.cs
+    |   |   |   MiniTransportTycoon.Core.csproj
+    |   |   |   
+    |   |   +---bin
+    |   |   |   \---Debug
+    |   |   |       \---net8.0
+    |   |   |               MiniTransportTycoon.Core.deps.json
+    |   |   |               MiniTransportTycoon.Core.dll
+    |   |   |               MiniTransportTycoon.Core.pdb
+    |   |   |               
+    |   |   \---obj
+    |   |       |   MiniTransportTycoon.Core.csproj.nuget.dgspec.json
+    |   |       |   MiniTransportTycoon.Core.csproj.nuget.g.props
+    |   |       |   MiniTransportTycoon.Core.csproj.nuget.g.targets
+    |   |       |   project.assets.json
+    |   |       |   project.nuget.cache
+    |   |       |   
+    |   |       \---Debug
+    |   |           \---net8.0
+    |   |               |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    |   |               |   MiniTransportTycoon.Core.AssemblyInfo.cs
+    |   |               |   MiniTransportTycoon.Core.AssemblyInfoInputs.cache
+    |   |               |   MiniTransportTycoon.Core.assets.cache
+    |   |               |   MiniTransportTycoon.Core.csproj.CoreCompileInputs.cache
+    |   |               |   MiniTransportTycoon.Core.csproj.FileListAbsolute.txt
+    |   |               |   MiniTransportTycoon.Core.dll
+    |   |               |   MiniTransportTycoon.Core.GeneratedMSBuildEditorConfig.editorconfig
+    |   |               |   MiniTransportTycoon.Core.GlobalUsings.g.cs
+    |   |               |   MiniTransportTycoon.Core.pdb
+    |   |               |   
+    |   |               +---ref
+    |   |               |       MiniTransportTycoon.Core.dll
+    |   |               |       
+    |   |               \---refint
+    |   |                       MiniTransportTycoon.Core.dll
+    |   |                       
+    |   +---Routes
+    |   |       Route.cs
+    |   |       
+    |   \---Vehicles
+    |           Bus.cs
+    |           Truck.cs
+    |           Vehicle.cs
+    |           
+    +---Game
+    |   +---Economy
+    |   |       EconomyManager.cs
+    |   |       
+    |   +---GameModel
+    |   |       GameModel.cs
+    |   |       
+    |   +---MiniTransportTycoon.Game
+    |   |   |   Class1.cs
+    |   |   |   MiniTransportTycoon.Game.csproj
+    |   |   |   
+    |   |   +---bin
+    |   |   |   \---Debug
+    |   |   |       \---net8.0
+    |   |   |               MiniTransportTycoon.Core.dll
+    |   |   |               MiniTransportTycoon.Core.pdb
+    |   |   |               MiniTransportTycoon.Game.deps.json
+    |   |   |               MiniTransportTycoon.Game.dll
+    |   |   |               MiniTransportTycoon.Game.pdb
+    |   |   |               
+    |   |   \---obj
+    |   |       |   MiniTransportTycoon.Game.csproj.nuget.dgspec.json
+    |   |       |   MiniTransportTycoon.Game.csproj.nuget.g.props
+    |   |       |   MiniTransportTycoon.Game.csproj.nuget.g.targets
+    |   |       |   project.assets.json
+    |   |       |   project.nuget.cache
+    |   |       |   
+    |   |       \---Debug
+    |   |           \---net8.0
+    |   |               |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    |   |               |   MiniTran.E868C1D6.Up2Date
+    |   |               |   MiniTransportTycoon.Game.AssemblyInfo.cs
+    |   |               |   MiniTransportTycoon.Game.AssemblyInfoInputs.cache
+    |   |               |   MiniTransportTycoon.Game.assets.cache
+    |   |               |   MiniTransportTycoon.Game.csproj.AssemblyReference.cache
+    |   |               |   MiniTransportTycoon.Game.csproj.CoreCompileInputs.cache
+    |   |               |   MiniTransportTycoon.Game.csproj.FileListAbsolute.txt
+    |   |               |   MiniTransportTycoon.Game.dll
+    |   |               |   MiniTransportTycoon.Game.GeneratedMSBuildEditorConfig.editorconfig
+    |   |               |   MiniTransportTycoon.Game.GlobalUsings.g.cs
+    |   |               |   MiniTransportTycoon.Game.pdb
+    |   |               |   
+    |   |               +---ref
+    |   |               |       MiniTransportTycoon.Game.dll
+    |   |               |       
+    |   |               \---refint
+    |   |                       MiniTransportTycoon.Game.dll
+    |   |                       
+    |   +---Pathfinding
+    |   |       Pathfinder.cs
+    |   |       
+    |   +---Persistence
+    |   |       SaveManager.cs
+    |   |       
+    |   \---Time
+    |           TimeManager.cs
+    |           
+    \---MiniTransportTycoonUI
+        |   .gitkeep
+        |   
+        +---Assets
+        |       .gitkeep
+        |       
+        +---Controls
+        |       .gitkeep
+        |       
+        +---MiniTransportTycoon.UI
+        |   |   App.xaml
+        |   |   App.xaml.cs
+        |   |   AssemblyInfo.cs
+        |   |   MainWindow.xaml
+        |   |   MainWindow.xaml.cs
+        |   |   MiniTransportTycoon.UI.csproj
+        |   |   MiniTransportTycoon.UI.csproj.user
+        |   |   
+        |   +---bin
+        |   |   \---Debug
+        |   |       \---net8.0-windows
+        |   |               MiniTransportTycoon.Core.dll
+        |   |               MiniTransportTycoon.Core.pdb
+        |   |               MiniTransportTycoon.Game.dll
+        |   |               MiniTransportTycoon.Game.pdb
+        |   |               MiniTransportTycoon.UI.deps.json
+        |   |               MiniTransportTycoon.UI.dll
+        |   |               MiniTransportTycoon.UI.exe
+        |   |               MiniTransportTycoon.UI.pdb
+        |   |               MiniTransportTycoon.UI.runtimeconfig.json
+        |   |               
+        |   \---obj
+        |       |   MiniTransportTycoon.UI.csproj.nuget.dgspec.json
+        |       |   MiniTransportTycoon.UI.csproj.nuget.g.props
+        |       |   MiniTransportTycoon.UI.csproj.nuget.g.targets
+        |       |   project.assets.json
+        |       |   project.nuget.cache
+        |       |   
+        |       \---Debug
+        |           \---net8.0-windows
+        |               |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+        |               |   App.g.cs
+        |               |   App.g.i.cs
+        |               |   apphost.exe
+        |               |   MainWindow.baml
+        |               |   MainWindow.g.cs
+        |               |   MainWindow.g.i.cs
+        |               |   MiniTran.75FCB9D4.Up2Date
+        |               |   MiniTransportTycoon.UI.AssemblyInfo.cs
+        |               |   MiniTransportTycoon.UI.AssemblyInfoInputs.cache
+        |               |   MiniTransportTycoon.UI.assets.cache
+        |               |   MiniTransportTycoon.UI.csproj.AssemblyReference.cache
+        |               |   MiniTransportTycoon.UI.csproj.CoreCompileInputs.cache
+        |               |   MiniTransportTycoon.UI.csproj.FileListAbsolute.txt
+        |               |   MiniTransportTycoon.UI.designer.deps.json
+        |               |   MiniTransportTycoon.UI.designer.runtimeconfig.json
+        |               |   MiniTransportTycoon.UI.dll
+        |               |   MiniTransportTycoon.UI.g.resources
+        |               |   MiniTransportTycoon.UI.GeneratedMSBuildEditorConfig.editorconfig
+        |               |   MiniTransportTycoon.UI.genruntimeconfig.cache
+        |               |   MiniTransportTycoon.UI.GlobalUsings.g.cs
+        |               |   MiniTransportTycoon.UI.pdb
+        |               |   MiniTransportTycoon.UI_gaon3k3h_wpftmp.AssemblyInfo.cs
+        |               |   MiniTransportTycoon.UI_gaon3k3h_wpftmp.AssemblyInfoInputs.cache
+        |               |   MiniTransportTycoon.UI_gaon3k3h_wpftmp.assets.cache
+        |               |   MiniTransportTycoon.UI_gaon3k3h_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |               |   MiniTransportTycoon.UI_gaon3k3h_wpftmp.GlobalUsings.g.cs
+        |               |   MiniTransportTycoon.UI_MarkupCompile.cache
+        |               |   MiniTransportTycoon.UI_MarkupCompile.i.cache
+        |               |   MiniTransportTycoon.UI_MarkupCompile.lref
+        |               |   
+        |               +---ref
+        |               |       MiniTransportTycoon.UI.dll
+        |               |       
+        |               \---refint
+        |                       MiniTransportTycoon.UI.dll
+        |                       
+        +---ViewModels
+        |   |   .gitkeep
+        |   |   
+        |   \---Assets
+        |           .gitkeep
+        |           
+        \---Views
+                .gitkeep
+                

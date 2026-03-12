@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Game\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj" />
+    <ProjectReference Include="..\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36705.20 d17.14
+VisualStudioVersion = 17.14.36705.20
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Core", "..\src\Core\MiniTransportTycoon.Core\MiniTransportTycoon.Core.csproj", "{930B582F-89F3-4EBA-89C5-89BBB5BB7090}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.UI", "..\src\MiniTransportTycoon.UI\MiniTransportTycoon.UI.csproj", "{32AA1D24-7185-255D-B711-0F319240AA51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Game", "..\src\Game\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj", "{89D5AC5F-8A8C-48BB-847B-A4A48AC89791}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Core", "..\src\MiniTransportTycoon.Core\MiniTransportTycoon.Core.csproj", "{D8742239-DFD1-AFAB-5C6D-F81DCEA1636A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.UI", "..\src\MiniTransportTycoonUI\MiniTransportTycoon.UI\MiniTransportTycoon.UI.csproj", "{A676803E-F3DF-4B0C-A466-DF8C9A9F8BE6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Game", "..\src\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj", "{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,18 +15,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{930B582F-89F3-4EBA-89C5-89BBB5BB7090}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{930B582F-89F3-4EBA-89C5-89BBB5BB7090}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{930B582F-89F3-4EBA-89C5-89BBB5BB7090}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{930B582F-89F3-4EBA-89C5-89BBB5BB7090}.Release|Any CPU.Build.0 = Release|Any CPU
-		{89D5AC5F-8A8C-48BB-847B-A4A48AC89791}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{89D5AC5F-8A8C-48BB-847B-A4A48AC89791}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{89D5AC5F-8A8C-48BB-847B-A4A48AC89791}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{89D5AC5F-8A8C-48BB-847B-A4A48AC89791}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A676803E-F3DF-4B0C-A466-DF8C9A9F8BE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A676803E-F3DF-4B0C-A466-DF8C9A9F8BE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A676803E-F3DF-4B0C-A466-DF8C9A9F8BE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A676803E-F3DF-4B0C-A466-DF8C9A9F8BE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32AA1D24-7185-255D-B711-0F319240AA51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32AA1D24-7185-255D-B711-0F319240AA51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32AA1D24-7185-255D-B711-0F319240AA51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32AA1D24-7185-255D-B711-0F319240AA51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8742239-DFD1-AFAB-5C6D-F81DCEA1636A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8742239-DFD1-AFAB-5C6D-F81DCEA1636A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8742239-DFD1-AFAB-5C6D-F81DCEA1636A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8742239-DFD1-AFAB-5C6D-F81DCEA1636A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
