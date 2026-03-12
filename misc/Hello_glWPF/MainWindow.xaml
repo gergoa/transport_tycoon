@@ -1,0 +1,33 @@
+﻿<Window x:Class="Hello_glWPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
+        Title="WPF GL Interop" Height="450" Width="800">
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Width="200" Margin="10" Background="#222">
+            <TextBlock Text="Vertex Colors" Foreground="White" FontWeight="Bold" Margin="0,0,0,10"/>
+
+            <ItemsControl x:Name="ColorControls">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,5">
+                            <TextBlock Text="{Binding Name}" Foreground="LightGray" FontSize="10"/>
+                            <Slider Minimum="0" Maximum="1" Value="{Binding R, Mode=TwoWay}" Foreground="Red"/>
+                            <Slider Minimum="0" Maximum="1" Value="{Binding G, Mode=TwoWay}" Foreground="Green"/>
+                            <Slider Minimum="0" Maximum="1" Value="{Binding B, Mode=TwoWay}" Foreground="Blue"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <Grid>
+            <glWpfControl:GLWpfControl 
+                x:Name="OpenTkControl" 
+                Ready="OpenTkControl_OnReady" 
+                Render="OpenTkControl_OnRender" Margin="30,38,28,28" />
+        </Grid>
+    </DockPanel>
+
+</Window>
