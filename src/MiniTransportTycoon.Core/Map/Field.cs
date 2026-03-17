@@ -4,12 +4,13 @@ namespace MiniTransportTycoon.Core.Map
 {
     public class Field
     {
-        public int x;
-        public int y;
+        private int x;
+        private int y;
+        private FieldType type;
+        private Building building = null!;
 
-        public FieldType type;
+        public FieldType Type => type;
 
-        public Building building;
         public Field(int x, int y, FieldType type)
         {
             this.x = x;
