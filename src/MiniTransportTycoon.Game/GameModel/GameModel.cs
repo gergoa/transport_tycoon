@@ -16,6 +16,12 @@ namespace MiniTransportTycoon.Game.GameModel
         private TimeManager timeSystem = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private Pathfinder pathfinder = new Pathfinder();
+        public bool IsGameOver { get; private set; } = false;
+        public float ElapsedTime { get; private set; } = 0f;
+        public Field[,] Board => board;
+        public int Width => width;
+        public int Height => height;
+        public EconomyManager EconomyManager => economyManager;
 
         public event EventHandler? GameStarted;
 
@@ -23,11 +29,6 @@ namespace MiniTransportTycoon.Game.GameModel
         {
             StartNewGame(width, height);
         }
-
-        public Field[,] Board => board;
-        public int Width => width;
-        public int Height => height;
-        public EconomyManager EconomyManager => economyManager;
 
         public void StartNewGame(int width, int height)
         {
@@ -40,12 +41,24 @@ namespace MiniTransportTycoon.Game.GameModel
 
         public void GameTick(float deltaTime)
         {
+            float scaledTime = timeSystem.Tick(deltaTime);
 
+            ElapsedTime += scaledTime;
+
+            foreach (var facility in facilities)
+            {
+                facility.Tick(scaledTime);
+            }
+
+            if (economyManager.IsBankrupt())
+            {
+                GameOver();
+            }
         }
 
         public void GameOver()
         {
-
+            IsGameOver = true;
         }
 
         public void OnGameStarted()

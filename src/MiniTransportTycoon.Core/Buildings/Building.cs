@@ -6,12 +6,12 @@ namespace MiniTransportTycoon.Core.Buildings
 {
     public abstract class Building
     {
-        public Field Field { get; set; }
+        public Field Field { get; private set; }
 
         public Building(Field field)
         {
-            this.Field = field;
-            //field.building = this;
+            Field = field;
+            field.SetBuilding(this);
         }
     }
 }
