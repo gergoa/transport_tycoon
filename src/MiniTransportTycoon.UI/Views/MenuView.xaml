@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="MiniTransportTycoon.UI.Views.MenuView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MiniTransportTycoon.UI.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="800">
+    <Grid>
+        <Button Content="Új játék" Height="50" Width="100"
+                Command="{Binding StartGameCommand}"/>
+    </Grid>
+</UserControl>

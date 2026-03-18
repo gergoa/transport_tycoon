@@ -37,6 +37,11 @@ namespace MiniTransportTycoon.Game.GameModel
             OnGameStarted();
         }
 
+        public void GameTick(float deltaTime)
+        {
+
+        }
+
         public void GameOver()
         {
 

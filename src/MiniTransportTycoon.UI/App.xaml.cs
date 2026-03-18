@@ -1,4 +1,7 @@
-﻿using System.Configuration;
+﻿using MiniTransportTycoon.Game.GameModel;
+using MiniTransportTycoon.UI.ViewModels;
+using MiniTransportTycoon.UI.Views;
+using System.Configuration;
 using System.Data;
 using System.Windows;
 
@@ -9,6 +12,44 @@ namespace MiniTransportTycoon.UI
     /// </summary>
     public partial class App : Application
     {
+        private GameModel? _model;
+        private MainWindow _mainWindow = null!;
+        private GameView? gameView;
+        private GameViewModel? gameViewModel;
+        private MenuView menuView = null!;
+        private MenuViewModel menuViewModel = null!;
+
+        public App()
+        {
+            Startup += OnStartup;
+        }
+
+        private void OnStartup(object sender, StartupEventArgs e)
+        {
+            menuViewModel = new MenuViewModel();
+
+            menuViewModel.StartGame += MenuViewModel_StartGame;
+
+            menuView = new MenuView
+            {
+                DataContext = menuViewModel
+            };
+            _mainWindow = new MainWindow();
+            _mainWindow.contentControl.Content = menuView;
+            _mainWindow.Show();
+        }
+
+        private void MenuViewModel_StartGame(object? sender, EventArgs e)
+        {
+            _model = new GameModel();
+            _model.StartNewGame();
+            gameViewModel = new GameViewModel(_model);
+            gameView = new GameView
+            {
+                DataContext = gameViewModel
+            };
+            _mainWindow.contentControl.Content = gameView;
+        }
     }
 
 }

@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTransportTycoon.UI"
         mc:Ignorable="d"
-        Title="Mini Transport Tycoon" Height="750" Width="750">
-    <Grid>
-        <UniformGrid Name="MapGrid" Columns="{Binding width}" Rows="{Binding height}" />
-    </Grid>
+        Title="MainWindow" Height="800" Width="800">
+    <ContentControl x:Name="contentControl">
+        
+    </ContentControl>
 </Window>
