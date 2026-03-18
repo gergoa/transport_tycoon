@@ -20,14 +20,19 @@ namespace MiniTransportTycoon.UI.ViewModels
             get { return _model.EconomyManager.GetBalance(); }
         }
 
-        public int SizeN
+        public float Time
         {
-            get { return _model.Board.GetLength(0); }
+            get { return _model.ElapsedTime; }
         }
 
-        public int SizeM
+        public int Width
         {
-            get { return _model.Board.GetLength(1); }
+            get { return _model.Width; }
+        }
+
+        public int Height
+        {
+            get { return _model.Height; }
         }
 
         public ObservableCollection<FieldType> Fields { get; private set; }
@@ -40,9 +45,9 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             Fields = new ObservableCollection<FieldType>();
 
-            for (int i=0;i<SizeN;i++)
+            for (int i=0;i<Width;i++)
             {
-                for(int j=0;j<SizeM;j++)
+                for(int j=0;j<Height;j++)
                 {
                     Fields.Add(_model.Board[i,j].Type);
                 }

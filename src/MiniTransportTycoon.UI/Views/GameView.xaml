@@ -18,7 +18,7 @@
         <ItemsControl Grid.Row="1" ItemsSource="{Binding Fields}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding SizeN}" Rows="{Binding SizeM}" Height="700" Width="700"/>
+                    <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}" Height="700" Width="700"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemContainerStyle>
@@ -29,6 +29,39 @@
             </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
+                    <Button BorderThickness="0.5" Focusable="False">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="EMPTY">
+                                        <Setter Property="Background" Value="LightGreen"/>
+                                        <Setter Property="BorderBrush" Value="DarkGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="FOREST">
+                                        <Setter Property="Background" Value="Green"/>
+                                        <Setter Property="BorderBrush" Value="LightGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="WATER">
+                                        <Setter Property="Background" Value="Blue"/>
+                                        <Setter Property="BorderBrush" Value="LightGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="ROAD">
+                                        <Setter Property="Background" Value="#464646"/>
+                                        <Setter Property="BorderBrush" Value="White"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="BRIDGE">
+                                        <Setter Property="Background" Value="OrangeRed"/>
+                                        <Setter Property="BorderBrush" Value="DarkGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="FACILITY">
+                                        <Setter Property="Background" Value="DarkViolet"/>
+                                        <Setter Property="BorderBrush" Value="LightGray"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <!--
                     <Rectangle StrokeThickness="0.5">
                         <Rectangle.Style>
                             <Style TargetType="Rectangle">
@@ -61,11 +94,18 @@
                             </Style>
                         </Rectangle.Style>
                     </Rectangle>
+                    -->
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
         <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="Time: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding Time}"/>
+            </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Text="Money: "/>
             </StatusBarItem>
