@@ -16,9 +16,6 @@ namespace MiniTransportTycoon.Core.Facilities
             this.Fields = fields;
         }
 
-        public virtual void Tick(float deltaTime)
-        {
-
-        }
+        public virtual void Tick(float deltaTime);
     }
 }

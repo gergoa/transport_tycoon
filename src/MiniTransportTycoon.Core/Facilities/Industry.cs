@@ -10,6 +10,9 @@ namespace MiniTransportTycoon.Core.Facilities
         public Dictionary<CargoType, int> InputRequirements { get; set; } = new Dictionary<CargoType, int>();
         public CargoType OutputType { get; set; }
 
+        private float status = 0.0f;
+        private bool producing = false;
+
         public Industry(List<Field> fields, CargoType outputType) : base(fields)
         {
             this.OutputType = outputType;
@@ -17,12 +20,45 @@ namespace MiniTransportTycoon.Core.Facilities
 
         public void Produce(float deltaTime)
         {
- 
+            if (status >= 1.0f)
+            {
+                InventoryOut[OutputType] += 1;
+                status = 0.0f;
+                producing = false;
+            }
+            status += ProductionRate * deltaTime;
         }
 
         public override void Tick(float deltaTime)
         {
-            Produce(deltaTime);
+            if (!producing && MaterialsOnStock())
+            {
+                producing = true;
+                RemoveInputMaterials();
+            }
+            
+            if (producing) Produce(deltaTime);
+        }
+
+        private bool MaterialsOnStock()
+        {
+            bool onStock = true;
+            foreach (var (type, num) in InputRequirements)
+            {
+                if (InventoryIn.!ContainsKey(type) || InventoryIn[type] < num)
+                {
+                    onStock = false;
+                }
+            }
+            return onStock;
+        }
+
+        private void RemoveInputMaterials()
+        {
+            foreach (var (type, n) in InputRequirements)
+            {
+                InventoryIn[type] -= n;
+            }
         }
     }
 }
