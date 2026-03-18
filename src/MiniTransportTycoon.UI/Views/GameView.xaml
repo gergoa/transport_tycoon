@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MiniTransportTycoon.UI.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="750" d:DesignWidth="750">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -18,17 +18,44 @@
         <ItemsControl Grid.Row="1" ItemsSource="{Binding Fields}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding SizeN}" Rows="{Binding SizeM}"/>
+                    <UniformGrid Columns="{Binding SizeN}" Rows="{Binding SizeM}" Height="700" Width="700"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemContainerStyle>
+                <Style>
+                    <Setter Property="Control.Padding" Value="0"/>
+                    <Setter Property="Control.Margin" Value="0"/>
+                </Style>
+            </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Rectangle>
+                    <Rectangle StrokeThickness="0.5">
                         <Rectangle.Style>
                             <Style TargetType="Rectangle">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding}" Value="0">
+                                    <DataTrigger Binding="{Binding}" Value="EMPTY">
+                                        <Setter Property="Fill" Value="LightGreen"/>
+                                        <Setter Property="Stroke" Value="DarkGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="FOREST">
                                         <Setter Property="Fill" Value="Green"/>
+                                        <Setter Property="Stroke" Value="LightGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="WATER">
+                                        <Setter Property="Fill" Value="Blue"/>
+                                        <Setter Property="Stroke" Value="LightGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="ROAD">
+                                        <Setter Property="Fill" Value="#464646"/>
+                                        <Setter Property="Stroke" Value="White"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="BRIDGE">
+                                        <Setter Property="Fill" Value="OrangeRed"/>
+                                        <Setter Property="Stroke" Value="DarkGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="FACILITY">
+                                        <Setter Property="Fill" Value="DarkViolet"/>
+                                        <Setter Property="Stroke" Value="LightGray"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -40,7 +67,10 @@
 
         <StatusBar Grid.Row="2">
             <StatusBarItem>
-                <TextBlock Text="A"/>
+                <TextBlock Text="Money: "/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding Money}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

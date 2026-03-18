@@ -13,7 +13,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public List<Facility> facilities;
 
         public TimeManager timeSystem;
-        public EconomyManager economyManager;
+        public EconomyManager economyManager = new EconomyManager();
         public Pathfinder pathfinder;
 
         public void StartNewGame()
@@ -30,6 +30,11 @@ namespace MiniTransportTycoon.Game.GameModel
                     board[x, y] = new Field(x, y, FieldType.EMPTY);
                 }
             }
+        }
+
+        public void GameTick(float deltaTime)
+        {
+
         }
 
         public void GameOver()
