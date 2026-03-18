@@ -11,7 +11,7 @@ namespace MiniTransportTycoon.Core.Buildings
         public Building(Field field)
         {
             this.Field = field;
-            field.building = this;
+            //field.building = this;
         }
     }
 }

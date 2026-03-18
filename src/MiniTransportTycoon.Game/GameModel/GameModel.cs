@@ -9,32 +9,42 @@ namespace MiniTransportTycoon.Game.GameModel
 {
     public class GameModel
     {
-        public Field[,] board;
-        public List<Facility> facilities;
+        private int width = 100;
+        private int height = 100;
+        private Field[,] board = null!;
+        private List<Facility> facilities = new List<Facility>();
+        private TimeManager timeSystem = new TimeManager();
+        private EconomyManager economyManager = new EconomyManager();
+        private Pathfinder pathfinder = new Pathfinder();
 
-        public TimeManager timeSystem;
-        public EconomyManager economyManager;
-        public Pathfinder pathfinder;
+        public event EventHandler? GameStarted;
 
-        public void StartNewGame()
+        public GameModel()
         {
-            int width = 100;
-            int height = 100;
+            StartNewGame(width, height);
+        }
 
-            board = new Field[width, height];
+        public Field[,] Board => board;
+        public int Width => width;
+        public int Height => height;
 
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    board[x, y] = new Field(x, y, FieldType.EMPTY);
-                }
-            }
+        public void StartNewGame(int width, int height)
+        {
+            //tábla generálás segédosztállyokkal
+            MapGenerator generator = new MapGenerator(width, height);
+            board = generator.Generate();
+
+            OnGameStarted();
         }
 
         public void GameOver()
         {
 
+        }
+
+        public void OnGameStarted()
+        {
+            GameStarted?.Invoke(this, EventArgs.Empty);
         }
     }
 }
