@@ -27,6 +27,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public Field[,] Board => board;
         public int Width => width;
         public int Height => height;
+        public EconomyManager EconomyManager => economyManager;
 
         public void StartNewGame(int width, int height)
         {

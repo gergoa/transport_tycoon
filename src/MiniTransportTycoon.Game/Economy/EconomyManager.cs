@@ -2,7 +2,7 @@ namespace MiniTransportTycoon.Game.Economy
 {
     public class EconomyManager
     {
-        private int money;
+        private int money = 100;
 
         public bool IsBankrupt()
         {

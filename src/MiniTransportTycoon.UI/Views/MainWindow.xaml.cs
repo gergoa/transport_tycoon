@@ -20,10 +20,10 @@ namespace MiniTransportTycoon.UI
         public MainWindow()
         {
             InitializeComponent();
-            DrawMap();
+            //DrawMap();
         }
 
-        private void DrawMap()
+        /*private void DrawMap()
         {   
             var board = model.Board;
 
@@ -49,6 +49,6 @@ namespace MiniTransportTycoon.UI
                     MapGrid.Children.Add(r);
                 }
             }
-        }
+        }*/
     }
 }

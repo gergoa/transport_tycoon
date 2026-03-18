@@ -17,17 +17,17 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public int Money
         {
-            get { return _model.economyManager.GetBalance(); }
+            get { return _model.EconomyManager.GetBalance(); }
         }
 
         public int SizeN
         {
-            get { return _model.board.GetLength(0); }
+            get { return _model.Board.GetLength(0); }
         }
 
         public int SizeM
         {
-            get { return _model.board.GetLength(1); }
+            get { return _model.Board.GetLength(1); }
         }
 
         public ObservableCollection<FieldType> Fields { get; private set; }
@@ -44,7 +44,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 for(int j=0;j<SizeM;j++)
                 {
-                    Fields.Add(_model.board[i,j].type);
+                    Fields.Add(_model.Board[i,j].Type);
                 }
             }
         }
