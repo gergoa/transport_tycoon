@@ -5,18 +5,31 @@ namespace MiniTransportTycoon.Core.Map
 {
     public class Field
     {
-        public int x;
-        public int y;
+        private int x;
+        private int y;
+        private FieldType type;
+        private Building? building = null!;
+        private Facility? facility = null!;
 
-        public FieldType type;
+        public FieldType Type => type;
+        public Building? Building => building;
+        public Facility? Facility => Facility;
 
-        public Building? building;
-        public Facility? facility;
         public Field(int x, int y, FieldType type)
         {
             this.x = x;
             this.y = y;
             this.type = type;
+        }
+        internal void SetBuilding(Building building)
+        {
+            this.building = building;
+        }
+
+        internal void PlaceFacility(Facility facility)
+        {
+            this.facility = facility;
+            this.type = FieldType.FACILITY;
         }
 
         public bool IsPassable()

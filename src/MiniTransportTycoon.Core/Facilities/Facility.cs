@@ -17,8 +17,7 @@ namespace MiniTransportTycoon.Core.Facilities
 
             foreach (var field in fields)
             {
-                field.facility = this;
-                field.type = FieldType.FACILITY;
+                field.PlaceFacility(this);
             }
         }
 

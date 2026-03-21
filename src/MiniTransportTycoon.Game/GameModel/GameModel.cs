@@ -11,43 +11,63 @@ namespace MiniTransportTycoon.Game.GameModel
 {
     public class GameModel
     {
-        public Field[,] board;
-        public List<Facility> facilities;
-
-        public TimeManager timeSystem;
-        public EconomyManager economyManager;
-        public Pathfinder pathfinder;
-
+        private int width = 100;
+        private int height = 100;
+        private Field[,] board = null!;
+        private List<Facility> facilities = new List<Facility>();
+        private TimeManager timeSystem = new TimeManager();
+        private EconomyManager economyManager = new EconomyManager();
+        private Pathfinder pathfinder = new Pathfinder();
+        public bool IsGameOver { get; private set; } = false;
+        public float ElapsedTime { get; private set; } = 0f;
+        public Field[,] Board => board;
+        public int Width => width;
+        public int Height => height;
+        public EconomyManager EconomyManager => economyManager;
         private Random _random = new Random();
-
-        private const int _width = 100;
-        private const int _height = 100;
-
-        public int Width { get { return _width; } }
-        public int Height { get { return _height; } }
-
-        public void StartNewGame()
+        public event EventHandler? GameStarted;
+        
+        public GameModel()
         {
-            InitializeMap();
+            StartNewGame(width, height);
+        }
+
+        public void StartNewGame(int width, int height)
+        {
+            //tábla generálás segédosztállyokkal
+            MapGenerator generator = new MapGenerator(width, height);
+            board = generator.Generate();
+
             InitializeFacilities();
+
+            OnGameStarted();
+        }
+
+        public void GameTick(float deltaTime)
+        {
+            float scaledTime = timeSystem.Tick(deltaTime);
+
+            ElapsedTime += scaledTime;
+
+            foreach (var facility in facilities)
+            {
+                facility.Tick(scaledTime);
+            }
+
+            if (economyManager.IsBankrupt())
+            {
+                GameOver();
+            }
         }
 
         public void GameOver()
         {
-
+            IsGameOver = true;
         }
 
-        private void InitializeMap()
+        public void OnGameStarted()
         {
-            board = new Field[_width, _height];
-
-            for (int x = 0; x < _width; x++)
-            {
-                for (int y = 0; y < _height; y++)
-                {
-                    board[x, y] = new Field(x, y, FieldType.EMPTY);
-                }
-            }
+            GameStarted?.Invoke(this, EventArgs.Empty);
         }
 
         private void InitializeFacilities()
@@ -132,12 +152,12 @@ namespace MiniTransportTycoon.Game.GameModel
         {
 
             int n = 300; // for safety
-            while (n-- > 0) 
+            while (n-- > 0)
             {
-                int rx = _random.Next(_width);
-                int ry = _random.Next(_height);
-                Field targetField = board[rx,ry];
-                if (targetField.IsFree() && targetField.type == FieldType.EMPTY)
+                int rx = _random.Next(width);
+                int ry = _random.Next(height);
+                Field targetField = board[rx, ry];
+                if (targetField.IsFree() && targetField.Type == FieldType.EMPTY)
                 {
                     return targetField;
                 }
