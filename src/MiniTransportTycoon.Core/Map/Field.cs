@@ -1,4 +1,5 @@
 using MiniTransportTycoon.Core.Buildings;
+using MiniTransportTycoon.Core.Facilities;
 
 namespace MiniTransportTycoon.Core.Map
 {
@@ -9,7 +10,8 @@ namespace MiniTransportTycoon.Core.Map
 
         public FieldType type;
 
-        public Building building;
+        public Building? building;
+        public Facility? facility;
         public Field(int x, int y, FieldType type)
         {
             this.x = x;
@@ -24,7 +26,7 @@ namespace MiniTransportTycoon.Core.Map
 
         public bool IsFree()
         {
-            return building == null;
+            return building == null && facility == null;
         }
     }
 }

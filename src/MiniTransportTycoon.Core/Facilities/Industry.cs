@@ -20,13 +20,14 @@ namespace MiniTransportTycoon.Core.Facilities
 
         public void Produce(float deltaTime)
         {
-            if (status >= 1.0f)
+            status += ProductionRate * deltaTime;
+
+            while (status >= 1.0f)
             {
-                InventoryOut[OutputType] += 1;
-                status = 0.0f;
+                InventoryOut[OutputType]++;
+                status -= 1.0f;
                 producing = false;
             }
-            status += ProductionRate * deltaTime;
         }
 
         public override void Tick(float deltaTime)
@@ -36,8 +37,11 @@ namespace MiniTransportTycoon.Core.Facilities
                 producing = true;
                 RemoveInputMaterials();
             }
-            
-            if (producing) Produce(deltaTime);
+
+            if (producing)
+            {
+                Produce(deltaTime);
+            }
         }
 
         private bool MaterialsOnStock()
@@ -45,7 +49,7 @@ namespace MiniTransportTycoon.Core.Facilities
             bool onStock = true;
             foreach (var (type, num) in InputRequirements)
             {
-                if (InventoryIn.!ContainsKey(type) || InventoryIn[type] < num)
+                if (!InventoryIn.ContainsKey(type) || InventoryIn[type] < num)
                 {
                     onStock = false;
                 }

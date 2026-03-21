@@ -14,8 +14,14 @@ namespace MiniTransportTycoon.Core.Facilities
         public Facility(List<Field> fields)
         {
             this.Fields = fields;
+
+            foreach (var field in fields)
+            {
+                field.facility = this;
+                field.type = FieldType.FACILITY;
+            }
         }
 
-        public virtual void Tick(float deltaTime);
+        public abstract void Tick(float deltaTime);
     }
 }
