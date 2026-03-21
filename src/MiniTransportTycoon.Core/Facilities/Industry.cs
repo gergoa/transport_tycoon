@@ -16,6 +16,7 @@ namespace MiniTransportTycoon.Core.Facilities
         public Industry(List<Field> fields, CargoType outputType) : base(fields)
         {
             this.OutputType = outputType;
+            this.InventoryOut[outputType] = 0;
         }
 
         public void Produce(float deltaTime)
