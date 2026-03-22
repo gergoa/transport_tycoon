@@ -1,4 +1,5 @@
 using MiniTransportTycoon.Core.Buildings;
+using MiniTransportTycoon.Core.Facilities;
 
 namespace MiniTransportTycoon.Core.Map
 {
@@ -8,9 +9,11 @@ namespace MiniTransportTycoon.Core.Map
         private int y;
         private FieldType type;
         private Building? building = null!;
+        private Facility? facility = null!;
 
         public FieldType Type => type;
         public Building? Building => building;
+        public Facility? Facility => Facility;
 
         public Field(int x, int y, FieldType type)
         {
@@ -23,6 +26,12 @@ namespace MiniTransportTycoon.Core.Map
             this.building = building;
         }
 
+        internal void PlaceFacility(Facility facility)
+        {
+            this.facility = facility;
+            this.type = FieldType.FACILITY;
+        }
+
         public bool IsPassable()
         {
             return type != FieldType.WATER;
@@ -30,7 +39,7 @@ namespace MiniTransportTycoon.Core.Map
 
         public bool IsFree()
         {
-            return building == null;
+            return building == null && facility == null;
         }
     }
 }
