@@ -13,6 +13,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Menu Grid.Row="0">
+            <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
         </Menu>
         <ItemsControl Grid.Row="1" ItemsSource="{Binding Fields}">

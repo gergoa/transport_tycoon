@@ -14,6 +14,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         private GameModel _model;
 
         public DelegateCommand TickCommand { get; private set; }
+        public DelegateCommand NewGameCommand { get; private set; }
 
         public int Money
         {
@@ -41,7 +42,11 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             _model = model;
 
+            _model.GameStarted += _model_GameStarted;
+
             TickCommand = new DelegateCommand(param => model.GameTick(1.0f));
+
+            NewGameCommand = new DelegateCommand(param => model.StartNewGame(Width, Height));
 
             Fields = new ObservableCollection<FieldType>();
 
@@ -50,6 +55,17 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for(int j=0;j<Height;j++)
                 {
                     Fields.Add(_model.Board[i,j].Type);
+                }
+            }
+        }
+
+        private void _model_GameStarted(object? sender, EventArgs e)
+        {
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    Fields[i*Height+j]= _model.Board[i, j].Type;
                 }
             }
         }
