@@ -42,7 +42,6 @@ namespace MiniTransportTycoon.UI
         private void MenuViewModel_StartGame(object? sender, EventArgs e)
         {
             _model = new GameModel();
-            _model.StartNewGame(_model.Width, _model.Height);
             gameViewModel = new GameViewModel(_model);
             gameView = new GameView
             {

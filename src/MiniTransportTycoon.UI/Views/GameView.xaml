@@ -54,7 +54,11 @@
                                         <Setter Property="Background" Value="OrangeRed"/>
                                         <Setter Property="BorderBrush" Value="DarkGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="FACILITY">
+                                    <DataTrigger Binding="{Binding}" Value="INDUSTRY">
+                                        <Setter Property="Background" Value="Orange"/>
+                                        <Setter Property="BorderBrush" Value="LightGray"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding}" Value="CITY">
                                         <Setter Property="Background" Value="DarkViolet"/>
                                         <Setter Property="BorderBrush" Value="LightGray"/>
                                     </DataTrigger>

@@ -29,7 +29,14 @@ namespace MiniTransportTycoon.Core.Map
         internal void PlaceFacility(Facility facility)
         {
             this.facility = facility;
-            this.type = FieldType.FACILITY;
+            if(facility is City)
+            {
+                this.type = FieldType.CITY;
+            }
+            else
+            {
+                this.type = FieldType.INDUSTRY;
+            }
         }
 
         public bool IsPassable()

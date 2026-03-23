@@ -7,6 +7,7 @@ namespace MiniTransportTycoon.Core.Map
         WATER,
         ROAD,
         BRIDGE,
-        FACILITY
+        INDUSTRY,
+        CITY
     }
 }
