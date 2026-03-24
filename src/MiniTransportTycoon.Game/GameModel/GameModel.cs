@@ -21,11 +21,13 @@ namespace MiniTransportTycoon.Game.GameModel
         public bool IsGameOver { get; private set; } = false;
         public float ElapsedTime { get; private set; } = 0f;
         public Field[,] Board => board;
+        public List<Facility> Facilities => facilities;
         public int Width => width;
         public int Height => height;
         public EconomyManager EconomyManager => economyManager;
         private Random _random = new Random();
         public event EventHandler? GameStarted;
+        public event EventHandler? MapUpdated;
 
         //útgeneráláshoz használt akció
         public event Action<int, int, FieldType>? FieldChanged;
@@ -40,8 +42,7 @@ namespace MiniTransportTycoon.Game.GameModel
             //tábla generálás segédosztállyokkal
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
-
-            InitializeFacilities();
+            FacilityManager.InitializeFacilities(this);
 
             economyManager.ResetBalance();
             ElapsedTime = 0f;
@@ -64,6 +65,14 @@ namespace MiniTransportTycoon.Game.GameModel
             {
                 GameOver();
             }
+
+            // for showcase purposes, TODO: Remove
+            foreach (var facility in facilities)
+            {
+                if (facility is City c) ExpandCity(c);
+            }
+            MapUpdated?.Invoke(this, EventArgs.Empty);
+
         }
 
         public void BuildRoad(Field field)
@@ -94,130 +103,12 @@ namespace MiniTransportTycoon.Game.GameModel
             GameStarted?.Invoke(this, EventArgs.Empty);
         }
 
-        private void InitializeFacilities()
+        public bool ExpandCity(City city)
         {
-            facilities.Add(new City(FindEmptyFields(), 2000, "Metropolis"));
-            facilities.Add(new City(FindEmptyFields(), 800, "Smallville"));
+            if (city == null || !facilities.Contains(city)) return false;
 
-            // TIER 0
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Wood) { ProductionRate = 1.0f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.IronOre) { ProductionRate = 1.0f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Coal) { ProductionRate = 1.0f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.CrudeOil) { ProductionRate = 0.8f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Grain) { ProductionRate = 1.5f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Livestock) { ProductionRate = 1.2f });
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.CopperOre) { ProductionRate = 1.0f });
-
-            // TIER 1
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Lumber)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Wood, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Steel)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.IronOre, 2 }, { CargoType.Coal, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Plastic)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CrudeOil, 2 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.CopperWire)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CopperOre, 1 } }
-            });
-
-            // TIER 2
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.ProcessedFood)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Grain, 1 }, { CargoType.Livestock, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Furniture)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Lumber, 3 }, { CargoType.Steel, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Tools)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Steel, 2 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Microchips)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CopperWire, 3 }, { CargoType.Plastic, 1 } }
-            });
-
-            // TIER 3
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Automobiles)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Steel, 4 }, { CargoType.Plastic, 1 }, { CargoType.Tools, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(), CargoType.Electronics)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }
-            });
+            return FacilityManager.TryGrowCity(this, city);
         }
-
-        private List<Field> FindEmptyFields()
-        {
-
-            if (width < 3 || height < 3)
-            {
-                throw new InvalidOperationException("Board is too small for a 3x3 area.");
-            }
-
-            int n = 1000;
-            while (n-- > 0)
-            {
-                int rx = _random.Next(1, width - 1);
-                int ry = _random.Next(1, height - 1);
-
-                bool allTilesFree = true;
-                List<Field> potentialTiles = new List<Field>(9);
-
-                // Check the 3x3 grid around the center (rx, ry)
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    for (int dy = -1; dy <= 1; dy++)
-                    {
-                        Field targetField = board[rx + dx, ry + dy];
-
-                        if (!targetField.IsFree() || targetField.Type != FieldType.EMPTY)
-                        {
-                            allTilesFree = false;
-                            break;
-                        }
-
-                        potentialTiles.Add(targetField);
-                    }
-
-                    if (!allTilesFree)
-                    {
-                        break;
-                    }
-                }
-
-                if (allTilesFree)
-                {
-                    return potentialTiles;
-                }
-            }
-
-            throw new Exception("Failed to find a 3x3 empty area!");
-        }
+        
     }
 }

@@ -23,11 +23,11 @@ namespace MiniTransportTycoon.Core.Map
             }
         }
 
-        public int X => x;
-        public int Y => y;
+        public int X { get => x; }
+        public int Y { get => y; }
 
         public Building? Building => building;
-        public Facility? Facility => Facility;
+        public Facility? Facility => facility;
 
         public Field(int x, int y, FieldType type)
         {
@@ -35,12 +35,12 @@ namespace MiniTransportTycoon.Core.Map
             this.y = y;
             this.type = type;
         }
-        internal void SetBuilding(Building building)
+        public void SetBuilding(Building building)
         {
             this.building = building;
         }
 
-        internal void PlaceFacility(Facility facility)
+        public void PlaceFacility(Facility facility)
         {
             this.facility = facility;
             if(facility is City)

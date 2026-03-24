@@ -46,6 +46,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             _model = model;
 
             _model.GameStarted += _model_GameStarted;
+            _model.MapUpdated += _model_MapUpdated;
 
             TickCommand = new DelegateCommand(param => { model.GameTick(1.0f); OnPropertyChanged(nameof(Time)); });
 
@@ -111,6 +112,22 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for (int i = 0; i < Width; i++)
                 {
                     Fields[j*Width+i].Type = _model.Board[i, j].Type;
+                }
+            }
+        }
+
+        private void _model_MapUpdated(object? sender, EventArgs e)
+        {
+            SyncMap();
+        }
+
+        private void SyncMap()
+        {
+            for (int j = 0; j < Height; j++)
+            {
+                for (int i = 0; i < Width; i++)
+                {
+                    Fields[j * Width + i].Type = _model.Board[i, j].Type;
                 }
             }
         }
