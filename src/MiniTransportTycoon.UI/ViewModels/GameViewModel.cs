@@ -92,7 +92,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnFieldChanged(int x, int y, FieldType newType)
         {
-            ViewField? targetField = null;
+            /*ViewField? targetField = null;
 
             foreach (var field in Fields)
             {
@@ -102,7 +102,12 @@ namespace MiniTransportTycoon.UI.ViewModels
                     break;
                 }
             }
-            if (targetField != null) { targetField.Type = newType; }
+            if (targetField != null) { targetField.Type = newType; }*/
+
+            if (0 <= x && x < Width && 0 <= y && y < Height)
+            {
+                Fields[y * Width + x].Type = newType;
+            }
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)
