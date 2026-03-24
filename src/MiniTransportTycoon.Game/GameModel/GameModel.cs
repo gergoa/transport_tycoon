@@ -60,6 +60,11 @@ namespace MiniTransportTycoon.Game.GameModel
             }
         }
 
+        public void BuildRoad(Field field)
+        {
+
+        }
+
         public void GameOver()
         {
             IsGameOver = true;
