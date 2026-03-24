@@ -15,6 +15,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
+        public DelegateCommand FieldClickCommand { get; }
 
         public int Money
         {
@@ -48,31 +49,59 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             TickCommand = new DelegateCommand(param => { model.GameTick(1.0f); OnPropertyChanged(nameof(Time)); });
 
-            NewGameCommand = new DelegateCommand(param => model.StartNewGame(Width, Height));
+            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
 
             Fields = new ObservableCollection<ViewField>();
 
-            for (int j=0;j<Height;j++)
+            _model.FieldChanged += OnFieldChanged;
+
+            FieldClickCommand = new DelegateCommand(OnFieldClick);
+
+            InitializeFields();
+        }
+
+        private void InitializeFields()
+        {
+            Fields.Clear();
+            for (int j = 0; j < Height; j++)
             {
-                for(int i=0;i<Width;i++)
+                for (int i = 0; i < Width; i++)
                 {
                     Fields.Add(new ViewField
-                    {
-                        Type = _model.Board[i, j].Type,
-                        X = i,
-                        Y = j,
-                        FieldClickCommand = new DelegateCommand(param =>
-                        {
-                            if (param is Tuple<int, int> position)
-                            {
-                                DebugText = $"X: {position.Item1} Y: {position.Item2}";
-                                OnPropertyChanged(nameof(DebugText));
-                                _model.BuildRoad(_model.Board[position.Item1, position.Item2]);
-                            }
-                        })
+                    { Type = _model.Board[i, j].Type,
+                      X = i, 
+                      Y = j
                     });
                 }
+            }      
+        }
+
+        private void OnFieldClick(object? param)
+        {
+            if (param is ViewField position)
+            {
+                _model.BuildRoad(_model.Board[position.X, position.Y]);
+
+                OnPropertyChanged(nameof(Money));
+
+                DebugText = $"X: {position.X} Y: {position.Y}";
+                OnPropertyChanged(nameof(DebugText));
             }
+        }
+
+        private void OnFieldChanged(int x, int y, FieldType newType)
+        {
+            ViewField? targetField = null;
+
+            foreach (var field in Fields)
+            {
+                if (field.X == x && field.Y == y)
+                {
+                    targetField = field;
+                    break;
+                }
+            }
+            if (targetField != null) { targetField.Type = newType; }
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)

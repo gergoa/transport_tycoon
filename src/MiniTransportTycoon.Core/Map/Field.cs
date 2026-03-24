@@ -11,7 +11,21 @@ namespace MiniTransportTycoon.Core.Map
         private Building? building = null!;
         private Facility? facility = null!;
 
-        public FieldType Type => type;
+        public FieldType Type
+        {
+            get { return type; }
+            set
+            {
+                if (type != value)
+                {
+                    type = value;
+                }
+            }
+        }
+
+        public int X => x;
+        public int Y => y;
+
         public Building? Building => building;
         public Facility? Facility => Facility;
 
