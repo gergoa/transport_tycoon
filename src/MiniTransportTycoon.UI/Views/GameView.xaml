@@ -30,35 +30,35 @@
             </ItemsControl.ItemContainerStyle>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Button BorderThickness="0.5" Focusable="False">
+                    <Button BorderThickness="0.5" Focusable="False" Command="{Binding FieldClickCommand}" CommandParameter="{Binding XY}">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding}" Value="EMPTY">
+                                    <DataTrigger Binding="{Binding Type}" Value="EMPTY">
                                         <Setter Property="Background" Value="LightGreen"/>
                                         <Setter Property="BorderBrush" Value="DarkGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="FOREST">
+                                    <DataTrigger Binding="{Binding Type}" Value="FOREST">
                                         <Setter Property="Background" Value="Green"/>
                                         <Setter Property="BorderBrush" Value="LightGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="WATER">
+                                    <DataTrigger Binding="{Binding Type}" Value="WATER">
                                         <Setter Property="Background" Value="Blue"/>
                                         <Setter Property="BorderBrush" Value="LightGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="ROAD">
+                                    <DataTrigger Binding="{Binding Type}" Value="ROAD">
                                         <Setter Property="Background" Value="#464646"/>
                                         <Setter Property="BorderBrush" Value="White"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="BRIDGE">
+                                    <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
                                         <Setter Property="Background" Value="OrangeRed"/>
                                         <Setter Property="BorderBrush" Value="DarkGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="INDUSTRY">
+                                    <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
                                         <Setter Property="Background" Value="Orange"/>
                                         <Setter Property="BorderBrush" Value="LightGray"/>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="CITY">
+                                    <DataTrigger Binding="{Binding Type}" Value="CITY">
                                         <Setter Property="Background" Value="DarkViolet"/>
                                         <Setter Property="BorderBrush" Value="LightGray"/>
                                     </DataTrigger>
@@ -66,40 +66,6 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <!--
-                    <Rectangle StrokeThickness="0.5">
-                        <Rectangle.Style>
-                            <Style TargetType="Rectangle">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding}" Value="EMPTY">
-                                        <Setter Property="Fill" Value="LightGreen"/>
-                                        <Setter Property="Stroke" Value="DarkGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="FOREST">
-                                        <Setter Property="Fill" Value="Green"/>
-                                        <Setter Property="Stroke" Value="LightGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="WATER">
-                                        <Setter Property="Fill" Value="Blue"/>
-                                        <Setter Property="Stroke" Value="LightGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="ROAD">
-                                        <Setter Property="Fill" Value="#464646"/>
-                                        <Setter Property="Stroke" Value="White"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="BRIDGE">
-                                        <Setter Property="Fill" Value="OrangeRed"/>
-                                        <Setter Property="Stroke" Value="DarkGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding}" Value="FACILITY">
-                                        <Setter Property="Fill" Value="DarkViolet"/>
-                                        <Setter Property="Stroke" Value="LightGray"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Rectangle.Style>
-                    </Rectangle>
-                    -->
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
@@ -116,6 +82,9 @@
             </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Text="{Binding Money}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Text="{Binding DebugText}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
