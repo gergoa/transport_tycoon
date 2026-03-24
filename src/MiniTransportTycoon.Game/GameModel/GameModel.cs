@@ -62,7 +62,20 @@ namespace MiniTransportTycoon.Game.GameModel
 
         public void BuildRoad(Field field)
         {
+            int cost = 0;
 
+            if (field.Type == FieldType.EMPTY) { cost = 1; }
+            else if (field.Type == FieldType.FOREST) { cost = 2; }
+            else { return; }
+
+            if (EconomyManager.GetBalance() >= cost)
+            {
+                EconomyManager.SubtractMoney(cost);
+
+                field.Type = FieldType.ROAD;
+
+                FieldChanged?.Invoke(field.X, field.Y, FieldType.ROAD);
+            }
         }
 
         public void GameOver()
