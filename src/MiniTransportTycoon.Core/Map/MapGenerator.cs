@@ -39,16 +39,16 @@ namespace MiniTransportTycoon.Core.Map
             //folyó - egyik oldalról szembe - random irányban és kanyarokkal/vastagsággal
             bool[,] isRiver = new bool[_width, _height];
             bool isHorizontal = random.Next(0, 2) == 0;
-            int currX = isHorizontal ? 0 : random.Next(20, 80);
-            int currY = isHorizontal ? random.Next(20, 80) : 0;
+            int currX = isHorizontal ? 0 : random.Next((int)(_width * 0.2), (int)(_width * 0.8));
+            int currY = isHorizontal ? random.Next((int)(_height * 0.2), (int)(_height * 0.8)) : 0;
 
-            while ((isHorizontal && currX < 100) || (!isHorizontal && currY < 100))
+            while ((isHorizontal && currX < _width) || (!isHorizontal && currY < _height))
             {
-                if (currX >= 0 && currX < 100 && currY >= 0 && currY < 100)
+                if (currX >= 0 && currX < _width && currY >= 0 && currY < _height)
                 {
                     isRiver[currX, currY] = true;
-                    if (isHorizontal && currY + 1 < 100) isRiver[currX, currY + 1] = true;
-                    if (!isHorizontal && currX + 1 < 100) isRiver[currX + 1, currY] = true;
+                    if (isHorizontal && currY + 1 < _height) isRiver[currX, currY + 1] = true;
+                    if (!isHorizontal && currX + 1 < _width) isRiver[currX + 1, currY] = true;
                 }
 
                 int dir = random.Next(100);
@@ -56,14 +56,14 @@ namespace MiniTransportTycoon.Core.Map
                 if (isHorizontal)
                 {
                     if (dir < 30) currX++;
-                    else if (dir < 65 && currY > 5) currY--;
-                    else if (dir < 100 && currY < 95) currY++;
+                    else if (dir < 65 && currY > (int)(_height * 0.05)) currY--;
+                    else if (dir < 100 && currY < (int)(_height * 0.95)) currY++;
                 }
                 else
                 {
                     if (dir < 30) currY++;
-                    else if (dir < 65 && currX > 5) currX--;
-                    else if (dir < 100 && currX < 95) currX++;
+                    else if (dir < 65 && currX > (int)(_width * 0.05)) currX--;
+                    else if (dir < 100 && currX < (int)(_width * 0.95)) currX++;
                 }
             }
 

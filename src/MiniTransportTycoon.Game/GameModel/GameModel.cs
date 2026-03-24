@@ -29,6 +29,9 @@ namespace MiniTransportTycoon.Game.GameModel
         public event EventHandler? GameStarted;
         public event EventHandler? MapUpdated;
 
+        //útgeneráláshoz használt akció
+        public event Action<int, int, FieldType>? FieldChanged;
+
         public GameModel()
         {
             StartNewGame(width, height);
@@ -40,6 +43,9 @@ namespace MiniTransportTycoon.Game.GameModel
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
             FacilityManager.InitializeFacilities(this);
+
+            economyManager.ResetBalance();
+            ElapsedTime = 0f;
 
             OnGameStarted();
         }
@@ -71,7 +77,20 @@ namespace MiniTransportTycoon.Game.GameModel
 
         public void BuildRoad(Field field)
         {
+            int cost = 0;
 
+            if (field.Type == FieldType.EMPTY) { cost = 1; }
+            else if (field.Type == FieldType.FOREST) { cost = 2; }
+            else { return; }
+
+            if (EconomyManager.GetBalance() >= cost)
+            {
+                EconomyManager.SubtractMoney(cost);
+
+                field.Type = FieldType.ROAD;
+
+                FieldChanged?.Invoke(field.X, field.Y, FieldType.ROAD);
+            }
         }
 
         public void GameOver()

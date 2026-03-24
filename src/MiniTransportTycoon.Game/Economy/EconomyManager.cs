@@ -13,5 +13,15 @@ namespace MiniTransportTycoon.Game.Economy
         {
             return money;
         }
+
+        public void SubtractMoney(int amount)
+        {
+            money -= amount;
+        }
+
+        public void ResetBalance()
+        {
+            money = 100;
+        }
     }
 }
