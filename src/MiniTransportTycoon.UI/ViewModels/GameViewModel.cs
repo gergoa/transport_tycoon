@@ -52,9 +52,9 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             Fields = new ObservableCollection<ViewField>();
 
-            for (int i=0;i<Width;i++)
+            for (int j=0;j<Height;j++)
             {
-                for(int j=0;j<Height;j++)
+                for(int i=0;i<Width;i++)
                 {
                     Fields.Add(new ViewField
                     {
@@ -67,7 +67,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             {
                                 DebugText = $"X: {position.Item1} Y: {position.Item2}";
                                 OnPropertyChanged(nameof(DebugText));
-                                _model.BuildRoad(_model.Board[i, j]);
+                                _model.BuildRoad(_model.Board[position.Item1, position.Item2]);
                             }
                         })
                     });
@@ -77,11 +77,11 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void _model_GameStarted(object? sender, EventArgs e)
         {
-            for (int i = 0; i < Width; i++)
+            for (int j = 0; j < Height; j++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int i = 0; i < Width; i++)
                 {
-                    Fields[i*Height+j].Type = _model.Board[i, j].Type;
+                    Fields[j*Width+i].Type = _model.Board[i, j].Type;
                 }
             }
         }

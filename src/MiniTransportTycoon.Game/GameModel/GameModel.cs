@@ -11,7 +11,7 @@ namespace MiniTransportTycoon.Game.GameModel
 {
     public class GameModel
     {
-        private int width = 100;
+        private int width = 150;
         private int height = 100;
         private Field[,] board = null!;
         private List<Facility> facilities = new List<Facility>();
