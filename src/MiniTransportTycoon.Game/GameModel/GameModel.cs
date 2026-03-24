@@ -42,6 +42,7 @@ namespace MiniTransportTycoon.Game.GameModel
             //tábla generálás segédosztállyokkal
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
+            FacilityManager.CleanFacilities(this);
             FacilityManager.InitializeFacilities(this);
 
             economyManager.ResetBalance();

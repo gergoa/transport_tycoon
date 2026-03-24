@@ -55,7 +55,10 @@ namespace MiniTransportTycoon.Game.GameModel
 
             return true;
         }
-
+        internal static void CleanFacilities(GameModel model)
+        { 
+            model.Facilities.Clear();
+        }
         internal static void InitializeFacilities(GameModel model)
         {
             var facilities = model.Facilities;
@@ -148,8 +151,8 @@ namespace MiniTransportTycoon.Game.GameModel
             int n = 100;
             while (n-- > 0)
             {
-                int rx = _random.Next(1, width - 1);
-                int ry = _random.Next(1, height - 1);
+                int rx = _random.Next(1, width - 2);
+                int ry = _random.Next(1, height - 2);
 
                 bool allTilesFree = true;
                 List<Field> potentialTiles = new List<Field>(9);
