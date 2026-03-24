@@ -27,11 +27,11 @@ namespace MiniTransportTycoon.UI.ViewModels
         public int X {  get; set; }
         public int Y { get; set; }
 
-        public Tuple<int, int> XY
+        /*public Tuple<int, int> XY
         {
             get { return new(X, Y); }
-        }
+        }*/
 
-        public DelegateCommand? FieldClickCommand { get; set; }
+        //public DelegateCommand? FieldClickCommand { get; set; }
     }
 }
