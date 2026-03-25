@@ -35,7 +35,7 @@ namespace MiniTransportTycoon.UI
                 DataContext = menuViewModel
             };
             _mainWindow = new MainWindow();
-            _mainWindow.contentControl.Content = menuView;
+            _mainWindow.Content = menuView;
             _mainWindow.Show();
         }
 
@@ -47,7 +47,7 @@ namespace MiniTransportTycoon.UI
             {
                 DataContext = gameViewModel
             };
-            _mainWindow.contentControl.Content = gameView;
+            _mainWindow.Content = gameView;
         }
     }
 

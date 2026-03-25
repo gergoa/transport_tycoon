@@ -17,61 +17,63 @@
             <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
         </Menu>
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding Fields}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}" Height="700" Width="700"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemContainerStyle>
-                <Style>
-                    <Setter Property="Control.Padding" Value="0"/>
-                    <Setter Property="Control.Margin" Value="0"/>
-                </Style>
-            </ItemsControl.ItemContainerStyle>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button BorderThickness="0.5" Focusable="False"
-                            Command="{Binding DataContext.FieldClickCommand, ElementName=Root}"
-                            CommandParameter="{Binding}">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Type}" Value="EMPTY">
-                                        <Setter Property="Background" Value="LightGreen"/>
-                                        <Setter Property="BorderBrush" Value="DarkGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="FOREST">
-                                        <Setter Property="Background" Value="Green"/>
-                                        <Setter Property="BorderBrush" Value="LightGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="WATER">
-                                        <Setter Property="Background" Value="Blue"/>
-                                        <Setter Property="BorderBrush" Value="LightGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="ROAD">
-                                        <Setter Property="Background" Value="#464646"/>
-                                        <Setter Property="BorderBrush" Value="White"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
-                                        <Setter Property="Background" Value="OrangeRed"/>
-                                        <Setter Property="BorderBrush" Value="DarkGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
-                                        <Setter Property="Background" Value="Orange"/>
-                                        <Setter Property="BorderBrush" Value="LightGray"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Type}" Value="CITY">
-                                        <Setter Property="Background" Value="DarkViolet"/>
-                                        <Setter Property="BorderBrush" Value="LightGray"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Viewbox Grid.Row="1" Stretch="Uniform">
+            <ItemsControl ItemsSource="{Binding Fields}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}" Height="500" Width="500"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="Control.Padding" Value="0"/>
+                        <Setter Property="Control.Margin" Value="0"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button BorderThickness="0.5" Focusable="False"
+                                Command="{Binding DataContext.FieldClickCommand, ElementName=Root}"
+                                CommandParameter="{Binding}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Type}" Value="EMPTY">
+                                            <Setter Property="Background" Value="LightGreen"/>
+                                            <Setter Property="BorderBrush" Value="DarkGray"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="FOREST">
+                                            <Setter Property="Background" Value="Green"/>
+                                            <Setter Property="BorderBrush" Value="LightGray"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="WATER">
+                                            <Setter Property="Background" Value="Blue"/>
+                                            <Setter Property="BorderBrush" Value="LightGray"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="ROAD">
+                                            <Setter Property="Background" Value="#464646"/>
+                                            <Setter Property="BorderBrush" Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
+                                            <Setter Property="Background" Value="OrangeRed"/>
+                                            <Setter Property="BorderBrush" Value="DarkGray"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
+                                            <Setter Property="Background" Value="Orange"/>
+                                            <Setter Property="BorderBrush" Value="LightGray"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="CITY">
+                                            <Setter Property="Background" Value="DarkViolet"/>
+                                            <Setter Property="BorderBrush" Value="LightGray"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Viewbox>
 
         <StatusBar Grid.Row="2">
             <StatusBarItem>

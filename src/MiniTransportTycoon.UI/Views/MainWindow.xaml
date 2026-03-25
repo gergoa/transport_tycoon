@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MiniTransportTycoon.UI"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="800">
+        Title="Mini Transport Tycoon" Height="800" Width="800" MinHeight="400" MinWidth="400">
     <ContentControl x:Name="contentControl">
         
     </ContentControl>
