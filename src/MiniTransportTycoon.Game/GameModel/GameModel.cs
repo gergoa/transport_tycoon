@@ -1,7 +1,7 @@
 using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Game.Economy;
-using MiniTransportTycoon.Game.Pathfinding;
+using MiniTransportTycoon.Core.Pathfinding;
 using MiniTransportTycoon.Game.Time;
 using System.Collections.Generic;
 using MiniTransportTycoon.Core.Cargo;

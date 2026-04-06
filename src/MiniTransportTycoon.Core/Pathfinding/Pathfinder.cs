@@ -1,6 +1,6 @@
 using MiniTransportTycoon.Core.Map;
 
-namespace MiniTransportTycoon.Game.Pathfinding
+namespace MiniTransportTycoon.Core.Pathfinding
 {
     public class Pathfinder
     {
