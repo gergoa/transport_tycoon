@@ -1,5 +1,6 @@
 ﻿using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Game.GameModel;
+using MiniTransportTycoon.UI.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,7 +13,8 @@ namespace MiniTransportTycoon.UI.ViewModels
     class GameViewModel : ViewModelBase
     {
         private GameModel _model;
-
+        private TickData tickMapData;
+        public TickData TickData => tickMapData;
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
         public DelegateCommand FieldClickCommand { get; }
@@ -74,7 +76,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                       Y = j
                     });
                 }
-            }      
+            }
+            
         }
 
         private void OnFieldClick(object? param)
@@ -92,22 +95,13 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnFieldChanged(int x, int y, FieldType newType)
         {
-            /*ViewField? targetField = null;
-
-            foreach (var field in Fields)
-            {
-                if (field.X == x && field.Y == y)
-                {
-                    targetField = field;
-                    break;
-                }
-            }
-            if (targetField != null) { targetField.Type = newType; }*/
 
             if (0 <= x && x < Width && 0 <= y && y < Height)
             {
                 Fields[y * Width + x].Type = newType;
             }
+
+            
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)

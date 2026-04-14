@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows;
-using OpenTK.Graphics.OpenGL4; // Ensure you are using OpenGL4
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Wpf;
 
@@ -127,7 +127,7 @@ namespace Hello_glWPF
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
-            // Element (Index) Buffer - NEW!
+            // Element (Index) Buffer
             _elementBufferObject = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
