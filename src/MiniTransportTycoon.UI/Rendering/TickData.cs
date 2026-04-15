@@ -11,6 +11,14 @@ namespace MiniTransportTycoon.UI.Rendering
 {
     internal class TickData
     {
-        public Field[][] fields;
+        public Field[,] Fields;
+        public int Width;
+        public int Height;
+        public TickData(Field[,] fields, int w, int h)
+        {
+            this.Fields = fields;
+            this.Width = w;
+            this.Height = h;
+        }
     }
 }

@@ -46,6 +46,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         public GameViewModel(GameModel model)
         {
             _model = model;
+            tickMapData = new TickData(new Field[Width,Height], Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
@@ -75,6 +76,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                       X = i, 
                       Y = j
                     });
+                    tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
             }
             
@@ -101,6 +103,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 Fields[y * Width + x].Type = newType;
             }
 
+            tickMapData.Fields[x,y].Type = newType;
             
         }
 
@@ -111,8 +114,11 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for (int i = 0; i < Width; i++)
                 {
                     Fields[j*Width+i].Type = _model.Board[i, j].Type;
+                    tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
             }
+            tickMapData.Height = Height;
+            tickMapData.Width = Width;
         }
 
         private void _model_MapUpdated(object? sender, EventArgs e)
@@ -127,6 +133,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for (int i = 0; i < Width; i++)
                 {
                     Fields[j * Width + i].Type = _model.Board[i, j].Type;
+                    tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
             }
         }

@@ -8,6 +8,10 @@ using OpenTK.Graphics;
 using OpenTK.Mathematics;
 using MiniTransportTycoon.UI.Rendering.Geometry;
 using OpenTK.Graphics.OpenGL4;
+using MiniTransportTycoon.Core.Map;
+using MiniTransportTycoon.UI.Rendering.Misc;
+using MiniTransportTycoon.UI.Rendering.Camera;
+using System.Windows.Input;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -15,11 +19,13 @@ namespace MiniTransportTycoon.UI.Rendering
     {
         protected Vector2i _windowSize;
         private int _shaderProgram;
+        private WireframeRenderer _wireframeRenderer;
         private GLMeshObject _quadMesh;
 
         protected float _elapsedTime;
 
-        //protected Camera _camera;
+        protected Camera.Camera _camera;
+        protected Camera.CameraManipulator _cameraManipulator;
 
         private readonly string _vertexShaderSource = @"
         #version 460 core
@@ -44,14 +50,37 @@ namespace MiniTransportTycoon.UI.Rendering
 
         public void Initialize(TickData data, int w, int h)
         {
+            // core initialization
             _windowSize = new Vector2i(w, h);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
             MeshData quad = Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
 
+            // enable depth testing
             GL.Enable(EnableCap.DepthTest);
             Console.WriteLine("GL ERROR STATE: " + GL.GetError());
+
+            // camera initialization
+            _camera = new();
+            _camera.SetAspect((float)w / h);
+
+            _cameraManipulator = new();
+            float mapCenterX = data.Width / 2f;
+            float mapCenterY = data.Height / 2f;
+
+            _cameraManipulator.AttachCamera(_camera,
+                startingTarget: new Vector3(mapCenterX, mapCenterY, 0f),
+                startingDistance: 55f,
+                yaw: -MathHelper.PiOver2,
+                pitch: MathHelper.PiOver2
+            );
+
+            _cameraManipulator.Rotate(MathHelper.DegreesToRadians(30.0f), MathHelper.DegreesToRadians(30.0f));
+
+            // attach wireframe renderer
+            _wireframeRenderer = new();
+            _wireframeRenderer.Initialize();
         }
 
         public void Resize(int w, int h)
@@ -59,6 +88,9 @@ namespace MiniTransportTycoon.UI.Rendering
             _windowSize = new Vector2i(w, h);
 
             GL.Viewport(0, 0, w, h);
+
+            // update camera 
+            _camera.SetAspect((float)w / h);
         }
 
         public void Render(TickData data, TimeSpan delta)
@@ -74,20 +106,39 @@ namespace MiniTransportTycoon.UI.Rendering
 
             // calculate simple ortho projection, to replace with cam
             float aspect = (float)_windowSize.X / _windowSize.Y;
-            Matrix4 projection = Matrix4.CreateOrthographicOffCenter(-aspect, aspect, -1f, 1f, -1f, 1f);
-            Matrix4 view = Matrix4.Identity;
-            Matrix4 model = Matrix4.CreateScale(0.5f);
 
-            Matrix4 mvp = model * view * projection;
+            Matrix4 projection = _camera.ProjectionMatrix;
+            Matrix4 view = _camera.ViewMatrix;
 
             int mvpLocation = GL.GetUniformLocation(_shaderProgram, "mvp");
-            GL.UniformMatrix4(mvpLocation, false, ref mvp);
-
             int colorLocation = GL.GetUniformLocation(_shaderProgram, "col");
-            GL.Uniform3(colorLocation, 0.2f, 0.8f, 0.3f);
 
+            GL.UseProgram(_shaderProgram);
             GL.BindVertexArray(_quadMesh.VaoID);
-            GL.DrawElements(_quadMesh.DrawMode, _quadMesh.Count, DrawElementsType.UnsignedInt, 0);
+            for (int i = 0; i < data.Width; ++i)
+            {
+                for (int j = 0; j < data.Height; ++j)
+                {
+                    Matrix4 model = Matrix4.CreateTranslation(i + 0.5f, j + 0.5f, 0f);
+
+                    Matrix4 mvp = model * view * projection;
+                    GL.UniformMatrix4(mvpLocation, false, ref mvp);
+
+
+                    FieldType currentType = data.Fields[i, j].Type;
+                    Vector3 tileColor = GetColorForFieldType(currentType);
+                    GL.Uniform3(colorLocation, tileColor);
+
+                    GL.BindVertexArray(_quadMesh.VaoID);
+                    GL.DrawElements(_quadMesh.DrawMode, _quadMesh.Count, DrawElementsType.UnsignedInt, 0);
+
+
+                    Vector3 borderColor = new Vector3(0.0f, 0.0f, 0.0f);
+                    GL.Disable(EnableCap.DepthTest);
+                    _wireframeRenderer.DrawMeshWireframe(_quadMesh, mvp, borderColor);
+                    GL.Enable(EnableCap.DepthTest);
+                }
+            }
 
             GL.BindVertexArray(0);
             GL.UseProgram(0);
@@ -129,5 +180,23 @@ namespace MiniTransportTycoon.UI.Rendering
                 Console.WriteLine($"ERROR::SHADER_COMPILATION_ERROR of type: {type}\n{infoLog}\n");
             }
         }
+
+        // for debugging
+        private Vector3 GetColorForFieldType(FieldType type)
+        {
+            return type switch
+            {
+                FieldType.EMPTY => new Vector3(0.1f, 0.5f, 0.1f),
+                FieldType.FOREST => new Vector3(0.1f, 0.75f, 0.2f),  // Green
+                FieldType.WATER => new Vector3(0.2f, 0.4f, 0.8f),  // Blue
+                FieldType.ROAD => new Vector3(0.4f, 0.4f, 0.4f),  // Light Gray
+                FieldType.BRIDGE => new Vector3(0.6f, 0.4f, 0.2f),  // Brown
+                FieldType.INDUSTRY => new Vector3(0.8f, 0.8f, 0.2f),  // Yellow
+                FieldType.CITY => new Vector3(0.8f, 0.3f, 0.3f),  // Red
+                _ => new Vector3(1.0f, 0.0f, 1.0f)   // Magenta (Error color)
+            };
+        }
+
+
     }
 }

@@ -3,25 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MiniTransportTycoon.UI.Rendering.Geometry;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace MiniTransportTycoon.UI.Rendering.Geometry
+namespace MiniTransportTycoon.UI.Rendering.Misc
 {
     public static class Utils
     {
-        public static void Add<T>(this List<T> list, T a, T b)
+        public static void Add<T>(this List<T> list, params T[] values)
         {
-            list.Add(a);
-            list.Add(b);
+            foreach (var v in values)
+            {
+                list.Add(v);
+            }
         }
 
-        public static void Add<T>(this List<T> list, T a, T b, T c)
-        {
-            list.Add(a);
-            list.Add(b);
-            list.Add(c);
-        }
 
         public static MeshData CreateQuad()
         {
