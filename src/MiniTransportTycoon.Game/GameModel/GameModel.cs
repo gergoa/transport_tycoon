@@ -15,7 +15,7 @@ namespace MiniTransportTycoon.Game.GameModel
         private int height = 50;
         private Field[,] board = null!;
         private List<Facility> facilities = new List<Facility>();
-        private TimeManager timeSystem = new TimeManager();
+        private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private Pathfinder pathfinder = new Pathfinder();
         public bool IsGameOver { get; private set; } = false;
@@ -25,6 +25,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public int Width => width;
         public int Height => height;
         public EconomyManager EconomyManager => economyManager;
+        public TimeManager TimeManager => timeManager;
         private Random _random = new Random();
         public event EventHandler? GameStarted;
         public event EventHandler? MapUpdated;
@@ -53,7 +54,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
         public void GameTick(float deltaTime)
         {
-            float scaledTime = timeSystem.Tick(deltaTime);
+            float scaledTime = timeManager.Tick(deltaTime);
 
             ElapsedTime += scaledTime;
 

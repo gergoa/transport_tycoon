@@ -6,25 +6,31 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using MiniTransportTycoon.Game.Time;
 
 namespace MiniTransportTycoon.UI.ViewModels
 {
     class GameViewModel : ViewModelBase
     {
         private GameModel _model;
-
+        private DispatcherTimer _timer;
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
         public DelegateCommand FieldClickCommand { get; }
+        public DelegateCommand PauseCommand { get; private set; }
+        public DelegateCommand NormalSpeedCommand { get; private set; }
+        public DelegateCommand FastSpeedCommand { get; private set; }
+        public DelegateCommand VeryFastSpeedCommand { get; private set; }
 
         public int Money
         {
             get { return _model.EconomyManager.GetBalance(); }
         }
 
-        public float Time
+        public string Time
         {
-            get { return _model.ElapsedTime; }
+            get { return _model.ElapsedTime.ToString("0.0"); }
         }
 
         public int Width
@@ -44,6 +50,10 @@ namespace MiniTransportTycoon.UI.ViewModels
         public GameViewModel(GameModel model)
         {
             _model = model;
+            _timer = new DispatcherTimer();
+            _timer.Interval = TimeSpan.FromMilliseconds(100);
+            _timer.Tick += OnTimerTick;
+            _timer.Start();
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
@@ -51,6 +61,18 @@ namespace MiniTransportTycoon.UI.ViewModels
             TickCommand = new DelegateCommand(param => { model.GameTick(1.0f); OnPropertyChanged(nameof(Time)); });
 
             NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
+
+            PauseCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Paused));
+
+            NormalSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Normal));
+
+            FastSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Fast));
+
+            VeryFastSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.VeryFast));
 
             Fields = new ObservableCollection<ViewField>();
 
@@ -75,6 +97,14 @@ namespace MiniTransportTycoon.UI.ViewModels
                     });
                 }
             }      
+        }
+
+        private void OnTimerTick(object? sender, EventArgs e)
+        {
+            _model.GameTick(0.1f); // 100ms = 0.1 sec
+
+            OnPropertyChanged(nameof(Time));
+            OnPropertyChanged(nameof(Money));
         }
 
         private void OnFieldClick(object? param)

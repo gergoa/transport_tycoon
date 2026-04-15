@@ -16,6 +16,12 @@
         <Menu Grid.Row="0">
             <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
+            <Separator/>
+
+            <MenuItem Header="⏸ Pause" Command="{Binding PauseCommand}"/>
+            <MenuItem Header="▶ Normal" Command="{Binding NormalSpeedCommand}"/>
+            <MenuItem Header="⏩ Fast (2x)" Command="{Binding FastSpeedCommand}"/>
+            <MenuItem Header="⏩⏩ Very Fast (4x)" Command="{Binding VeryFastSpeedCommand}"/>
         </Menu>
         <Viewbox Grid.Row="1" Stretch="Uniform">
             <ItemsControl ItemsSource="{Binding Fields}">
