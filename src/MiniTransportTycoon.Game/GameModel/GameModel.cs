@@ -52,9 +52,11 @@ namespace MiniTransportTycoon.Game.GameModel
             OnGameStarted();
         }
 
-        public void GameTick(float deltaTime)
+        public void GameTick(float deltaTime, bool ignoreTimeScale = false)
         {
-            float scaledTime = timeManager.Tick(deltaTime);
+            float scaledTime = ignoreTimeScale
+                ? deltaTime
+                : timeManager.Tick(deltaTime);
 
             ElapsedTime += scaledTime;
 

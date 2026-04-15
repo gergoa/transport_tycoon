@@ -58,7 +58,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
 
-            TickCommand = new DelegateCommand(param => { model.GameTick(1.0f); OnPropertyChanged(nameof(Time)); });
+            TickCommand = new DelegateCommand(param => { model.GameTick(1.0f, true); OnPropertyChanged(nameof(Time)); });
 
             NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
 
