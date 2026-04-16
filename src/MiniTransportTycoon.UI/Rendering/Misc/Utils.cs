@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using MiniTransportTycoon.UI.Rendering.Geometry;
 using OpenTK.Graphics.OpenGL4;
@@ -33,6 +34,89 @@ namespace MiniTransportTycoon.UI.Rendering.Misc
 
             return quadData;
 
+        }
+
+        public static class ShaderLoader
+        {
+            // reads a shaderfile, and attaches to given program
+            public static int AttachShader(int programID, ShaderType shaderType, string filePath)
+            {
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine($"[ERROR] Shader file not found: {filePath}");
+                    return 0;
+                }
+                string shaderCode = File.ReadAllText(filePath);
+
+                return AttachShaderCode(programID, shaderType, shaderCode);
+            }
+
+            // compiles raw shadercode and attached to program
+            public static int AttachShaderCode(int programID, ShaderType shaderType, string shaderCode)
+            {
+                if (programID == 0)
+                {
+                    Console.WriteLine("[ERROR] Program needs to be initiated before loading shaders!");
+                    return 0;
+                }
+
+                // shader creation
+                int shaderID = GL.CreateShader(shaderType);
+
+                // link code to shader and compile
+                GL.ShaderSource(shaderID, shaderCode);
+                GL.CompileShader(shaderID);
+
+                // check for errors
+                GL.GetShader(shaderID, ShaderParameter.CompileStatus, out int success);
+
+                string infoLog = GL.GetShaderInfoLog(shaderID);
+
+                if (success == 0 || !string.IsNullOrWhiteSpace(infoLog))
+                {
+                    string severity = success == 0 ? "ERROR" : "WARN";
+                    Console.WriteLine($"[glCompileShader {severity}]:\n{infoLog}");
+                }
+
+                // attach to program
+                GL.AttachShader(programID, shaderID);
+
+                return shaderID;
+            }
+
+            
+            public static void LinkProgram(int programID, bool ownShaders = true)
+            {
+                // link program
+                GL.LinkProgram(programID);
+
+                // check for errors in info log
+                GL.GetProgram(programID, GetProgramParameterName.LinkStatus, out int success);
+                string infoLog = GL.GetProgramInfoLog(programID);
+
+                if (success == 0 || !string.IsNullOrWhiteSpace(infoLog))
+                {
+                    string severity = success == 0 ? "ERROR" : "WARN";
+                    Console.WriteLine($"[glLinkProgram {severity}]:\n{infoLog}");
+                }
+
+                // cleanup "owned" shaders
+                if (ownShaders)
+                {
+                    GL.GetProgram(programID, GetProgramParameterName.AttachedShaders, out int attachedCount);
+
+                    if (attachedCount > 0)
+                    {
+                        int[] shaders = new int[attachedCount];
+                        GL.GetAttachedShaders(programID, attachedCount, out _, shaders);
+
+                        foreach (int shader in shaders)
+                        {
+                            GL.DeleteShader(shader);
+                        }
+                    }
+                }
+            }
         }
     }
 }

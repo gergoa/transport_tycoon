@@ -14,15 +14,26 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+
         <Menu Grid.Row="0">
             <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
         </Menu>
-        <Grid>
-            <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
-                                   Render="MapRenderControl_OnRender" 
-                                   Ready="MapRenderControl_OnReady" Margin="27,66,182,-425" />
-        </Grid>
+
+        <Viewbox Grid.Row="1" Stretch="Uniform" Margin="10">
+            <Grid Width="1000" Height="1000">
+                <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
+                               Render="MapRenderControl_OnRender" 
+                               Ready="MapRenderControl_OnReady"
+                               Focusable="True"
+                               KeyDown="MapRenderControl_KeyDown"
+                               KeyUp="MapRenderControl_KeyUp"
+                               MouseMove="MapRenderControl_MouseMove"
+                               MouseWheel="MapRenderControl_MouseWheel"
+                               MouseDown="MapRenderControl_MouseDown" />
+            </Grid>
+        </Viewbox>
+
         <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock Text="Time: "/>

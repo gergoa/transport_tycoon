@@ -26,6 +26,7 @@ namespace MiniTransportTycoon.UI.Views
         private IRenderer _renderer;
         private GameViewModel? vm => this.DataContext as GameViewModel;
         private bool _isRendererInitialized = false;
+        private Point _lastMousePosition;
         public GameView()
         {
             InitializeComponent();
@@ -33,6 +34,7 @@ namespace MiniTransportTycoon.UI.Views
             _renderer = new OpenTKRenderer();
             MapRenderControl.Start(new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 6 });
         }
+
 
         public void MapRenderControl_OnReady()
         {
@@ -49,8 +51,69 @@ namespace MiniTransportTycoon.UI.Views
 
                 _isRendererInitialized = true;
             }
+
+            _renderer.MoveCamera(delta);
             _renderer.Render(vm.TickData, delta);
         }
 
+        private void MapRenderControl_KeyDown(object sender, KeyEventArgs e)
+        {
+            UpdateRendererMovement();
+        }
+
+        private void MapRenderControl_KeyUp(object sender, KeyEventArgs e)
+        {
+            UpdateRendererMovement();
+        }
+
+        private void UpdateRendererMovement()
+        {
+            if (_renderer == null) return;
+
+            bool w = Keyboard.IsKeyDown(Key.W);
+            bool s = Keyboard.IsKeyDown(Key.S);
+            bool a = Keyboard.IsKeyDown(Key.A);
+            bool d = Keyboard.IsKeyDown(Key.D);
+
+            _renderer.UpdateMovementState(w, s, a, d);
+        }
+
+        private void MapRenderControl_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            MapRenderControl.Focus();
+
+            if (e.RightButton == MouseButtonState.Pressed)
+            {
+                // capture starting point
+                _lastMousePosition = e.GetPosition(MapRenderControl);
+            }
+        }
+
+        private void MapRenderControl_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_renderer == null) return;
+
+            if (e.RightButton == MouseButtonState.Pressed)
+            {
+                Point currentPos = e.GetPosition(MapRenderControl);
+
+                // calculate deltas and rotate camera 
+                float deltaX = (float)(currentPos.X - _lastMousePosition.X);
+                float deltaY = (float)(currentPos.Y - _lastMousePosition.Y);
+
+                _renderer.OrbitCamera(deltaX, deltaY);
+
+                // update last mouse pos
+                _lastMousePosition = currentPos;
+            }
+        }
+
+        private void MapRenderControl_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (_renderer == null) return;
+
+            _renderer.ZoomCamera(e.Delta);
+        }
     }
 }
+

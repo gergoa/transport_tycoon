@@ -27,6 +27,8 @@ namespace MiniTransportTycoon.UI.Rendering
         protected Camera.Camera _camera;
         protected Camera.CameraManipulator _cameraManipulator;
 
+        private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
+
         private readonly string _vertexShaderSource = @"
         #version 460 core
         layout (location = 0) in vec3 aPosition;
@@ -75,8 +77,7 @@ namespace MiniTransportTycoon.UI.Rendering
                 yaw: -MathHelper.PiOver2,
                 pitch: MathHelper.PiOver2
             );
-
-            _cameraManipulator.Rotate(MathHelper.DegreesToRadians(30.0f), MathHelper.DegreesToRadians(30.0f));
+    
 
             // attach wireframe renderer
             _wireframeRenderer = new();
@@ -144,6 +145,43 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.UseProgram(0);
         }
 
+        // camera interaction
+        public void UpdateMovementState(bool forward, bool backward, bool left, bool right)
+        {
+            _moveForward = forward;
+            _moveBackward = backward;
+            _moveLeft = left;
+            _moveRight = right;
+        }
+
+        public void OrbitCamera(float deltaX, float deltaY)
+        {
+            const float sens = 0.001f;
+            _cameraManipulator.Rotate(deltaX * sens, deltaY * sens);
+        }
+
+        public void ZoomCamera(float delta)
+        {
+            float factor = delta > 0 ? 0.9f : 1.1f;
+            _cameraManipulator.Zoom(factor);
+        }
+
+        public void MoveCamera(TimeSpan delta)
+        {
+
+            float panSpeed = 15f * (float)delta.TotalSeconds;
+
+            // net movement calculation
+            float forwardAmount = (_moveForward ? 1.0f : 0.0f) - (_moveBackward ? 1.0f : 0.0f);
+            float rightAmount = (_moveRight ? 1.0f : 0.0f) - (_moveLeft ? 1.0f : 0.0f);
+
+            if (forwardAmount != 0.0f || rightAmount != 0.0f)
+            {
+                _cameraManipulator.Pan(rightAmount * panSpeed, forwardAmount * panSpeed);
+            }
+        }
+
+        // shadercode management
         // todo wrap in an actual class
         private int CompileShaders(string vertexSrc, string fragmentSrc)
         {

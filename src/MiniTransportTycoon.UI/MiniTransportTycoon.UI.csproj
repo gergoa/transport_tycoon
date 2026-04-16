@@ -19,4 +19,8 @@
     <ProjectReference Include="..\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Rendering\Shaders\" />
+  </ItemGroup>
+
 </Project>
