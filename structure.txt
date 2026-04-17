@@ -9,6 +9,45 @@ C:.
 +---MiniTransportTycoon
 |       MiniTransportTycoon.sln
 |       
++---misc
+|   |   Hello_glWPF.sln
+|   |   
+|   \---Hello_glWPF
+|       |   App.xaml
+|       |   App.xaml.cs
+|       |   AssemblyInfo.cs
+|       |   Hello_glWPF.csproj
+|       |   MainWindow.xaml
+|       |   MainWindow.xaml.cs
+|       |   
+|       +---bin
+|       |   +---Debug
+|       |   |   \---net8.0-windows
+|       |   \---Release
+|       |       \---net8.0-windows
+|       \---obj
+|           +---Debug
+|           |   \---net8.0-windows
+|           |       |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+|           |       |   App.g.cs
+|           |       |   Hello_glWPF.AssemblyInfo.cs
+|           |       |   Hello_glWPF.AssemblyInfoInputs.cache
+|           |       |   Hello_glWPF.GeneratedMSBuildEditorConfig.editorconfig
+|           |       |   Hello_glWPF.GlobalUsings.g.cs
+|           |       |   
+|           |       +---ref
+|           |       \---refint
+|           \---Release
+|               \---net8.0-windows
+|                   |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+|                   |   App.g.cs
+|                   |   Hello_glWPF.AssemblyInfo.cs
+|                   |   Hello_glWPF.AssemblyInfoInputs.cache
+|                   |   Hello_glWPF.GeneratedMSBuildEditorConfig.editorconfig
+|                   |   Hello_glWPF.GlobalUsings.g.cs
+|                   |   
+|                   +---ref
+|                   \---refint
 \---src
     +---MiniTransportTycoon.Core
     |   |   MiniTransportTycoon.Core.csproj
@@ -24,10 +63,12 @@ C:.
     |   |       \---net8.0
     |   +---Buildings
     |   |       Building.cs
+    |   |       Forest.cs
     |   |       Garage.cs
     |   |       Stop.cs
     |   |       
     |   +---Cargo
+    |   |       CargoProperties.cs
     |   |       CargoType.cs
     |   |       
     |   +---Facilities
@@ -38,6 +79,8 @@ C:.
     |   +---Map
     |   |       Field.cs
     |   |       FieldType.cs
+    |   |       MapGenerator.cs
+    |   |       Perlin.cs
     |   |       
     |   +---obj
     |   |   |   MiniTransportTycoon.Core.csproj.nuget.dgspec.json
@@ -70,6 +113,7 @@ C:.
     |   |           |   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
     |   |           |   MiniTransportTycoon.Core.AssemblyInfo.cs
     |   |           |   MiniTransportTycoon.Core.AssemblyInfoInputs.cache
+    |   |           |   MiniTransportTycoon.Core.assets.cache
     |   |           |   MiniTransportTycoon.Core.GeneratedMSBuildEditorConfig.editorconfig
     |   |           |   MiniTransportTycoon.Core.GlobalUsings.g.cs
     |   |           |   
@@ -101,6 +145,7 @@ C:.
     |   |       EconomyManager.cs
     |   |       
     |   +---GameModel
+    |   |       FacilityManager.cs
     |   |       GameModel.cs
     |   |       
     |   +---obj
@@ -212,15 +257,50 @@ C:.
         |   |       |   MiniTransportTycoon.UI_1x1cjfwu_wpftmp.assets.cache
         |   |       |   MiniTransportTycoon.UI_1x1cjfwu_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
         |   |       |   MiniTransportTycoon.UI_1x1cjfwu_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_2jafrrbd_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_2jafrrbd_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_2jafrrbd_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_2jafrrbd_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_2jafrrbd_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_dfxpyp50_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_dfxpyp50_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_dfxpyp50_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_dfxpyp50_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_dfxpyp50_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_emzqg3hp_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_emzqg3hp_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_emzqg3hp_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_emzqg3hp_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_emzqg3hp_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_hyoqnhpl_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_hyoqnhpl_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_hyoqnhpl_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_hyoqnhpl_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_hyoqnhpl_wpftmp.GlobalUsings.g.cs
         |   |       |   MiniTransportTycoon.UI_MarkupCompile.cache
         |   |       |   MiniTransportTycoon.UI_MarkupCompile.i.cache
         |   |       |   MiniTransportTycoon.UI_MarkupCompile.i.lref
         |   |       |   MiniTransportTycoon.UI_MarkupCompile.lref
+        |   |       |   MiniTransportTycoon.UI_neshd3xp_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_neshd3xp_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_neshd3xp_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_neshd3xp_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_neshd3xp_wpftmp.GlobalUsings.g.cs
         |   |       |   MiniTransportTycoon.UI_tkbeqgvp_wpftmp.AssemblyInfo.cs
         |   |       |   MiniTransportTycoon.UI_tkbeqgvp_wpftmp.AssemblyInfoInputs.cache
         |   |       |   MiniTransportTycoon.UI_tkbeqgvp_wpftmp.assets.cache
         |   |       |   MiniTransportTycoon.UI_tkbeqgvp_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
         |   |       |   MiniTransportTycoon.UI_tkbeqgvp_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_usvqnfgg_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_usvqnfgg_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_usvqnfgg_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_usvqnfgg_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_usvqnfgg_wpftmp.GlobalUsings.g.cs
+        |   |       |   MiniTransportTycoon.UI_zku0mwzs_wpftmp.AssemblyInfo.cs
+        |   |       |   MiniTransportTycoon.UI_zku0mwzs_wpftmp.AssemblyInfoInputs.cache
+        |   |       |   MiniTransportTycoon.UI_zku0mwzs_wpftmp.assets.cache
+        |   |       |   MiniTransportTycoon.UI_zku0mwzs_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+        |   |       |   MiniTransportTycoon.UI_zku0mwzs_wpftmp.GlobalUsings.g.cs
         |   |       |   
         |   |       +---ref
         |   |       |       MiniTransportTycoon.UI.dll
@@ -229,9 +309,15 @@ C:.
         |   |       |       MiniTransportTycoon.UI.dll
         |   |       |       
         |   |       \---Views
+        |   |               GameView.baml
+        |   |               GameView.g.cs
+        |   |               GameView.g.i.cs
         |   |               MainWindow.baml
         |   |               MainWindow.g.cs
         |   |               MainWindow.g.i.cs
+        |   |               MenuView.baml
+        |   |               MenuView.g.cs
+        |   |               MenuView.g.i.cs
         |   |               
         |   \---Release
         |       \---net8.0-windows
@@ -252,12 +338,21 @@ C:.
         |                   
         +---ViewModels
         |   |   .gitkeep
+        |   |   DelegateCommand.cs
+        |   |   GameViewModel.cs
+        |   |   MenuViewModel.cs
+        |   |   ViewField.cs
+        |   |   ViewModelBase.cs
         |   |   
         |   \---Assets
         |           .gitkeep
         |           
         \---Views
                 .gitkeep
+                GameView.xaml
+                GameView.xaml.cs
                 MainWindow.xaml
                 MainWindow.xaml.cs
+                MenuView.xaml
+                MenuView.xaml.cs
                 
