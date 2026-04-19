@@ -1,4 +1,5 @@
 using MiniTransportTycoon.Core.Facilities;
+using MiniTransportTycoon.Core.Vehicles;
 
 namespace MiniTransportTycoon.Core.Map
 {
@@ -9,6 +10,8 @@ namespace MiniTransportTycoon.Core.Map
         private FieldType type;
         private Facility? facility = null!;
         private Forest? forest;
+        private Vehicle? slotL = null!;
+        private Vehicle? slotR = null!;
 
         public FieldType Type
         {
@@ -28,6 +31,8 @@ namespace MiniTransportTycoon.Core.Map
         public Facility? Facility => facility;
         public Forest? Forest => forest;
 
+        public Vehicle? SlotL => slotL;
+        public Vehicle? SlotR => slotR;
         public Field(int x, int y, FieldType type)
         {
             this.x = x;
@@ -44,7 +49,10 @@ namespace MiniTransportTycoon.Core.Map
             this.facility = facility;
             if(facility is City)
             {
-                this.type = FieldType.CITY;
+                if (this.type != FieldType.ROAD)
+                {
+                    this.type = FieldType.CITY;
+                }
             }
             else
             {
@@ -52,6 +60,14 @@ namespace MiniTransportTycoon.Core.Map
             }
         }
 
+        public void AssignToSlotL(Vehicle? v) => this.slotL = v;
+        public void AssignToSlotR(Vehicle? v) => this.slotR = v;
+
+        public void ClearVehicle(Vehicle v)
+        {
+            if (slotL == v) slotL = null;
+            if (slotR == v) slotR = null;
+        }
         public bool IsPassable()
         {
             return type != FieldType.WATER;
