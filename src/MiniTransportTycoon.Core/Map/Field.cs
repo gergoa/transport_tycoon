@@ -1,4 +1,3 @@
-using MiniTransportTycoon.Core.Buildings;
 using MiniTransportTycoon.Core.Facilities;
 
 namespace MiniTransportTycoon.Core.Map
@@ -8,8 +7,8 @@ namespace MiniTransportTycoon.Core.Map
         private int x;
         private int y;
         private FieldType type;
-        private Building? building = null!;
         private Facility? facility = null!;
+        private Forest? forest;
 
         public FieldType Type
         {
@@ -26,8 +25,8 @@ namespace MiniTransportTycoon.Core.Map
         public int X { get => x; }
         public int Y { get => y; }
 
-        public Building? Building => building;
         public Facility? Facility => facility;
+        public Forest? Forest => forest;
 
         public Field(int x, int y, FieldType type)
         {
@@ -35,9 +34,9 @@ namespace MiniTransportTycoon.Core.Map
             this.y = y;
             this.type = type;
         }
-        public void SetBuilding(Building building)
+        public void SetForest(Forest? forest)
         {
-            this.building = building;
+            this.forest = forest;
         }
 
         public void PlaceFacility(Facility facility)
@@ -60,7 +59,7 @@ namespace MiniTransportTycoon.Core.Map
 
         public bool IsFree()
         {
-            return building == null && facility == null;
+            return facility == null;
         }
     }
 }
