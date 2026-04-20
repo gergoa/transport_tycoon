@@ -18,6 +18,7 @@
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
             <Separator/>
 
+            <MenuItem Header="Debug: Grow Cities" Command="{Binding DebugGrowCitiesCommand}"/>
             <MenuItem Header="⏸ Pause" Command="{Binding PauseCommand}"/>
             <MenuItem Header="▶ Normal" Command="{Binding NormalSpeedCommand}"/>
             <MenuItem Header="⏩ Fast (2x)" Command="{Binding FastSpeedCommand}"/>
@@ -72,6 +73,7 @@
                                             <Setter Property="Background" Value="DarkViolet"/>
                                             <Setter Property="BorderBrush" Value="LightGray"/>
                                         </DataTrigger>
+
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>

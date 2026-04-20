@@ -23,6 +23,9 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand FastSpeedCommand { get; private set; }
         public DelegateCommand VeryFastSpeedCommand { get; private set; }
 
+        // for debug
+        public DelegateCommand DebugGrowCitiesCommand { get; private set; }
+
         public int Money
         {
             get { return _model.EconomyManager.GetBalance(); }
@@ -73,6 +76,8 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             VeryFastSpeedCommand = new DelegateCommand(_ =>
                 _model.TimeManager.SetSpeed(TimeSpeed.VeryFast));
+
+            DebugGrowCitiesCommand = new DelegateCommand(_ => _model.DebugGrowCities());
 
             Fields = new ObservableCollection<ViewField>();
 

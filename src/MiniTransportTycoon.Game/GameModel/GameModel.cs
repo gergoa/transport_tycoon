@@ -95,12 +95,6 @@ namespace MiniTransportTycoon.Game.GameModel
                 GameOver();
             }
 
-            /* for showcase purposes, TODO: Remove
-            foreach (var facility in facilities)
-            {
-                if (facility is City c) ExpandCity(c);
-            }*/
-
             MapUpdated?.Invoke(this, EventArgs.Empty);
 
         }
@@ -224,6 +218,20 @@ namespace MiniTransportTycoon.Game.GameModel
 
             return FacilityManager.TryGrowCity(this, city);
         }
-        
+
+        // for debug
+        public void DebugGrowCities()
+        {
+            foreach (var facility in facilities)
+            {
+                if (facility is City c)
+                {
+                    ExpandCity(c);
+                }
+            }
+
+            // Notify the UI that the map has changed
+            MapUpdated?.Invoke(this, EventArgs.Empty);
+        }
     }
 }
