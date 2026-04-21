@@ -3,9 +3,11 @@ using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Game.Economy;
 using MiniTransportTycoon.Core.Pathfinding;
 using MiniTransportTycoon.Game.Time;
+using MiniTransportTycoon.Core.Vehicles;
 using System.Collections.Generic;
 using MiniTransportTycoon.Core.Cargo;
 using System;
+using MiniTransportTycoon.Core.Routes;
 
 namespace MiniTransportTycoon.Game.GameModel
 {
@@ -18,6 +20,8 @@ namespace MiniTransportTycoon.Game.GameModel
         private Field[,] board = null!;
         private List<Facility> facilities = new List<Facility>();
         private List<Field> forestFields = new List<Field>();
+        private List<Vehicle> vehicles = new List<Vehicle>();
+        private List<Route> routes = new List<Route>();
         private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private Pathfinder pathfinder = new Pathfinder();
@@ -97,6 +101,22 @@ namespace MiniTransportTycoon.Game.GameModel
 
             MapUpdated?.Invoke(this, EventArgs.Empty);
 
+        }
+
+        public void BuyBus(Field field)
+        {
+            Route route = new Route();
+            routes.Add(route);
+            Vehicle vehicle = new Bus(field, route);
+            vehicles.Add(vehicle);
+        }
+
+        public void BuyTruck(Field field, CargoType type)
+        {
+            Route route = new Route();
+            routes.Add(route);
+            Vehicle vehicle = new Truck(type, field, route);
+            vehicles.Add(vehicle);
         }
 
         public void BuildRoad(Field field)

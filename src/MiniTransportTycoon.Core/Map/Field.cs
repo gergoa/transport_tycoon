@@ -1,3 +1,4 @@
+using MiniTransportTycoon.Core.Buildings;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Vehicles;
 
@@ -10,6 +11,7 @@ namespace MiniTransportTycoon.Core.Map
         private FieldType type;
         private Facility? facility = null!;
         private Forest? forest;
+        private Stop? stop;
         private Vehicle? slotL = null!;
         private Vehicle? slotR = null!;
 
@@ -31,6 +33,8 @@ namespace MiniTransportTycoon.Core.Map
         public Facility? Facility => facility;
         public Forest? Forest => forest;
 
+        public Stop? Stop => stop;
+
         public Vehicle? SlotL => slotL;
         public Vehicle? SlotR => slotR;
         public Field(int x, int y, FieldType type)
@@ -42,6 +46,11 @@ namespace MiniTransportTycoon.Core.Map
         public void SetForest(Forest? forest)
         {
             this.forest = forest;
+        }
+
+        public void SetStop(Stop stop)
+        {
+            this.stop = stop;
         }
 
         public void PlaceFacility(Facility facility)

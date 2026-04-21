@@ -1,6 +1,6 @@
 using MiniTransportTycoon.Core.Buildings;
 using MiniTransportTycoon.Core.Map;
-using MiniTransportTycoon.Core.Pathfinding;
+//using MiniTransportTycoon.Core.Pathfinding;
 
 namespace MiniTransportTycoon.Core.Routes
 {
@@ -10,19 +10,35 @@ namespace MiniTransportTycoon.Core.Routes
         private List<Field> path;
         private bool loop;
 
-        public void addStop(Stop stop)
+        public List<Stop> Stops { get { return stops; } }
+
+        public List<Field> Path { get { return path; } }
+
+        public Route()
+        {
+            stops = new List<Stop>();
+            path = new List<Field>();
+        }
+
+        public Stop GetStop(int index)
+        {
+            return stops[index];
+        }
+
+        public void AddStop(Stop stop)
+        {
+            stops.Add(stop);
+        }
+
+        public void RemoveStop(Stop stop)
+        {
+            stops.Remove(stop);
+        }
+        /*
+        public void ComputePath(Pathfinder pathfinder)
         {
 
         }
-
-        public void removeStop(Stop stop)
-        {
-
-        }
-
-        public void computePath(Pathfinder pathfinder)
-        {
-
-        }
+        */
     }
 }
