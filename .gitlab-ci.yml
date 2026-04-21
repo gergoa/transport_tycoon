@@ -1,0 +1,117 @@
+# Default image (https://hub.docker.com/r/microsoft/dotnet-sdk)
+# Multiarch image, it has both Linux and Windows versions
+image: mcr.microsoft.com/dotnet/sdk:10.0
+
+stages:
+  - build
+  - test
+  - deploy
+
+include:
+  # NuGet Dependency Scanning
+  # https://docs.gitlab.com/ee/user/application_security/dependency_scanning/
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  # Secret Detection
+  # https://docs.gitlab.com/user/application_security/secret_detection/
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  # Static Application Security Testing (SAST)
+  # https://docs.gitlab.com/user/application_security/sast/
+  - template: Jobs/SAST.gitlab-ci.yml
+  # Static analysis-based Code Quality evaluation for .NET/C#
+  # https://szofttech.inf.elte.hu/components/code-quality-dotnet
+  - component: szofttech.inf.elte.hu/components/code-quality-dotnet/windows@2
+
+variables:
+  # Enable GitLab Advanced SAST (Ultimate feature)
+  GITLAB_ADVANCED_SAST_ENABLED: true
+
+# Build model
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+build_model:
+  stage: build
+  before_script:
+    - dotnet --version
+  script:
+    - dotnet build src/MiniTransportTycoon.Core/MiniTransportTycoon.Core.csproj
+    - dotnet build src/MiniTransportTycoon.Game/MiniTransportTycoon.Game.csproj
+
+# Build complete solution
+# (Uses Windows-based runner, because windows tag IS specified.)
+build_view:
+  stage: build
+  # Use a Windows Server Core based docker image
+  # The default mcr.microsoft.com/dotnet/sdk:10.0 would depend on Windows Nano Server, 
+  # which is not enough for us, as it does not containt the desktop packs.
+  image: mcr.microsoft.com/dotnet/sdk:10.0-windowsservercore-ltsc2025
+  tags: [windows]
+  before_script:
+    - dotnet --version
+  script:
+    - dotnet build src/MiniTransportTycoon.UI/MiniTransportTycoon.UI.csproj
+
+# Test
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+test_model:
+  stage: test
+  before_script:    
+    # Restore NuGet packages to the local .nuget folder
+    # NOTE: Update the path below if your test project has a different name!
+    - dotnet restore tests/MiniTransportTycoon.Tests --packages .nuget
+  script:
+    # Run the tests, extract code coverage, and log results
+    # NOTE: Update the path below to your actual test project folder!
+    - > 
+      dotnet test tests/MiniTransportTycoon.Tests --no-restore
+      --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose"
+      --collect:"XPlat Code Coverage"
+    
+    - apt-get update -yqq
+    - apt-get install -yqq bc
+    - dotnet tool install --tool-path . dotnet-reportgenerator-globaltool
+    
+    # Compute code coverage
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
+    
+    # Extract total coverage percentage for GitLab UI
+    - line_rate="$(head -n 3 ./report/Cobertura.xml | sed 'N;N;s/.*line-rate="\([^" ]*\).*/\1/g')"
+    - coverage=$(echo "${line_rate} * 100" | bc)
+    - 'printf "TOTAL_COVERAGE=%2.2f\n" "$coverage"'
+  artifacts:
+    paths:
+      - ./*/TestResults/TestResults.xml
+      - ./*/TestResults/*/coverage.cobertura.xml
+      - ./report/html/
+    reports:
+      junit:
+        - ./*/TestResults/TestResults.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: ./*/TestResults/*/coverage.cobertura.xml
+  coverage: '/TOTAL_COVERAGE=(\d+.\d+)/'
+  cache:
+    key: "unittest-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .nuget
+
+# Documentation
+# (Uses Linux-based runner, because windows tag is NOT specified.)
+pages:
+  stage: deploy
+  image: ubuntu:24.04
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -yqq doxygen graphviz
+  script:
+    - doxygen
+    - mkdir -p public/docs/
+    - cp -r doc/html/. public/docs/
+    - mkdir -p public/coverage
+    # Failsafe if the tests didn't run or coverage wasn't generated
+    - if [ -d "report/html" ]; then cp -r report/html/. public/coverage/; fi
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 day
+  only:
+    - master
