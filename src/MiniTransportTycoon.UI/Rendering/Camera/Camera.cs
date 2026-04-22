@@ -7,7 +7,7 @@ using OpenTK.Mathematics;
 
 namespace MiniTransportTycoon.UI.Rendering.Camera
 {
-    internal class Camera
+    public class Camera
     {
         public Matrix4 ViewMatrix { get; private set; }
         public Matrix4 ProjectionMatrix { get; private set; }
