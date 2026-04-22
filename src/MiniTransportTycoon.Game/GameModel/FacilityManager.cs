@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
-using MiniTransportTycoon.Game.Economy;
 
 // TODO: Implement merging adjacent cities
 namespace MiniTransportTycoon.Game.GameModel
@@ -15,13 +14,6 @@ namespace MiniTransportTycoon.Game.GameModel
     {
         private static readonly Random _random = new Random();
 
-        internal static void TickFacilities(List<Facility> facilities, float deltaTime)
-        {
-            foreach (var facility in facilities)
-            {
-                facility.Tick(deltaTime);
-            }
-        }
         internal static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
@@ -216,27 +208,6 @@ namespace MiniTransportTycoon.Game.GameModel
             });*/
         }
 
-        public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
-        {
-            if (facility is City c && c.Demand.ContainsKey(type)) return true;
-            if (facility is Industry ind && ind.InputRequirements.ContainsKey(type)) return true;
-            return false;
-        }
-
-        public static void DeliverCargoToFacility(Facility facility, EconomyManager economy, CargoType type, int amount)
-        {
-            if (facility is City city)
-            {
-                economy.ProcessDelivery(type, amount, city);
-                if (!city.InventoryIn.ContainsKey(type)) city.InventoryIn[type] = 0;
-                city.InventoryIn[type] += amount;
-            }
-            else if (facility is Industry industry)
-            {
-                if (!industry.InventoryIn.ContainsKey(type)) industry.InventoryIn[type] = 0;
-                industry.InventoryIn[type] += amount;
-            }
-        }
         // helper method
         private static List<Field> CreateCityBlock(List<Field> fields)
         {

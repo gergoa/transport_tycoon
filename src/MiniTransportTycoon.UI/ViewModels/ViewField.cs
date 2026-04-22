@@ -27,13 +27,6 @@ namespace MiniTransportTycoon.UI.ViewModels
         public int X {  get; set; }
         public int Y { get; set; }
 
-        private bool _hasStop;
-        public bool HasStop
-        {
-            get => _hasStop;
-            set { if (_hasStop != value) { _hasStop = value; OnPropertyChanged(); } }
-        }
-
         /*public Tuple<int, int> XY
         {
             get { return new(X, Y); }

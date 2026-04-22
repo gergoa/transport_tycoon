@@ -53,7 +53,6 @@ namespace MiniTransportTycoon.Core.Facilities
                 if (!InventoryIn.ContainsKey(type) || InventoryIn[type] < num)
                 {
                     onStock = false;
-                    break;
                 }
             }
             return onStock;
