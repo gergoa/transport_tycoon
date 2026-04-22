@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
+using MiniTransportTycoon.Game.Economy;
 
 // TODO: Implement merging adjacent cities
 namespace MiniTransportTycoon.Game.GameModel
@@ -14,56 +15,133 @@ namespace MiniTransportTycoon.Game.GameModel
     {
         private static readonly Random _random = new Random();
 
+        internal static void TickFacilities(List<Facility> facilities, float deltaTime)
+        {
+            foreach (var facility in facilities)
+            {
+                facility.Tick(deltaTime);
+            }
+        }
         internal static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
             int width = gameModel.Width;
             int height = gameModel.Height;
 
-            // we use a hashset to ensure the same tile cannot be present multiple times
-            var possibleFields = new HashSet<Field>();
+            var centers = new HashSet<(int X, int Y)>();
+            var cityFieldsSet = new HashSet<Field>(city.Fields);
 
-            int[] dx = { 0, 0, -1, 1 };
-            int[] dy = { -1, 1, 0, 0 };
-
-            // iterate neighbours, collect valid ones in hashset
+            // find all existing centers
             foreach (var field in city.Fields)
             {
-                for (int i = 0; i < 4; ++i)
+                int cx = field.X;
+                int cy = field.Y;
+
+                // filter out valid layouts
+                if (field.Type == FieldType.ROAD && cx >= 1 && cx < width - 1 && cy >= 1 && cy < height - 1)
                 {
-                    int posX = field.X + dx[i];
-                    int posY = field.Y + dy[i];
+                    var tl = board[cx - 1, cy - 1];
+                    var tr = board[cx + 1, cy - 1];
+                    var bl = board[cx - 1, cy + 1];
+                    var br = board[cx + 1, cy + 1];
 
-                    if (posX >= 0 && posX < width && posY >= 0 && posY < height)
-                    { 
-                        var neighbour = board[posX, posY];
+                    // enforce type checks
+                    if (tl.Type == FieldType.CITY && cityFieldsSet.Contains(tl) &&
+                        tr.Type == FieldType.CITY && cityFieldsSet.Contains(tr) &&
+                        bl.Type == FieldType.CITY && cityFieldsSet.Contains(bl) &&
+                        br.Type == FieldType.CITY && cityFieldsSet.Contains(br))
+                    {
+                        centers.Add((cx, cy));
+                    }
+                }
+            }
 
-                        if (neighbour.IsFree() && neighbour.Type == FieldType.EMPTY)
+            if (centers.Count == 0) return false;
+
+            var possibleNewCenters = new List<(int X, int Y)>();
+
+            // move 3 tiles away for new centers
+            int[] dirX = { 0, 0, -3, 3 };
+            int[] dirY = { -3, 3, 0, 0 };
+
+            // find all valid empty 3x3 adjacent blocks
+            foreach (var center in centers)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    int ncx = center.X + dirX[i];
+                    int ncy = center.Y + dirY[i];
+
+                    if (ncx >= 1 && ncx < width - 1 && ncy >= 1 && ncy < height - 1)
+                    {
+                        if (!centers.Contains((ncx, ncy)) && Is3x3Empty(board, ncx, ncy))
                         {
-                            possibleFields.Add(neighbour);
+                            if (!possibleNewCenters.Contains((ncx, ncy)))
+                            {
+                                possibleNewCenters.Add((ncx, ncy));
+                            }
                         }
                     }
                 }
             }
 
-            if (possibleFields.Count == 0) return false;
+            if (possibleNewCenters.Count == 0) return false;
 
-            var newField = possibleFields.ToList()[_random.Next(possibleFields.Count)];
+            var newCenter = possibleNewCenters[_random.Next(possibleNewCenters.Count)];
 
-            city.Fields.Add(newField);
-            newField.PlaceFacility(city);
+            // place new 3x3 segment, add those tiles to city boundary
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    var targetField = board[newCenter.X + dx, newCenter.Y + dy];
+
+                    // add to city bounds
+                    city.Fields.Add(targetField);
+                    targetField.PlaceFacility(city);
+
+                    // type middle cross is Road, 4 Corners is City
+                    if (dx == 0 || dy == 0)
+                    {
+                        targetField.Type = FieldType.ROAD;
+                    }
+                    else
+                    {
+                        targetField.Type = FieldType.CITY;
+                    }
+                }
+            }
 
             return true;
         }
+
+        private static bool Is3x3Empty(Field[,] board, int cx, int cy)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    Field targetField = board[cx + dx, cy + dy];
+                    if (!targetField.IsFree() || targetField.Type != FieldType.EMPTY)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         internal static void CleanFacilities(GameModel model)
-        { 
+        {
             model.Facilities.Clear();
         }
+
         internal static void InitializeFacilities(GameModel model)
         {
             var facilities = model.Facilities;
-            facilities.Add(new City(FindEmptyFields(model), 2000, "Metropolis"));
-            facilities.Add(new City(FindEmptyFields(model), 800, "Smallville"));
+
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis"));
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville"));
 
             // TIER 0
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Wood) { ProductionRate = 1.0f });
@@ -136,6 +214,52 @@ namespace MiniTransportTycoon.Game.GameModel
                 ProductionRate = 1.0f,
                 InputRequirements = new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }
             });*/
+        }
+
+        public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
+        {
+            if (facility is City c && c.Demand.ContainsKey(type)) return true;
+            if (facility is Industry ind && ind.InputRequirements.ContainsKey(type)) return true;
+            return false;
+        }
+
+        public static void DeliverCargoToFacility(Facility facility, EconomyManager economy, CargoType type, int amount)
+        {
+            if (facility is City city)
+            {
+                economy.ProcessDelivery(type, amount, city);
+                if (!city.InventoryIn.ContainsKey(type)) city.InventoryIn[type] = 0;
+                city.InventoryIn[type] += amount;
+            }
+            else if (facility is Industry industry)
+            {
+                if (!industry.InventoryIn.ContainsKey(type)) industry.InventoryIn[type] = 0;
+                industry.InventoryIn[type] += amount;
+            }
+        }
+        // helper method
+        private static List<Field> CreateCityBlock(List<Field> fields)
+        {
+            // find center of block
+            int minX = fields.Min(f => f.X);
+            int minY = fields.Min(f => f.Y);
+            int cx = minX + 1;
+            int cy = minY + 1;
+
+            foreach (var f in fields)
+            {
+                if (f.X == cx || f.Y == cy)
+                {
+                    // cross shape to road
+                    f.Type = FieldType.ROAD;
+                }
+                else
+                {
+                    // corners to city field
+                    f.Type = FieldType.CITY;
+                }
+            }
+            return fields;
         }
 
         private static List<Field> FindEmptyFields(GameModel model)

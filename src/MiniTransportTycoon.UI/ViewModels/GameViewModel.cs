@@ -8,26 +8,79 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using MiniTransportTycoon.Game.Time;
+using MiniTransportTycoon.Core.Facilities;
+using MiniTransportTycoon.Core.Cargo;
 
 namespace MiniTransportTycoon.UI.ViewModels
 {
+    public enum BuildMode
+    {
+        Road,
+        Bridge,
+        Stop
+    }
+
     class GameViewModel : ViewModelBase
     {
         private GameModel _model;
+        private DispatcherTimer _timer;
         private TickData tickMapData;
         public TickData TickData => tickMapData;
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
         public DelegateCommand FieldClickCommand { get; }
+        public DelegateCommand PauseCommand { get; private set; }
+        public DelegateCommand NormalSpeedCommand { get; private set; }
+        public DelegateCommand FastSpeedCommand { get; private set; }
+        public DelegateCommand VeryFastSpeedCommand { get; private set; }
+
+        // for debug
+        public DelegateCommand DebugGrowCitiesCommand { get; private set; }
+        public DelegateCommand DebugSpawnVehicleCommand { get; private set; }
+
+        // facility overlay, will have to abstract over or something
+        private Facility? _selectedFacility;
+
+        private bool _isOverlayVisible = false;
+        public bool IsOverlayVisible
+        {
+            get => _isOverlayVisible;
+            set { if (_isOverlayVisible != value) { _isOverlayVisible = value; OnPropertyChanged(); } }
+        }
+        private string _overlayTitle = string.Empty;
+        public string OverlayTitle
+        {
+            get => _overlayTitle;
+            set { if (_overlayTitle != value) { _overlayTitle = value; OnPropertyChanged(); } }
+        }
+
+        public ObservableCollection<InventoryItem> InventoryInList { get; } = new();
+        public ObservableCollection<InventoryItem> InventoryOutList { get; } = new();
+
+        public DelegateCommand CloseOverlayCommand { get; private set; }
+
+        // build mode
+        private BuildMode _currentBuildMode = BuildMode.Road;
+        public BuildMode CurrentBuildMode
+        {
+            get => _currentBuildMode;
+            set { if (_currentBuildMode != value) { _currentBuildMode = value; OnPropertyChanged(); } }
+        }
+
+        public DelegateCommand SelectRoadModeCommand { get; private set; }
+        public DelegateCommand SelectBridgeModeCommand { get; private set; }
+        public DelegateCommand SelectStopModeCommand { get; private set; }
 
         public int Money
         {
             get { return _model.EconomyManager.GetBalance(); }
         }
 
-        public float Time
+        public string Time
         {
-            get { return _model.ElapsedTime; }
+            get { return _model.ElapsedTime.ToString("0.0"); }
         }
 
         public int Width
@@ -43,20 +96,56 @@ namespace MiniTransportTycoon.UI.ViewModels
         public string DebugText { get; private set; } = string.Empty;
 
         public ObservableCollection<ViewField> Fields { get; private set; }
+        public ObservableCollection<ViewVehicle> Vehicles { get; private set; } = new();
 
         public GameViewModel(GameModel model)
         {
             _model = model;
+            _timer = new DispatcherTimer();
+            _timer.Interval = TimeSpan.FromMilliseconds(100);
+            _timer.Tick += OnTimerTick;
+            _timer.Start();
             tickMapData = new TickData(new Field[Width,Height], Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
 
-            TickCommand = new DelegateCommand(param => { model.GameTick(1.0f); OnPropertyChanged(nameof(Time)); });
+            TickCommand = new DelegateCommand(param => { model.GameTick(0.1f, true); OnPropertyChanged(nameof(Time)); });
 
             NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
 
+            PauseCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Paused));
+
+            NormalSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Normal));
+
+            FastSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.Fast));
+
+            VeryFastSpeedCommand = new DelegateCommand(_ =>
+                _model.TimeManager.SetSpeed(TimeSpeed.VeryFast));
+
+            DebugGrowCitiesCommand = new DelegateCommand(_ => _model.DebugGrowCities());
+
+            DebugSpawnVehicleCommand = new DelegateCommand(_ =>
+            {
+                _model.DebugSpawnVehicle();
+                SyncVehicles();
+            });
+
+            CloseOverlayCommand = new DelegateCommand(_ =>
+            {
+                IsOverlayVisible = false;
+                _selectedFacility = null;
+            });
+
             Fields = new ObservableCollection<ViewField>();
+            Vehicles = new();
+
+            SelectRoadModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Road);
+            SelectBridgeModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Bridge);
+            SelectStopModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Stop);
 
             _model.FieldChanged += OnFieldChanged;
 
@@ -83,13 +172,56 @@ namespace MiniTransportTycoon.UI.ViewModels
             
         }
 
+        private void OnTimerTick(object? sender, EventArgs e)
+        {
+            _model.GameTick(0.1f); // 100ms = 0.1 sec
+
+            SyncVehicles();
+
+            if (IsOverlayVisible)
+            {
+                SyncOverlay();
+            }
+
+            OnPropertyChanged(nameof(Time));
+            OnPropertyChanged(nameof(Money));
+        }
+
         private void OnFieldClick(object? param)
         {
             if (param is ViewField position)
             {
-                _model.BuildRoad(_model.Board[position.X, position.Y]);
+                var coreField = _model.Board[position.X, position.Y];
 
-                OnPropertyChanged(nameof(Money));
+                // check if facility is clicked
+                if (coreField.Facility != null)
+                {
+                    if (_selectedFacility != coreField.Facility)
+                    {
+                        _selectedFacility = coreField.Facility;
+                        InventoryInList.Clear();
+                        InventoryOutList.Clear();
+                    }
+                    OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
+                    IsOverlayVisible = true;
+                    SyncOverlay();
+                }
+                else
+                {
+                    switch (CurrentBuildMode)
+                    {
+                        case BuildMode.Road:
+                            _model.BuildRoad(coreField);
+                            break;
+                        case BuildMode.Bridge:
+                            _model.BuildBridge(coreField);
+                            break;
+                        case BuildMode.Stop:
+                            _model.BuildStop(coreField);
+                            break;
+                    }
+                    OnPropertyChanged(nameof(Money));
+                }
 
                 DebugText = $"X: {position.X} Y: {position.Y}";
                 OnPropertyChanged(nameof(DebugText));
@@ -98,10 +230,10 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnFieldChanged(int x, int y, FieldType newType)
         {
-
             if (0 <= x && x < Width && 0 <= y && y < Height)
             {
                 Fields[y * Width + x].Type = newType;
+                Fields[y * Width + x].HasStop = _model.Board[x, y].HasStop;
             }
 
             tickMapData.Fields[x,y].Type = newType;
@@ -149,6 +281,57 @@ namespace MiniTransportTycoon.UI.ViewModels
             _model.BuildRoad(coreField);
             DebugText = $"X: {gridX} Y: {gridY}";
             OnPropertyChanged(nameof(DebugText));
+        }
+
+        private void SyncVehicles()
+        {
+            float tileSize = 10f;
+            float laneOffset = 2f;
+
+            Vehicles.Clear();
+
+            foreach (var coreVehicle in _model.Vehicles)
+            {
+                float x = coreVehicle.CurrentField.X * tileSize + (tileSize / 2f);
+                float y = coreVehicle.CurrentField.Y * tileSize + (tileSize / 2f);
+
+                if (coreVehicle.NextField != null)
+                {
+                    float targetX = coreVehicle.NextField.X * tileSize + (tileSize / 2f);
+                    float targetY = coreVehicle.NextField.Y * tileSize + (tileSize / 2f);
+
+                    x += (targetX - x) * coreVehicle.Progress;
+                    y += (targetY - y) * coreVehicle.Progress;
+
+                }
+
+                Vehicles.Add(new ViewVehicle { X = x, Y = y });
+            }
+        }
+
+        private void SyncOverlay()
+        {
+            if (_selectedFacility == null) return;
+
+            SyncDictToOBC(_selectedFacility.InventoryIn, InventoryInList);
+            SyncDictToOBC(_selectedFacility.InventoryOut, InventoryOutList);
+        }
+
+        private void SyncDictToOBC(Dictionary<CargoType, int> sourceDict, ObservableCollection<InventoryItem> targetList)
+        {
+            foreach (var kv in sourceDict)
+            {
+                var existingItem = targetList.FirstOrDefault(i => i.Cargo == kv.Key);
+
+                if (existingItem != null)
+                {
+                    existingItem.Amount = kv.Value;
+                }
+                else
+                {
+                    targetList.Add(new InventoryItem { Cargo = kv.Key, Amount = kv.Value });
+                }
+            }
         }
     }
 }
