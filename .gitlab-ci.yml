@@ -104,7 +104,8 @@ pages:
     - apt-get update -yqq
     - apt-get install -yqq doxygen graphviz
   script:
-    - doxygen
+  # doxygen documentation is not implemented yet so we ignore errors for now
+    - doxygen || true
     - mkdir -p public/docs/
     - cp -r doc/html/. public/docs/
     - mkdir -p public/coverage

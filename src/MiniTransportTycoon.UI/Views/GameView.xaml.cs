@@ -1,17 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using MiniTransportTycoon.UI.Rendering;
 using MiniTransportTycoon.UI.ViewModels;
 using MiniTransportTycoon.UI.Rendering.Misc;
@@ -20,15 +10,13 @@ using OpenTK.Wpf;
 
 namespace MiniTransportTycoon.UI.Views
 {
-    /// <summary>
-    /// Interaction logic for UserControl1.xaml
-    /// </summary>
     public partial class GameView : UserControl
     {
         private IRenderer _renderer;
         private GameViewModel? vm => this.DataContext as GameViewModel;
         private bool _isRendererInitialized = false;
         private Point _lastMousePosition;
+
         public GameView()
         {
             InitializeComponent();
@@ -36,7 +24,6 @@ namespace MiniTransportTycoon.UI.Views
             _renderer = new OpenTKRenderer();
             MapRenderControl.Start(new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 6 });
         }
-
 
         public void MapRenderControl_OnReady()
         {
@@ -54,81 +41,57 @@ namespace MiniTransportTycoon.UI.Views
                 _isRendererInitialized = true;
             }
 
-            _renderer.MoveCamera(delta);
-            _renderer.Render(vm.TickData, delta);
-        }
-
-        private void MapRenderControl_KeyDown(object sender, KeyEventArgs e)
-        {
-            UpdateRendererMovement();
-        }
-
-        private void MapRenderControl_KeyUp(object sender, KeyEventArgs e)
-        {
-            UpdateRendererMovement();
-        }
-
-        private void UpdateRendererMovement()
-        {
-            if (_renderer == null) return;
-
             bool w = Keyboard.IsKeyDown(Key.W);
             bool s = Keyboard.IsKeyDown(Key.S);
             bool a = Keyboard.IsKeyDown(Key.A);
             bool d = Keyboard.IsKeyDown(Key.D);
-
             _renderer.UpdateMovementState(w, s, a, d);
+
+            Point currentMousePos = Mouse.GetPosition(MapRenderControl);
+            if (Mouse.RightButton == MouseButtonState.Pressed)
+            {
+                if (!MapRenderControl.IsMouseCaptured)
+                    MapRenderControl.CaptureMouse();
+
+                float deltaX = (float)(currentMousePos.X - _lastMousePosition.X);
+                float deltaY = (float)(currentMousePos.Y - _lastMousePosition.Y);
+
+                if (deltaX != 0 || deltaY != 0)
+                {
+                    _renderer.OrbitCamera(deltaX, deltaY);
+                }
+            }
+            else
+            {
+                if (MapRenderControl.IsMouseCaptured)
+                    MapRenderControl.ReleaseMouseCapture();
+            }
+            _lastMousePosition = currentMousePos;
+
+            _renderer.MoveCamera(delta);
+            _renderer.Render(vm.TickData, delta);
         }
 
         private void MapRenderControl_MouseDown(object sender, MouseButtonEventArgs e)
         {
             MapRenderControl.Focus();
 
-            if (e.RightButton == MouseButtonState.Pressed)
-            {
-                // capture starting point
-                _lastMousePosition = e.GetPosition(MapRenderControl);
-            }
-
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                // Get Mouse position relative to the GL Control
                 var position = e.GetPosition(MapRenderControl);
                 float mouseX = (float)position.X;
                 float mouseY = (float)position.Y;
 
-                // Get screen dimensions
                 float screenWidth = (float)MapRenderControl.ActualWidth;
                 float screenHeight = (float)MapRenderControl.ActualHeight;
 
-                // raycast
                 float tileSize = 1.0f;
                 Vector2i gridCoord = Utils.GetGridIntersection(mouseX, mouseY, screenWidth, screenHeight, _renderer.GetCamera(), tileSize);
 
-                // send to vm
                 if (DataContext is GameViewModel vm)
                 {
                     vm.HandleGridClick(gridCoord.X, gridCoord.Y);
                 }
-            }
-        }
-
-        private void MapRenderControl_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_renderer == null) return;
-
-            if (e.RightButton == MouseButtonState.Pressed)
-            {
-                Point currentPos = e.GetPosition(MapRenderControl);
-
-                // calculate deltas and rotate camera 
-                float deltaX = (float)(currentPos.X - _lastMousePosition.X);
-                float deltaY = (float)(currentPos.Y - _lastMousePosition.Y);
-
-                _renderer.OrbitCamera(deltaX, deltaY);
-
-                // update last mouse pos
-                _lastMousePosition = currentPos;
             }
         }
 
@@ -140,4 +103,3 @@ namespace MiniTransportTycoon.UI.Views
         }
     }
 }
-

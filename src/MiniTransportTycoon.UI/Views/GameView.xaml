@@ -50,10 +50,6 @@
                                            Render="MapRenderControl_OnRender" 
                                            Ready="MapRenderControl_OnReady"
                                            Focusable="True"
-                                           KeyDown="MapRenderControl_KeyDown"
-                                           KeyUp="MapRenderControl_KeyUp"
-                                           MouseMove="MapRenderControl_MouseMove"
-                                           MouseWheel="MapRenderControl_MouseWheel"
                                            MouseDown="MapRenderControl_MouseDown" />
 
                 <ItemsControl ItemsSource="{Binding Vehicles}">
