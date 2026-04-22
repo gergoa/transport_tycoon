@@ -10,13 +10,20 @@ namespace MiniTransportTycoon.Game.Pathfinding
         // We utilize the A* (A-star) algorithm for finding shortest path in our road graph
         // https://en.wikipedia.org/wiki/A*_search_algorithm
 
-        public List<Field> FindPath(Field[,] board, Field start, Field end)
+        private Field[,] fields;
+
+        public Pathfinder(Field[,] fields)
+        {
+            this.fields = fields;
+        }
+
+        public List<Field> FindPath(Field start, Field end)
         {
             var path = new List<Field>();
             if (start == null || end == null) return path;
 
-            int width = board.GetLength(0);
-            int height = board.GetLength(1);
+            int width = fields.GetLength(0);
+            int height = fields.GetLength(1);
 
             var openSet = new PriorityQueue<Field, int>();
             var cameFrom = new Dictionary<Field, Field>();
@@ -46,7 +53,7 @@ namespace MiniTransportTycoon.Game.Pathfinding
                     // bounds checking
                     if (nx >= 0 && nx < width && ny >= 0 && ny < height)
                     {
-                        var neighbor = board[nx, ny];
+                        var neighbor = fields[nx, ny];
 
                         if (!IsTraversible(neighbor) && neighbor != end)
                             continue;
@@ -72,12 +79,16 @@ namespace MiniTransportTycoon.Game.Pathfinding
             return path;
         }
 
-        public static void MoveVehicle(Vehicle vehicle, Field current, Field target)
+        public static bool MoveVehicle(Vehicle vehicle, Field current, Field target)
         {
             // calculate coordinate differences
             int dx = target.X - current.X;
             int dy = target.Y - current.Y;
 
+            // check if targeted tile is free
+            bool isTargetSlotFree = (dx > 0 || dy < 0) ? vehicle.NextField.SlotR == null : vehicle.NextField.SlotL == null;
+
+            if (!isTargetSlotFree) return false;
             // left to right (dx > 0) or bottom to top (dy < 0)
             if (dx > 0 || dy < 0)
             {
@@ -90,9 +101,10 @@ namespace MiniTransportTycoon.Game.Pathfinding
                 target.AssignToSlotL(vehicle);
                 current.ClearVehicle(vehicle);
             }
+            return true;
         }
 
-        private List<Field> ReconstructPath(Dictionary<Field, Field> cameFrom, Field current)
+        private static List<Field> ReconstructPath(Dictionary<Field, Field> cameFrom, Field current)
         {
             var path = new List<Field> { current };
 
@@ -106,13 +118,13 @@ namespace MiniTransportTycoon.Game.Pathfinding
             return path;
         }
 
-        private int ManhattanDistance(Field a, Field b)
+        private static int ManhattanDistance(Field a, Field b)
         {
             // Manhattan distance heuristic
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
         }
 
-        private bool IsTraversible(Field field)
+        private static bool IsTraversible(Field field)
         {
             return field.Type == FieldType.ROAD ||
                    field.Type == FieldType.BRIDGE;

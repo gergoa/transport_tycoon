@@ -4,86 +4,181 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
              xmlns:local="clr-namespace:MiniTransportTycoon.UI.Views"
              mc:Ignorable="d" 
              d:DesignHeight="750" d:DesignWidth="750">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+
         <Menu Grid.Row="0">
             <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
             <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
             <Separator/>
-
             <MenuItem Header="Debug: Grow Cities" Command="{Binding DebugGrowCitiesCommand}"/>
+            <MenuItem Header="Debug: Spawn Vehicle" Command="{Binding DebugSpawnVehicleCommand}"/>
             <MenuItem Header="⏸ Pause" Command="{Binding PauseCommand}"/>
             <MenuItem Header="▶ Normal" Command="{Binding NormalSpeedCommand}"/>
             <MenuItem Header="⏩ Fast (2x)" Command="{Binding FastSpeedCommand}"/>
             <MenuItem Header="⏩⏩ Very Fast (4x)" Command="{Binding VeryFastSpeedCommand}"/>
         </Menu>
-        <Viewbox Grid.Row="1" Stretch="Uniform">
-            <ItemsControl ItemsSource="{Binding Fields}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}" Height="500" Width="500"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemContainerStyle>
-                    <Style>
-                        <Setter Property="Control.Padding" Value="0"/>
-                        <Setter Property="Control.Margin" Value="0"/>
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button BorderThickness="0.5" Focusable="False"
-                                Command="{Binding DataContext.FieldClickCommand, ElementName=Root}"
-                                CommandParameter="{Binding}">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Type}" Value="EMPTY">
-                                            <Setter Property="Background" Value="LightGreen"/>
-                                            <Setter Property="BorderBrush" Value="DarkGray"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="FOREST">
-                                            <Setter Property="Background" Value="Green"/>
-                                            <Setter Property="BorderBrush" Value="LightGray"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="WATER">
-                                            <Setter Property="Background" Value="Blue"/>
-                                            <Setter Property="BorderBrush" Value="LightGray"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="ROAD">
-                                            <Setter Property="Background" Value="#464646"/>
-                                            <Setter Property="BorderBrush" Value="White"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
-                                            <Setter Property="Background" Value="OrangeRed"/>
-                                            <Setter Property="BorderBrush" Value="DarkGray"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
-                                            <Setter Property="Background" Value="Orange"/>
-                                            <Setter Property="BorderBrush" Value="LightGray"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Type}" Value="CITY">
-                                            <Setter Property="Background" Value="DarkViolet"/>
-                                            <Setter Property="BorderBrush" Value="LightGray"/>
-                                        </DataTrigger>
 
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Background="#2D2D30">
+            <TextBlock Text="Build Tools:" Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
+
+            <Button Content="🛣️ Road ($1)" Command="{Binding SelectRoadModeCommand}" Margin="0,0,10,0" Padding="10,5"/>
+            <Button Content="🌉 Bridge ($5)" Command="{Binding SelectBridgeModeCommand}" Margin="0,0,10,0" Padding="10,5"/>
+            <Button Content="🚏 Stop ($10)" Command="{Binding SelectStopModeCommand}" Margin="0,0,20,0" Padding="10,5"/>
+
+            <TextBlock Text="{Binding CurrentBuildMode, StringFormat='Active Tool: {0}'}" Foreground="Cyan" VerticalAlignment="Center" FontWeight="Bold"/>
+        </StackPanel>
+
+        <Viewbox Grid.Row="2" Stretch="Uniform">
+            <Grid Width="500" Height="500">
+
+                <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
+                                           Render="MapRenderControl_OnRender" 
+                                           Ready="MapRenderControl_OnReady"
+                                           Focusable="True"
+                                           MouseDown="MapRenderControl_MouseDown" 
+                                           MouseWheel="MapRenderControl_MouseWheel"/>
+
+                <Border Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Margin="20" Width="150" Height="150"
+                BorderBrush="White" BorderThickness="2" Background="#CC000000" CornerRadius="5" ClipToBounds="True">
+
+                    <Viewbox Stretch="Fill">
+                        <Grid Width="500" Height="500">
+
+                            <ItemsControl ItemsSource="{Binding Fields}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style>
+                                        <Setter Property="Control.Padding" Value="0"/>
+                                        <Setter Property="Control.Margin" Value="0"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Rectangle>
+                                            <Rectangle.Style>
+                                                <Style TargetType="Rectangle">
+                                                    <Setter Property="Fill" Value="LightGreen"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="WATER">
+                                                            <Setter Property="Fill" Value="Blue"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="ROAD">
+                                                            <Setter Property="Fill" Value="#464646"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
+                                                            <Setter Property="Fill" Value="OrangeRed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
+                                                            <Setter Property="Fill" Value="Orange"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="CITY">
+                                                            <Setter Property="Fill" Value="DarkViolet"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Type}" Value="FOREST">
+                                                            <Setter Property="Fill" Value="DarkGreen"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Rectangle.Style>
+                                        </Rectangle>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Polygon x:Name="MinimapFrustum" Stroke="Yellow" StrokeThickness="0.5" Fill="#44FFFF00" />
+                        </Grid>
+                    </Viewbox>
+                </Border>
+                
+                <ItemsControl ItemsSource="{Binding Vehicles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas IsHitTestVisible="False" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}" />
+                            <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="8" Height="8" Fill="Yellow" Stroke="Black" StrokeThickness="1" Margin="-4,-4,0,0"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Background="#E6000000" CornerRadius="10" 
+                        Width="200" Height="220" 
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVis}}">
+
+                    <Grid Margin="15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="{Binding OverlayTitle}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                            <TextBlock Text="Requires / Accepts:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                            <ItemsControl ItemsSource="{Binding InventoryInList}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                            <TextBlock Text="{Binding Amount}" Foreground="Cyan" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2">
+                            <TextBlock Text="Produces / Holding:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                            <ItemsControl ItemsSource="{Binding InventoryOutList}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                            <TextBlock Text="{Binding Amount}" Foreground="Yellow" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <Button Grid.Row="3" Content="Close" Command="{Binding CloseOverlayCommand}" Padding="5" Margin="0,10,0,0" Background="#444" Foreground="White" BorderThickness="0"/>
+                    </Grid>
+                </Border>
+            </Grid>
         </Viewbox>
 
-        <StatusBar Grid.Row="2">
+        <StatusBar Grid.Row="3">
             <StatusBarItem>
                 <TextBlock Text="Time: "/>
             </StatusBarItem>

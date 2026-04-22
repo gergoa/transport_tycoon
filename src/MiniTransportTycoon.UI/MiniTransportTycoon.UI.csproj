@@ -9,7 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <PackageReference Include="OpenTK.Compute" Version="4.9.4" />
+    <PackageReference Include="OpenTK.GLWpfControl" Version="4.3.6" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Rendering\Shaders\" />
   </ItemGroup>
 
 </Project>

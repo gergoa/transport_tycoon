@@ -1,3 +1,4 @@
+using MiniTransportTycoon.Core.Buildings;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Vehicles;
 
@@ -12,6 +13,9 @@ namespace MiniTransportTycoon.Core.Map
         private Forest? forest;
         private Vehicle? slotL = null!;
         private Vehicle? slotR = null!;
+
+        public Stop? Stop { get; set; } = null;
+        public bool HasStop => Stop != null;
 
         public FieldType Type
         {
