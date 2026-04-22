@@ -26,6 +26,11 @@ namespace MiniTransportTycoon.UI
 
         private void OnStartup(object sender, StartupEventArgs e)
         {
+#if DEBUG
+            // Only allocate the console in debug builds
+            MiniTransportTycoon.UI.Rendering.Utils.ConsoleAllocator.ShowConsole();
+            Console.WriteLine("OpenGL Debug Console Initialized.");
+#endif
             menuViewModel = new MenuViewModel();
 
             menuViewModel.StartGame += MenuViewModel_StartGame;
@@ -34,6 +39,8 @@ namespace MiniTransportTycoon.UI
             {
                 DataContext = menuViewModel
             };
+
+
             _mainWindow = new MainWindow();
             _mainWindow.Content = menuView;
             _mainWindow.Show();

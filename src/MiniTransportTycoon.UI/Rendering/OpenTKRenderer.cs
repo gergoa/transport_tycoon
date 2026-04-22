@@ -56,7 +56,7 @@ namespace MiniTransportTycoon.UI.Rendering
             _windowSize = new Vector2i(w, h);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
-            MeshData quad = Utils.CreateQuad();
+            MeshData quad = Misc.Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
 
             // enable depth testing

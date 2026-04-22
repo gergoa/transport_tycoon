@@ -191,6 +191,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             if (param is ViewField position)
             {
+
                 var coreField = _model.Board[position.X, position.Y];
 
                 // check if facility is clicked
@@ -273,6 +274,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public void HandleGridClick(int gridX, int gridY)
         {
+            if (0 > gridX || gridX >= Width || 0 > gridY || gridY >= Height) return;
             var coreField = _model.Board[gridX, gridY];
 
             // check if facility is clicked
