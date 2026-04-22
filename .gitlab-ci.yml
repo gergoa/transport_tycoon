@@ -49,17 +49,13 @@ build_view:
   script:
     - dotnet build src/MiniTransportTycoon.UI/MiniTransportTycoon.UI.csproj
 
-# Test
+# Test Stage
 # (Uses Linux-based runner, because windows tag is NOT specified.)
 test_model:
   stage: test
   before_script:    
-    # Restore NuGet packages to the local .nuget folder
-    # NOTE: Update the path below if your test project has a different name!
     - dotnet restore tests/MiniTransportTycoon.Tests --packages .nuget
   script:
-    # Run the tests, extract code coverage, and log results
-    # NOTE: Update the path below to your actual test project folder!
     - > 
       dotnet test tests/MiniTransportTycoon.Tests --no-restore
       --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose"
@@ -69,25 +65,30 @@ test_model:
     - apt-get install -yqq bc
     - dotnet tool install --tool-path . dotnet-reportgenerator-globaltool
     
-    # Compute code coverage
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/*/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
+    # Compute code coverage (Updated exact paths)
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
     
     # Extract total coverage percentage for GitLab UI
     - line_rate="$(head -n 3 ./report/Cobertura.xml | sed 'N;N;s/.*line-rate="\([^" ]*\).*/\1/g')"
     - coverage=$(echo "${line_rate} * 100" | bc)
     - 'printf "TOTAL_COVERAGE=%2.2f\n" "$coverage"'
   artifacts:
+    # Adding when: always ensures artifacts are saved even if a test fails
+    when: always
     paths:
-      - ./*/TestResults/TestResults.xml
-      - ./*/TestResults/*/coverage.cobertura.xml
-      - ./report/html/
+      # Updated exact paths
+      - tests/MiniTransportTycoon.Tests/TestResults/TestResults.xml
+      - tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml
+      - report/html/
     reports:
       junit:
-        - ./*/TestResults/TestResults.xml
+        # Updated exact paths
+        - tests/MiniTransportTycoon.Tests/TestResults/TestResults.xml
       coverage_report:
         coverage_format: cobertura
-        path: ./*/TestResults/*/coverage.cobertura.xml
+        # Updated exact paths
+        path: tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml
   coverage: '/TOTAL_COVERAGE=(\d+.\d+)/'
   cache:
     key: "unittest-$CI_COMMIT_REF_SLUG"
