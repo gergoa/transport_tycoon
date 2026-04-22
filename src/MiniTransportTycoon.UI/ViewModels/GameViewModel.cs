@@ -273,12 +273,38 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public void HandleGridClick(int gridX, int gridY)
         {
-            // make sure we didn't click out of bounds
-            if (gridX < 0 || gridX >= Width || gridY < 0 || gridY >= Height) return;
-
             var coreField = _model.Board[gridX, gridY];
 
-            _model.BuildRoad(coreField);
+            // check if facility is clicked
+            if (coreField.Facility != null)
+            {
+                if (_selectedFacility != coreField.Facility)
+                {
+                    _selectedFacility = coreField.Facility;
+                    InventoryInList.Clear();
+                    InventoryOutList.Clear();
+                }
+                OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
+                IsOverlayVisible = true;
+                SyncOverlay();
+            }
+            else
+            {
+                switch (CurrentBuildMode)
+                {
+                    case BuildMode.Road:
+                        _model.BuildRoad(coreField);
+                        break;
+                    case BuildMode.Bridge:
+                        _model.BuildBridge(coreField);
+                        break;
+                    case BuildMode.Stop:
+                        _model.BuildStop(coreField);
+                        break;
+                }
+                OnPropertyChanged(nameof(Money));
+            }
+
             DebugText = $"X: {gridX} Y: {gridY}";
             OnPropertyChanged(nameof(DebugText));
         }
