@@ -23,7 +23,7 @@ namespace MiniTransportTycoon.UI.Rendering.Camera
 
         public Camera()
         {
-            SetView(new Vector3(0, 0, 3), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+            SetView(new Vector3(0, 0, -3), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
             SetProjection(_fov, _aspectRatio, _zNear, _zFar);
         }
 

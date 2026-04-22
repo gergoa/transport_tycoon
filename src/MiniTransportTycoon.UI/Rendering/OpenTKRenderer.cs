@@ -229,8 +229,8 @@ namespace MiniTransportTycoon.UI.Rendering
         {
             return type switch
             {
-                FieldType.EMPTY => new Vector3(0.1f, 0.5f, 0.1f),
-                FieldType.FOREST => new Vector3(0.1f, 0.75f, 0.2f),  // Green
+                FieldType.EMPTY => new Vector3(0.1f, 0.75f, 0.1f),
+                FieldType.FOREST => new Vector3(0.1f, 0.45f, 0.2f),  // Green
                 FieldType.WATER => new Vector3(0.2f, 0.4f, 0.8f),  // Blue
                 FieldType.ROAD => new Vector3(0.4f, 0.4f, 0.4f),  // Light Gray
                 FieldType.BRIDGE => new Vector3(0.6f, 0.4f, 0.2f),  // Brown
