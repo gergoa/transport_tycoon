@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media.Media3D;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -17,5 +18,6 @@ namespace MiniTransportTycoon.UI.Rendering
         void ZoomCamera(float delta);
 
         void MoveCamera(TimeSpan delta);
+        Camera.Camera GetCamera();
     }
 }

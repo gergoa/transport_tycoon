@@ -181,6 +181,11 @@ namespace MiniTransportTycoon.UI.Rendering
             }
         }
 
+        public Camera.Camera GetCamera()
+        {
+            return _camera;
+        }
+
         // shadercode management
         // todo wrap in an actual class
         private int CompileShaders(string vertexSrc, string fragmentSrc)

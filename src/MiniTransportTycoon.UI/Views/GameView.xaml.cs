@@ -14,6 +14,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using MiniTransportTycoon.UI.Rendering;
 using MiniTransportTycoon.UI.ViewModels;
+using MiniTransportTycoon.UI.Rendering.Misc;
+using OpenTK.Mathematics;
 using OpenTK.Wpf;
 
 namespace MiniTransportTycoon.UI.Views
@@ -86,6 +88,28 @@ namespace MiniTransportTycoon.UI.Views
             {
                 // capture starting point
                 _lastMousePosition = e.GetPosition(MapRenderControl);
+            }
+
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                // Get Mouse position relative to the GL Control
+                var position = e.GetPosition(MapRenderControl);
+                float mouseX = (float)position.X;
+                float mouseY = (float)position.Y;
+
+                // Get screen dimensions
+                float screenWidth = (float)MapRenderControl.ActualWidth;
+                float screenHeight = (float)MapRenderControl.ActualHeight;
+
+                // raycast
+                float tileSize = 1.0f;
+                Vector2i gridCoord = Utils.GetGridIntersection(mouseX, mouseY, screenWidth, screenHeight, _renderer.GetCamera(), tileSize);
+
+                // send to vm
+                if (DataContext is GameViewModel vm)
+                {
+                    vm.HandleGridClick(gridCoord.X, gridCoord.Y);
+                }
             }
         }
 

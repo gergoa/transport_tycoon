@@ -1,4 +1,5 @@
-﻿using MiniTransportTycoon.Core.Map;
+﻿using MiniTransportTycoon.Core.Facilities;
+using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Game.GameModel;
 using MiniTransportTycoon.UI.Rendering;
 using System;
@@ -136,6 +137,18 @@ namespace MiniTransportTycoon.UI.ViewModels
                     tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
             }
+        }
+
+        public void HandleGridClick(int gridX, int gridY)
+        {
+            // make sure we didn't click out of bounds
+            if (gridX < 0 || gridX >= Width || gridY < 0 || gridY >= Height) return;
+
+            var coreField = _model.Board[gridX, gridY];
+
+            _model.BuildRoad(coreField);
+            DebugText = $"X: {gridX} Y: {gridY}";
+            OnPropertyChanged(nameof(DebugText));
         }
     }
 }

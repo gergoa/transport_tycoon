@@ -21,6 +21,33 @@ namespace MiniTransportTycoon.UI.Rendering.Misc
             }
         }
 
+        public static Vector2i GetGridIntersection(float mouseX, float mouseY, float screenWidth, float screenHeight, Camera.Camera camera, float tileSize)
+        {
+            float ndcX = (2.0f * mouseX) / screenWidth - 1.0f;
+            float ndcY = 1.0f - (2.0f * mouseY) / screenHeight; // Y is flipped in 3D
+
+            Vector4 clipCoords = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
+
+            Vector4 eyeCoords = clipCoords * Matrix4.Invert(camera.ProjectionMatrix);
+            eyeCoords = new Vector4(eyeCoords.X, eyeCoords.Y, -1.0f, 0.0f);
+
+            Vector4 worldCoords = eyeCoords * Matrix4.Invert(camera.ViewMatrix);
+            Vector3 rayWorld = new Vector3(worldCoords.X, worldCoords.Y, worldCoords.Z);
+            rayWorld.Normalize();
+
+            if (Math.Abs(rayWorld.Z) < 0.001f) return new Vector2i(-1, -1); // looking perfectly parallel to the ground
+
+            float t = -camera.Eye.Z / rayWorld.Z;
+
+            if (t < 0) return new Vector2i(-1, -1);
+
+            Vector3 hit = camera.Eye + rayWorld * t;
+
+            int gridX = (int)Math.Floor(hit.X / tileSize);
+            int gridY = (int)Math.Floor(hit.Y / tileSize);
+
+            return new Vector2i(gridX, gridY);
+        }
 
         public static MeshData CreateQuad()
         {
@@ -117,34 +144,6 @@ namespace MiniTransportTycoon.UI.Rendering.Misc
                         }
                     }
                 }
-            }
-
-            public static Vector2i GetGridIntersection(float mouseX, float mouseY, float screenWidth, float screenHeight, Camera.Camera camera, float tileSize)
-            {
-                float ndcX = (2.0f * mouseX) / screenWidth - 1.0f;
-                float ndcY = 1.0f - (2.0f * mouseY) / screenHeight; // Y is flipped in 3D
-
-                Vector4 clipCoords = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
-
-                Vector4 eyeCoords = clipCoords * Matrix4.Invert(camera.ProjectionMatrix);
-                eyeCoords = new Vector4(eyeCoords.X, eyeCoords.Y, -1.0f, 0.0f);
-
-                Vector4 worldCoords = eyeCoords * Matrix4.Invert(camera.ViewMatrix);
-                Vector3 rayWorld = new Vector3(worldCoords.X, worldCoords.Y, worldCoords.Z);
-                rayWorld.Normalize();
-
-                if (Math.Abs(rayWorld.Z) < 0.001f) return new Vector2i(-1, -1); // looking perfectly parallel to the ground
-
-                float t = -camera.Eye.Z / rayWorld.Z;
-
-                if (t < 0) return new Vector2i(-1, -1);
-
-                Vector3 hit = camera.Eye + rayWorld * t;
-
-                int gridX = (int)Math.Floor(hit.X / tileSize);
-                int gridY = (int)Math.Floor(hit.Y / tileSize);
-
-                return new Vector2i(gridX, gridY);
             }
         }
     }
