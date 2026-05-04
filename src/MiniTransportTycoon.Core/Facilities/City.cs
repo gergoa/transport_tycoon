@@ -17,10 +17,19 @@ namespace MiniTransportTycoon.Core.Facilities
         private float _passengerAccumulator = 0.0f;
         private string name;
 
+        public int CenterX { get; private set; }
+        public int CenterY { get; private set; }
+
         public City(List<Field> fields, int population, string name) : base(fields)
         {
             this.Population = population;
             this.name = name;
+
+            int minX = fields.Min(f => f.X);
+            int minY = fields.Min(f => f.Y);
+            CenterX = minX + 1;
+            CenterY = minY + 1;
+
 
             if (!InventoryOut.ContainsKey(CargoType.Passengers))
             {
