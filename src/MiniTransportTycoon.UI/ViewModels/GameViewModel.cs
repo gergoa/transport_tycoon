@@ -28,6 +28,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         private GameModel _model;
         private DispatcherTimer _timer;
         private TickData tickMapData;
+        private (int X, int Y)? _bridgeStart = null;
         public TickData TickData => tickMapData;
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
@@ -109,6 +110,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             get { return _model.Height; }
         }
+        public bool IsGameOver => _model.IsGameOver;
 
         public string DebugText { get; private set; } = string.Empty;
 
@@ -129,7 +131,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             TickCommand = new DelegateCommand(param => { model.GameTick(0.1f, true); OnPropertyChanged(nameof(Time)); });
 
-            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
+            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); _timer.Start(); });
 
             PauseCommand = new DelegateCommand(_ =>
                 _model.TimeManager.SetSpeed(TimeSpeed.Paused));
@@ -206,6 +208,12 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnTimerTick(object? sender, EventArgs e)
         {
+            if (_model.IsGameOver)
+            {
+                _timer.Stop();
+                OnPropertyChanged(nameof(IsGameOver));
+                return;
+            }
             _model.GameTick(0.1f); // 100ms = 0.1 sec
 
             SyncVehicles();
@@ -217,6 +225,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             OnPropertyChanged(nameof(Time));
             OnPropertyChanged(nameof(Money));
+            OnPropertyChanged(nameof(IsGameOver));
         }
 
         private void OnFieldClick(object? param)
@@ -247,7 +256,33 @@ namespace MiniTransportTycoon.UI.ViewModels
                             _model.BuildRoad(coreField);
                             break;
                         case BuildMode.Bridge:
-                            _model.BuildBridge(coreField);
+
+                            if (_bridgeStart == null)
+                            {
+                                _bridgeStart = (position.X, position.Y);
+                                DebugText = $"Bridge start set: {_bridgeStart.Value.X},{_bridgeStart.Value.Y}";
+                                OnPropertyChanged(nameof(DebugText));
+                                return;
+                            }
+
+                            var start = _model.Board[_bridgeStart.Value.X, _bridgeStart.Value.Y];
+                            var end = coreField;
+
+                            var path = _model.GetStraightLine(start, end);
+
+                            if (path.Count == 0)
+                            {
+                                DebugText = "Invalid bridge (not straight)";
+                                OnPropertyChanged(nameof(DebugText));
+                                _bridgeStart = null;
+                                return;
+                            }
+
+                            var type = GetBridgeTypeByLength(path.Count);
+
+                            _model.BuildBridge(path, type);
+
+                            _bridgeStart = null;
                             break;
                         case BuildMode.Stop:
                             _model.BuildStop(coreField);
@@ -267,6 +302,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 Fields[y * Width + x].Type = newType;
                 Fields[y * Width + x].HasStop = _model.Board[x, y].HasStop;
+                Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
             }
 
             tickMapData.Fields[x,y].Type = newType;
@@ -330,8 +366,35 @@ namespace MiniTransportTycoon.UI.ViewModels
                         _model.BuildRoad(coreField);
                         break;
                     case BuildMode.Bridge:
-                        _model.BuildBridge(coreField);
-                        break;
+
+                            if (_bridgeStart == null)
+                            {
+                            _bridgeStart = (gridX, gridY);
+                            DebugText = $"Bridge start set: {gridX},{gridY}";
+                            OnPropertyChanged(nameof(DebugText));
+                            return;
+                        }
+
+                            var start = _model.Board[_bridgeStart.Value.X, _bridgeStart.Value.Y];
+                            var end = coreField;
+
+                            var path = _model.GetStraightLine(start, end);
+
+                            if (path.Count == 0)
+                            {
+                                DebugText = "Invalid bridge (not straight)";
+                                OnPropertyChanged(nameof(DebugText));
+                                _bridgeStart = null;
+                                return;
+                            }
+                            path.Insert(0, start);
+
+                            var type = GetBridgeTypeByLength(path.Count);
+
+                            _model.BuildBridge(path, type);
+
+                            _bridgeStart = null;
+                            break;
                     case BuildMode.Stop:
                         _model.BuildStop(coreField);
                         break;
@@ -392,6 +455,12 @@ namespace MiniTransportTycoon.UI.ViewModels
                     targetList.Add(new InventoryItem { Cargo = kv.Key, Amount = kv.Value });
                 }
             }
+        }
+        private BridgeType GetBridgeTypeByLength(int length)
+        {
+            if (length <= 3) return BridgeType.Wooden;
+            if (length <= 6) return BridgeType.Steel;
+            return BridgeType.Highway;
         }
 
         private void BuyVehicle(VehicleType type)
