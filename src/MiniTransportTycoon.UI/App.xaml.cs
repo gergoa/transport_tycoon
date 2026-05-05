@@ -3,7 +3,9 @@ using MiniTransportTycoon.UI.ViewModels;
 using MiniTransportTycoon.UI.Views;
 using System.Configuration;
 using System.Data;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace MiniTransportTycoon.UI
 {
@@ -18,6 +20,7 @@ namespace MiniTransportTycoon.UI
         private GameViewModel? gameViewModel;
         private MenuView menuView = null!;
         private MenuViewModel menuViewModel = null!;
+        private LoadingView loadingView = null!;
 
         public App()
         {
@@ -40,14 +43,19 @@ namespace MiniTransportTycoon.UI
                 DataContext = menuViewModel
             };
 
+            loadingView = new LoadingView();
 
             _mainWindow = new MainWindow();
             _mainWindow.Content = menuView;
             _mainWindow.Show();
         }
 
-        private void MenuViewModel_StartGame(object? sender, EventArgs e)
+        private async void MenuViewModel_StartGame(object? sender, EventArgs e)
         {
+            _mainWindow.Content = loadingView;
+
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+
             _model = new GameModel();
             gameViewModel = new GameViewModel(_model);
             gameView = new GameView
