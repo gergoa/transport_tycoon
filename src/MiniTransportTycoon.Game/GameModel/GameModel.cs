@@ -22,6 +22,7 @@ namespace MiniTransportTycoon.Game.GameModel
         private List<Facility> facilities = new List<Facility>();
         private List<Field> forestFields = new List<Field>();
         private List<Vehicle> vehicles = new List<Vehicle>();
+        private List<Route> routes = new List<Route>();
         private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private VehicleManager vehicleManager = new VehicleManager();
@@ -31,6 +32,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public Field[,] Board => board;
         public List<Facility> Facilities => facilities;
         public List<Vehicle> Vehicles => vehicles;
+        public List<Route> Routes => routes;
         public int Width => width;
         public int Height => height;
         public EconomyManager EconomyManager => economyManager;
@@ -158,6 +160,7 @@ namespace MiniTransportTycoon.Game.GameModel
                         field.Stop = new Stop(field, adjacentFacility);
 
                         FieldChanged?.Invoke(field.X, field.Y, field.Type);
+                        RebuildDefaultRoute();
                     }
                 }
             }
@@ -176,6 +179,33 @@ namespace MiniTransportTycoon.Game.GameModel
                 vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
             }
         }
+        private void RebuildDefaultRoute()
+        {
+            routes.Clear();
+
+            var stops = new List<Stop>();
+
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    if (board[x, y].Stop != null)
+                        stops.Add(board[x, y].Stop!);
+                }
+            }
+
+            if (stops.Count < 2)
+                return;
+
+            var route = new Route();
+            route.loop = true;
+
+            foreach (var stop in stops)
+                route.AddStop(stop);
+
+            routes.Add(route);
+        }
+
         #region Forest management
         public void RemoveForest(Field field)
         {

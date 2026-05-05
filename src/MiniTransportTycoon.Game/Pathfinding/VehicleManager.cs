@@ -33,20 +33,25 @@ namespace MiniTransportTycoon.Game.Pathfinding
         {
             foreach (var vehicle in vehicles)
             {
-                Route route = _vehicleRoutes[vehicle];
+                if (!_vehicleRoutes.TryGetValue(vehicle, out Route? route))
+                    continue;
 
                 switch (vehicle.State)
                 {
                     case VehicleState.MOVING:
                         UpdateDrivingState(vehicle, route, board, pathfinder, deltaTime);
                         break;
+
                     case VehicleState.UNLOADING:
                         Stop? unloadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        UpdateUnloadingState(vehicle, unloadStop!.assignedFacility!, economy, deltaTime);
+                        if (unloadStop?.assignedFacility != null)
+                            UpdateUnloadingState(vehicle, unloadStop.assignedFacility, economy, deltaTime);
                         break;
+
                     case VehicleState.LOADING:
                         Stop? loadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        UpdateLoadingState(vehicle, route, loadStop!.assignedFacility!, board, pathfinder, deltaTime);
+                        if (loadStop?.assignedFacility != null)
+                            UpdateLoadingState(vehicle, route, loadStop.assignedFacility, board, pathfinder, deltaTime);
                         break;
                 }
             }
