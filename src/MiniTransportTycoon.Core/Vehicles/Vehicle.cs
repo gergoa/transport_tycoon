@@ -7,6 +7,7 @@ namespace MiniTransportTycoon.Core.Vehicles
 {
     public class Vehicle
     {
+        public VehicleType Type { get; set; }
         public Field PreviousField { get; set; }
         public Field CurrentField { get; set; }
         public Field NextField { get; set; }
@@ -17,10 +18,10 @@ namespace MiniTransportTycoon.Core.Vehicles
         public VehicleState State { get; set; }
         public float elapsedInState { get; set; }
 
-        public int CargoCapacity;
+        public int CargoCapacity { get; set; }
         public HashSet<CargoType> CarriedTypes = new();
         public Dictionary<CargoType, int> currentCargoInventory = new();
 
-
+        public int MaintenanceCost { get; set; }
     }
 }

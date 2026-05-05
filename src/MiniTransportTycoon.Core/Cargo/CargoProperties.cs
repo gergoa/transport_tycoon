@@ -39,5 +39,39 @@ namespace MiniTransportTycoon.Core.Cargo
         {
             return GrowthValues.TryGetValue(type, out int val) ? val : 0;
         }
+
+        public static IEnumerable<CargoType> GetPassengerCargo()
+        {
+            return GrowthValues.Keys
+                .Where(c => c == CargoType.Passengers);
+        }
+
+        public static IEnumerable<CargoType> GetTier0CargoTypes()
+        {
+            return GrowthValues
+                .Where(x => x.Key != CargoType.Passengers && x.Value <= 2)
+                .Select(x => x.Key);
+        }
+
+        public static IEnumerable<CargoType> GetTier1CargoTypes()
+        {
+            return GrowthValues
+                .Where(x => x.Key != CargoType.Passengers && x.Value >= 4 && x.Value <= 10)
+                .Select(x => x.Key);
+        }
+
+        public static IEnumerable<CargoType> GetTier2CargoTypes()
+        {
+            return GrowthValues
+                .Where(x => x.Value >= 15 && x.Value <= 35)
+                .Select(x => x.Key);
+        }
+
+        public static IEnumerable<CargoType> GetTier3CargoTypes()
+        {
+            return GrowthValues
+                .Where(x => x.Value >= 100)
+                .Select(x => x.Key);
+        }
     }
 }

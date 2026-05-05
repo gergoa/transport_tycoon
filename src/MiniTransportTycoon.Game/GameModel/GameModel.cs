@@ -22,6 +22,7 @@ namespace MiniTransportTycoon.Game.GameModel
         private List<Facility> facilities = new List<Facility>();
         private List<Field> forestFields = new List<Field>();
         private List<Vehicle> vehicles = new List<Vehicle>();
+        private List<Route> routes = new List<Route>();
         private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private VehicleManager vehicleManager = new VehicleManager();
@@ -31,6 +32,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public Field[,] Board => board;
         public List<Facility> Facilities => facilities;
         public List<Vehicle> Vehicles => vehicles;
+        public List<Route> Routes => routes;
         public int Width => width;
         public int Height => height;
         public EconomyManager EconomyManager => economyManager;
@@ -159,6 +161,7 @@ namespace MiniTransportTycoon.Game.GameModel
                         field.Stop = new Stop(field, adjacentFacility);
 
                         FieldChanged?.Invoke(field.X, field.Y, field.Type);
+                        RebuildDefaultRoute();
                     }
                 }
             }
@@ -195,6 +198,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 FieldChanged?.Invoke(field.X, field.Y, FieldType.BRIDGE);
             }
         }
+
         public List<Field> GetStraightLine(Field a, Field b)
         {
             var list = new List<Field>();
@@ -221,6 +225,81 @@ namespace MiniTransportTycoon.Game.GameModel
 
             return list;
         }
+
+        public void BuyVehicle(VehicleType type, Route route)
+        {
+            if (route == null || route.stops.Count == 0)
+                return;
+
+            int cost = VehicleFactory.GetPurchaseCost(type);
+
+            if (economyManager.GetBalance() < cost)
+                return;
+
+            Field startField = route.stops[0].assignedField;
+
+            if (startField.Type != FieldType.ROAD && startField.Type != FieldType.BRIDGE)
+                return;
+
+            if (startField.SlotR != null && startField.SlotL != null)
+                return;
+
+            economyManager.SubtractMoney(cost);
+
+            Vehicle vehicle = VehicleFactory.Create(type, startField);
+
+            vehicles.Add(vehicle);
+            vehicleManager.AssignVehicle(route, vehicle);
+
+            if (startField.SlotR == null)
+                startField.AssignToSlotR(vehicle);
+            else
+                startField.AssignToSlotL(vehicle);
+
+            vehicle.PreviousField = startField;
+            vehicle.CurrentField = startField;
+            vehicle.NextField = null!;
+
+            vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
+
+            MapUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void BuyVehicleOnFirstRoute(VehicleType type)
+        {
+            if (routes.Count == 0)
+                return;
+
+            BuyVehicle(type, routes[0]);
+        }
+
+        private void RebuildDefaultRoute()
+        {
+            routes.Clear();
+
+            var stops = new List<Stop>();
+
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    if (board[x, y].Stop != null)
+                        stops.Add(board[x, y].Stop!);
+                }
+            }
+
+            if (stops.Count < 2)
+                return;
+
+            var route = new Route();
+            route.loop = true;
+
+            foreach (var stop in stops)
+                route.AddStop(stop);
+
+            routes.Add(route);
+        }
+
         #region Forest management
         public void RemoveForest(Field field)
         {

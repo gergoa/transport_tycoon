@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using MiniTransportTycoon.Game.Time;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
+using MiniTransportTycoon.Core.Vehicles;
 
 namespace MiniTransportTycoon.UI.ViewModels
 {
@@ -40,6 +41,22 @@ namespace MiniTransportTycoon.UI.ViewModels
         // for debug
         public DelegateCommand DebugGrowCitiesCommand { get; private set; }
         public DelegateCommand DebugSpawnVehicleCommand { get; private set; }
+
+        // vehicle
+        public DelegateCommand BuySmallBusCommand { get; private set; }
+        public DelegateCommand BuyLargeBusCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier0TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier0TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier1TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier1TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier2TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier2TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier3TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier3TruckCommand { get; private set; }
 
         // facility overlay, will have to abstract over or something
         private Facility? _selectedFacility;
@@ -148,6 +165,21 @@ namespace MiniTransportTycoon.UI.ViewModels
             SelectRoadModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Road);
             SelectBridgeModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Bridge);
             SelectStopModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Stop);
+
+            BuySmallBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.SmallBus));
+            BuyLargeBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LargeBus));
+
+            BuyLightTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier0Truck));
+            BuyHeavyTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier0Truck));
+
+            BuyLightTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier1Truck));
+            BuyHeavyTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier1Truck));
+
+            BuyLightTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier2Truck));
+            BuyHeavyTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier2Truck));
+
+            BuyLightTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier3Truck));
+            BuyHeavyTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier3Truck));
 
             _model.FieldChanged += OnFieldChanged;
 
@@ -429,6 +461,20 @@ namespace MiniTransportTycoon.UI.ViewModels
             if (length <= 3) return BridgeType.Wooden;
             if (length <= 6) return BridgeType.Steel;
             return BridgeType.Highway;
+        }
+
+        private void BuyVehicle(VehicleType type)
+        {
+            DebugText = $"Buy clicked: {type}";
+            OnPropertyChanged(nameof(DebugText));
+
+            _model.BuyVehicleOnFirstRoute(type);
+
+            DebugText += $" | Routes: {_model.Routes.Count}";
+            OnPropertyChanged(nameof(DebugText));
+
+            SyncVehicles();
+            OnPropertyChanged(nameof(Money));
         }
     }
 }
