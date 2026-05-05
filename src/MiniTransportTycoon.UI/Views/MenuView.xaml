@@ -3,11 +3,95 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:MiniTransportTycoon.UI.Views"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="800">
+
     <Grid>
-        <Button Content="Új játék" Height="50" Width="100"
-                Command="{Binding StartGameCommand}"/>
+
+        <Grid>
+            <Rectangle Fill="#0F1E1E"/>
+
+            <Ellipse Width="600" Height="600"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Top"
+                     Margin="-150,-150,0,0"
+                     Opacity="0.5">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#1FA2FF" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <Ellipse Width="700" Height="700"
+                     HorizontalAlignment="Right"
+                     VerticalAlignment="Bottom"
+                     Margin="0,0,-200,-200"
+                     Opacity="0.5">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#2ECC71" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <Ellipse Width="500" Height="500"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center"
+                     Opacity="0.4">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#00C9A7" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Grid>
+
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+
+            <TextBlock Text="Mini Transport Tycoon"
+                       FontSize="40"
+                       FontWeight="Bold"
+                       Foreground="#1FA2FF"
+                       FontFamily="Verdana"
+                       Margin="20"
+                       HorizontalAlignment="Center"/>
+
+            <Button Content="Start Game"
+                    Command="{Binding StartGameCommand}"
+                    Width="220"
+                    Height="50"
+                    FontFamily="Verdana"
+                    FontSize="30"
+                    FontWeight="Bold"
+                    Background="#0F1E1E"
+                    Foreground="#2ECC71"
+                    BorderBrush="#2ECC71"
+                    BorderThickness="2"
+                    Cursor="Hand">
+
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="1">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+
     </Grid>
 </UserControl>

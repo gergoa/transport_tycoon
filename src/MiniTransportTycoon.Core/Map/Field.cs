@@ -31,6 +31,7 @@ namespace MiniTransportTycoon.Core.Map
 
         public int X { get => x; }
         public int Y { get => y; }
+        public BridgeSegment? Bridge { get; set; }
 
         public Facility? Facility => facility;
         public Forest? Forest => forest;

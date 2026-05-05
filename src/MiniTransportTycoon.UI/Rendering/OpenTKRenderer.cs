@@ -99,7 +99,7 @@ namespace MiniTransportTycoon.UI.Rendering
             _elapsedTime += (float)delta.TotalSeconds;
 
             // clear screen
-            GL.ClearColor(0.5f, 0.1f, 0.15f, 1.0f);
+            GL.ClearColor(0.06f, 0.12f, 0.12f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // attach shader program

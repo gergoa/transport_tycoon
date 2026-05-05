@@ -7,7 +7,8 @@
              xmlns:glWpfControl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
              xmlns:local="clr-namespace:MiniTransportTycoon.UI.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="750" d:DesignWidth="750">
+             d:DesignHeight="750" d:DesignWidth="750"
+             Background="#0F1E1E">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -15,35 +16,189 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0">
-            <MenuItem Header="Új játék" Command="{Binding NewGameCommand}"/>
-            <MenuItem Header="Tick" Command="{Binding TickCommand}"/>
-            <Separator/>
-            <MenuItem Header="Debug: Grow Cities" Command="{Binding DebugGrowCitiesCommand}"/>
-            <MenuItem Header="Debug: Spawn Vehicle" Command="{Binding DebugSpawnVehicleCommand}"/>
-            <MenuItem Header="⏸ Pause" Command="{Binding PauseCommand}"/>
-            <MenuItem Header="▶ Normal" Command="{Binding NormalSpeedCommand}"/>
-            <MenuItem Header="⏩ Fast (2x)" Command="{Binding FastSpeedCommand}"/>
-            <MenuItem Header="⏩⏩ Very Fast (4x)" Command="{Binding VeryFastSpeedCommand}"/>
-        </Menu>
+        <Border Grid.Row="0"
+                Background="#0F1E1E"
+                Padding="8">
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Background="#2D2D30">
-            <TextBlock Text="Build Tools:" Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0" FontWeight="Bold"/>
+            <Border.Resources>
+                <Style x:Key="ToolbarButton" TargetType="Control">
+                    <Setter Property="Foreground" Value="#2ECC71"/>
+                    <Setter Property="Background" Value="#0F1E1E"/>
+                    <Setter Property="BorderBrush" Value="#2ECC71"/>
+                    <Setter Property="FontFamily" Value="Verdana"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="Padding" Value="12,6"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="FontSize" Value="15" />
+                </Style>
+            </Border.Resources>
 
-            <Button Content="🛣️ Road ($1)" Command="{Binding SelectRoadModeCommand}" Margin="0,0,10,0" Padding="10,5"/>
-            <Button Content="🌉 Bridge ($5)" Command="{Binding SelectBridgeModeCommand}" Margin="0,0,10,0" Padding="10,5"/>
-            <Button Content="🚏 Stop ($10)" Command="{Binding SelectStopModeCommand}" Margin="0,0,20,0" Padding="10,5"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <TextBlock Text="{Binding CurrentBuildMode, StringFormat='Active Tool: {0}'}" Foreground="Cyan" VerticalAlignment="Center" FontWeight="Bold"/>
-        </StackPanel>
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
 
-        <Viewbox Grid.Row="2" Stretch="Uniform">
+                    <Button Content="New Game"
+                            Command="{Binding NewGameCommand}"
+                            Style="{StaticResource ToolbarButton}"
+                            Margin="6"
+                            BorderBrush="#1FA2FF"
+                            Foreground="#1FA2FF"/>
+
+                    <Grid>
+                        <ToggleButton x:Name="BuildBtn"
+                                      Content="Build"
+                                      Style="{StaticResource ToolbarButton}"
+                                      Margin="6"/>
+
+                        <Popup IsOpen="{Binding IsChecked, ElementName=BuildBtn}"
+                               PlacementTarget="{Binding ElementName=BuildBtn}"
+                               Placement="Bottom"
+                               StaysOpen="False">
+
+                            <StackPanel Background="#0F1E1E">
+                                <Button Content="Road" Command="{Binding SelectRoadModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                                <Button Content="Bridge" Command="{Binding SelectBridgeModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                                <Button Content="Stop" Command="{Binding SelectStopModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                            </StackPanel>
+                        </Popup>
+                    </Grid>
+
+                    <Grid>
+                        <ToggleButton x:Name="BuyBtn"
+                                      Content="Vehicle"
+                                      Style="{StaticResource ToolbarButton}"
+                                      Margin="6"/>
+
+                        <Popup IsOpen="{Binding IsChecked, ElementName=BuyBtn}"
+                               PlacementTarget="{Binding ElementName=BuyBtn}"
+                               Placement="Bottom"
+                               StaysOpen="False"
+                               DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+
+                            <StackPanel Background="#0F1E1E">
+
+                                <Button Content="Small Bus"
+                                        Command="{Binding BuySmallBusCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Large Bus"
+                                        Command="{Binding BuyLargeBusCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Small Raw Material Truck"
+                                        Command="{Binding BuyLightTier0TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Large Raw Material Truck"
+                                        Command="{Binding BuyHeavyTier0TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Small Processing Truck"
+                                        Command="{Binding BuyLightTier1TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Large Processing Truck"
+                                        Command="{Binding BuyHeavyTier1TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Small Industrial Truck"
+                                        Command="{Binding BuyLightTier2TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Large Industrial Truck"
+                                        Command="{Binding BuyHeavyTier2TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Small High-Tech Truck"
+                                        Command="{Binding BuyLightTier3TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                                <Button Content="Large High-Tech Truck"
+                                        Command="{Binding BuyHeavyTier3TruckCommand}"
+                                        Style="{StaticResource ToolbarButton}"/>
+
+                            </StackPanel>
+                        </Popup>
+                    </Grid>
+
+                    <Grid>
+                        <ToggleButton x:Name="TimeBtn"
+                                      Content="Speed"
+                                      Style="{StaticResource ToolbarButton}"
+                                      Margin="6"/>
+
+                        <Popup IsOpen="{Binding IsChecked, ElementName=TimeBtn}"
+                               PlacementTarget="{Binding ElementName=TimeBtn}"
+                               Placement="Bottom"
+                               StaysOpen="False">
+
+                            <StackPanel Background="#0F1E1E">
+                                <Button Content="Normal" Command="{Binding NormalSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                                <Button Content="Pause" Command="{Binding PauseCommand}" Style="{StaticResource ToolbarButton}"/>
+                                <Button Content="2x" Command="{Binding FastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                                <Button Content="4x" Command="{Binding VeryFastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                            </StackPanel>
+                        </Popup>
+                    </Grid>
+
+                    <Button Style="{StaticResource ToolbarButton}"
+                            Margin="6"
+                            BorderBrush="#1FA2FF"
+                            Foreground="#1FA2FF">
+                        <TextBlock>
+                            <Run Text="Active: "/>
+                            <Run Text="{Binding CurrentBuildMode}"/>
+                        </TextBlock>
+                    </Button>
+                    
+                </StackPanel>
+
+                <!--StatusBar helyett-->
+                <StackPanel Orientation="Horizontal"
+                            Grid.Column="1"
+                            VerticalAlignment="Center">
+
+                    <TextBlock Text="Time:"
+                               Foreground="White"
+                               Margin="6,0"
+                               FontFamily="Verdana"
+                               FontWeight="Bold"
+                               FontSize="15"/>
+                    <TextBlock Text="{Binding Time}"
+                               Foreground="#1FA2FF"
+                               FontWeight="Bold"
+                               FontSize="15"
+                               Margin="6,0"/>
+
+                    <TextBlock Text="Money:"
+                               Foreground="White"
+                               Margin="12,0,0,0"
+                               FontFamily="Verdana"
+                               FontWeight="Bold"
+                               FontSize="15"/>
+                    <TextBlock Text="{Binding Money}"
+                               Foreground="#2ECC71"
+                               FontWeight="Bold"
+                               FontSize="15"
+                               Margin="6,0"/>
+                    <TextBlock Text="{Binding DebugText}"
+                               Foreground="Yellow"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               Margin="12,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Viewbox Grid.Row="1" Stretch="Uniform">
             <Grid Width="500" Height="500">
 
                 <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
@@ -85,8 +240,17 @@
                                                         <DataTrigger Binding="{Binding Type}" Value="ROAD">
                                                             <Setter Property="Fill" Value="#464646"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
-                                                            <Setter Property="Fill" Value="OrangeRed"/>
+                                                       
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Wooden">
+                                                            <Setter Property="Fill" Value="White"/>
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Steel">
+                                                            <Setter Property="Fill" Value="Yellow"/>
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Highway">
+                                                            <Setter Property="Fill" Value="Black"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
                                                             <Setter Property="Fill" Value="Orange"/>
@@ -109,7 +273,7 @@
                         </Grid>
                     </Viewbox>
                 </Border>
-                
+
                 <ItemsControl ItemsSource="{Binding Vehicles}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -177,23 +341,26 @@
                 </Border>
             </Grid>
         </Viewbox>
+        <Grid Grid.RowSpan="4" IsHitTestVisible="False">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsGameOver}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
 
-        <StatusBar Grid.Row="3">
-            <StatusBarItem>
-                <TextBlock Text="Time: "/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="{Binding Time}"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="Money: "/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="{Binding Money}"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock Text="{Binding DebugText}"/>
-            </StatusBarItem>
-        </StatusBar>
+            <Border Background="#CC000000">
+                <TextBlock Text="GAME OVER"
+               FontSize="48"
+               Foreground="Red"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"/>
+            </Border>
+
+        </Grid>
     </Grid>
 </UserControl>

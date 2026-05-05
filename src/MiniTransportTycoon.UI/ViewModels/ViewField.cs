@@ -33,7 +33,20 @@ namespace MiniTransportTycoon.UI.ViewModels
             get => _hasStop;
             set { if (_hasStop != value) { _hasStop = value; OnPropertyChanged(); } }
         }
+        private BridgeType? _bridgeType;
 
+        public BridgeType? BridgeType
+        {
+            get => _bridgeType;
+            set
+            {
+                if (_bridgeType != value)
+                {
+                    _bridgeType = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
         /*public Tuple<int, int> XY
         {
             get { return new(X, Y); }

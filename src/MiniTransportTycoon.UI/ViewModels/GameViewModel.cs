@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using MiniTransportTycoon.Game.Time;
 using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
+using MiniTransportTycoon.Core.Vehicles;
 
 namespace MiniTransportTycoon.UI.ViewModels
 {
@@ -27,6 +28,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         private GameModel _model;
         private DispatcherTimer _timer;
         private TickData tickMapData;
+        private (int X, int Y)? _bridgeStart = null;
         public TickData TickData => tickMapData;
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
@@ -39,6 +41,22 @@ namespace MiniTransportTycoon.UI.ViewModels
         // for debug
         public DelegateCommand DebugGrowCitiesCommand { get; private set; }
         public DelegateCommand DebugSpawnVehicleCommand { get; private set; }
+
+        // vehicle
+        public DelegateCommand BuySmallBusCommand { get; private set; }
+        public DelegateCommand BuyLargeBusCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier0TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier0TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier1TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier1TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier2TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier2TruckCommand { get; private set; }
+
+        public DelegateCommand BuyLightTier3TruckCommand { get; private set; }
+        public DelegateCommand BuyHeavyTier3TruckCommand { get; private set; }
 
         // facility overlay, will have to abstract over or something
         private Facility? _selectedFacility;
@@ -92,6 +110,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             get { return _model.Height; }
         }
+        public bool IsGameOver => _model.IsGameOver;
 
         public string DebugText { get; private set; } = string.Empty;
 
@@ -112,7 +131,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             TickCommand = new DelegateCommand(param => { model.GameTick(0.1f, true); OnPropertyChanged(nameof(Time)); });
 
-            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); });
+            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); _timer.Start(); });
 
             PauseCommand = new DelegateCommand(_ =>
                 _model.TimeManager.SetSpeed(TimeSpeed.Paused));
@@ -147,6 +166,21 @@ namespace MiniTransportTycoon.UI.ViewModels
             SelectBridgeModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Bridge);
             SelectStopModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Stop);
 
+            BuySmallBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.SmallBus));
+            BuyLargeBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LargeBus));
+
+            BuyLightTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier0Truck));
+            BuyHeavyTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier0Truck));
+
+            BuyLightTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier1Truck));
+            BuyHeavyTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier1Truck));
+
+            BuyLightTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier2Truck));
+            BuyHeavyTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier2Truck));
+
+            BuyLightTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier3Truck));
+            BuyHeavyTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier3Truck));
+
             _model.FieldChanged += OnFieldChanged;
 
             FieldClickCommand = new DelegateCommand(OnFieldClick);
@@ -174,6 +208,12 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnTimerTick(object? sender, EventArgs e)
         {
+            if (_model.IsGameOver)
+            {
+                _timer.Stop();
+                OnPropertyChanged(nameof(IsGameOver));
+                return;
+            }
             _model.GameTick(0.1f); // 100ms = 0.1 sec
 
             SyncVehicles();
@@ -185,6 +225,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             OnPropertyChanged(nameof(Time));
             OnPropertyChanged(nameof(Money));
+            OnPropertyChanged(nameof(IsGameOver));
         }
 
         private void OnFieldClick(object? param)
@@ -206,6 +247,14 @@ namespace MiniTransportTycoon.UI.ViewModels
                     OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
                     IsOverlayVisible = true;
                     SyncOverlay();
+                    if(_selectedFacility is City c)
+                    {
+                        DebugText = $"{c.TimeToRateChange} {c.ChangeRate} {c.PassengerRate}";
+                    }
+                    if(_selectedFacility is Industry i)
+                    {
+                        DebugText = $"{i.TimeToRateChange} {i.ChangeRate} {i.ProductionRate}";
+                    }
                 }
                 else
                 {
@@ -215,7 +264,33 @@ namespace MiniTransportTycoon.UI.ViewModels
                             _model.BuildRoad(coreField);
                             break;
                         case BuildMode.Bridge:
-                            _model.BuildBridge(coreField);
+
+                            if (_bridgeStart == null)
+                            {
+                                _bridgeStart = (position.X, position.Y);
+                                DebugText = $"Bridge start set: {_bridgeStart.Value.X},{_bridgeStart.Value.Y}";
+                                OnPropertyChanged(nameof(DebugText));
+                                return;
+                            }
+
+                            var start = _model.Board[_bridgeStart.Value.X, _bridgeStart.Value.Y];
+                            var end = coreField;
+
+                            var path = _model.GetStraightLine(start, end);
+
+                            if (path.Count == 0)
+                            {
+                                DebugText = "Invalid bridge (not straight)";
+                                OnPropertyChanged(nameof(DebugText));
+                                _bridgeStart = null;
+                                return;
+                            }
+
+                            var type = GetBridgeTypeByLength(path.Count);
+
+                            _model.BuildBridge(path, type);
+
+                            _bridgeStart = null;
                             break;
                         case BuildMode.Stop:
                             _model.BuildStop(coreField);
@@ -224,7 +299,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                     OnPropertyChanged(nameof(Money));
                 }
 
-                DebugText = $"X: {position.X} Y: {position.Y}";
+                //DebugText = $"X: {position.X} Y: {position.Y}";
                 OnPropertyChanged(nameof(DebugText));
             }
         }
@@ -235,6 +310,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 Fields[y * Width + x].Type = newType;
                 Fields[y * Width + x].HasStop = _model.Board[x, y].HasStop;
+                Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
             }
 
             tickMapData.Fields[x,y].Type = newType;
@@ -289,6 +365,15 @@ namespace MiniTransportTycoon.UI.ViewModels
                 OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
                 IsOverlayVisible = true;
                 SyncOverlay();
+
+                if (_selectedFacility is City c)
+                {
+                    DebugText = $"time:{c.TimeToRateChange} change:{c.ChangeRate} rate:{c.PassengerRate}";
+                }
+                if (_selectedFacility is Industry i)
+                {
+                    DebugText = $"time:{i.TimeToRateChange} change:{i.ChangeRate} rate:{i.ProductionRate}";
+                }
             }
             else
             {
@@ -298,8 +383,35 @@ namespace MiniTransportTycoon.UI.ViewModels
                         _model.BuildRoad(coreField);
                         break;
                     case BuildMode.Bridge:
-                        _model.BuildBridge(coreField);
-                        break;
+
+                            if (_bridgeStart == null)
+                            {
+                            _bridgeStart = (gridX, gridY);
+                            DebugText = $"Bridge start set: {gridX},{gridY}";
+                            OnPropertyChanged(nameof(DebugText));
+                            return;
+                        }
+
+                            var start = _model.Board[_bridgeStart.Value.X, _bridgeStart.Value.Y];
+                            var end = coreField;
+
+                            var path = _model.GetStraightLine(start, end);
+
+                            if (path.Count == 0)
+                            {
+                                DebugText = "Invalid bridge (not straight)";
+                                OnPropertyChanged(nameof(DebugText));
+                                _bridgeStart = null;
+                                return;
+                            }
+                            path.Insert(0, start);
+
+                            var type = GetBridgeTypeByLength(path.Count);
+
+                            _model.BuildBridge(path, type);
+
+                            _bridgeStart = null;
+                            break;
                     case BuildMode.Stop:
                         _model.BuildStop(coreField);
                         break;
@@ -307,7 +419,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 OnPropertyChanged(nameof(Money));
             }
 
-            DebugText = $"X: {gridX} Y: {gridY}";
+            //DebugText = $"X: {gridX} Y: {gridY}";
             OnPropertyChanged(nameof(DebugText));
         }
 
@@ -360,6 +472,26 @@ namespace MiniTransportTycoon.UI.ViewModels
                     targetList.Add(new InventoryItem { Cargo = kv.Key, Amount = kv.Value });
                 }
             }
+        }
+        private BridgeType GetBridgeTypeByLength(int length)
+        {
+            if (length <= 3) return BridgeType.Wooden;
+            if (length <= 6) return BridgeType.Steel;
+            return BridgeType.Highway;
+        }
+
+        private void BuyVehicle(VehicleType type)
+        {
+            DebugText = $"Buy clicked: {type}";
+            OnPropertyChanged(nameof(DebugText));
+
+            _model.BuyVehicleOnFirstRoute(type);
+
+            DebugText += $" | Routes: {_model.Routes.Count}";
+            OnPropertyChanged(nameof(DebugText));
+
+            SyncVehicles();
+            OnPropertyChanged(nameof(Money));
         }
     }
 }
