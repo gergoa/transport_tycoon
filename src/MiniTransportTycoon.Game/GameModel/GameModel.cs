@@ -50,6 +50,7 @@ namespace MiniTransportTycoon.Game.GameModel
         public void StartNewGame(int width, int height)
         {
             //tábla generálás segédosztállyokkal
+            IsGameOver = false;
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
             FacilityManager.CleanFacilities(this);
@@ -163,18 +164,62 @@ namespace MiniTransportTycoon.Game.GameModel
             }
         }
 
-        public void BuildBridge(Field field)
+        public void BuildBridge(List<Field> path, BridgeType type)
         {
-            int cost = 5;
+            var props = BridgeProperties.Get(type);
 
-            if (field.Type == FieldType.WATER && EconomyManager.GetBalance() >= cost)
+            if (path.Count == 0 || path.Count > props.MaxLength)
+                return;
+
+            if (path.Any(f => f.Type != FieldType.WATER))
+                return;
+
+            int cost = props.Cost * path.Count;
+
+            if (EconomyManager.GetBalance() < cost)
+                return;
+
+            EconomyManager.SubtractMoney(cost);
+
+            var segment = new BridgeSegment
             {
-                EconomyManager.SubtractMoney(cost);
+                Type = type,
+                Fields = path
+            };
+
+            foreach (var field in path)
+            {
                 field.Type = FieldType.BRIDGE;
+                field.Bridge = segment;
 
                 FieldChanged?.Invoke(field.X, field.Y, FieldType.BRIDGE);
-                vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
             }
+        }
+        public List<Field> GetStraightLine(Field a, Field b)
+        {
+            var list = new List<Field>();
+
+            if (a.X != b.X && a.Y != b.Y)
+                return list;
+
+            if (a.X == b.X)
+            {
+                int step = a.Y < b.Y ? 1 : -1;
+                for (int y = a.Y + step; y != b.Y + step; y += step)
+                {
+                    list.Add(Board[a.X, y]);
+                }
+            }
+            else
+            {
+                int step = a.X < b.X ? 1 : -1;
+                for (int x = a.X + step; x != b.X + step; x += step)
+                {
+                    list.Add(Board[x, a.Y]);
+                }
+            }
+
+            return list;
         }
         #region Forest management
         public void RemoveForest(Field field)

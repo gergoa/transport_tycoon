@@ -85,8 +85,17 @@
                                                         <DataTrigger Binding="{Binding Type}" Value="ROAD">
                                                             <Setter Property="Fill" Value="#464646"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="BRIDGE">
-                                                            <Setter Property="Fill" Value="OrangeRed"/>
+                                                       
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Wooden">
+                                                            <Setter Property="Fill" Value="White"/>
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Steel">
+                                                            <Setter Property="Fill" Value="Yellow"/>
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Highway">
+                                                            <Setter Property="Fill" Value="Black"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
                                                             <Setter Property="Fill" Value="Orange"/>
@@ -195,5 +204,26 @@
                 <TextBlock Text="{Binding DebugText}"/>
             </StatusBarItem>
         </StatusBar>
+        <Grid Grid.RowSpan="4" IsHitTestVisible="False">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsGameOver}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Border Background="#CC000000">
+                <TextBlock Text="GAME OVER"
+                       FontSize="48"
+                       Foreground="Red"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+            </Border>
+
+        </Grid>
     </Grid>
 </UserControl>
