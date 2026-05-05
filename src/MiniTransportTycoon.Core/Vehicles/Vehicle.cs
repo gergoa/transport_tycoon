@@ -22,6 +22,6 @@ namespace MiniTransportTycoon.Core.Vehicles
         public HashSet<CargoType> CarriedTypes = new();
         public Dictionary<CargoType, int> currentCargoInventory = new();
 
-
+        public int MaintenanceCost { get; set; }
     }
 }

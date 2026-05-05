@@ -256,5 +256,13 @@ namespace MiniTransportTycoon.Game.Pathfinding
                 industry.InventoryIn[type] += amount;
             }
         }
+
+        public void ChargeMaintenance(EconomyManager economy, List<Vehicle> vehicles)
+        {
+            foreach (var vehicle in vehicles)
+            {
+                economy.SubtractMoney(vehicle.MaintenanceCost);
+            }
+        }
     }
 }
