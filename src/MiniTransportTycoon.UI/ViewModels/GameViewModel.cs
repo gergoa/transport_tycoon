@@ -247,6 +247,14 @@ namespace MiniTransportTycoon.UI.ViewModels
                     OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
                     IsOverlayVisible = true;
                     SyncOverlay();
+                    if(_selectedFacility is City c)
+                    {
+                        DebugText = $"{c.TimeToRateChange} {c.ChangeRate} {c.PassengerRate}";
+                    }
+                    if(_selectedFacility is Industry i)
+                    {
+                        DebugText = $"{i.TimeToRateChange} {i.ChangeRate} {i.ProductionRate}";
+                    }
                 }
                 else
                 {
@@ -291,7 +299,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                     OnPropertyChanged(nameof(Money));
                 }
 
-                DebugText = $"X: {position.X} Y: {position.Y}";
+                //DebugText = $"X: {position.X} Y: {position.Y}";
                 OnPropertyChanged(nameof(DebugText));
             }
         }
@@ -357,6 +365,15 @@ namespace MiniTransportTycoon.UI.ViewModels
                 OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
                 IsOverlayVisible = true;
                 SyncOverlay();
+
+                if (_selectedFacility is City c)
+                {
+                    DebugText = $"time:{c.TimeToRateChange} change:{c.ChangeRate} rate:{c.PassengerRate}";
+                }
+                if (_selectedFacility is Industry i)
+                {
+                    DebugText = $"time:{i.TimeToRateChange} change:{i.ChangeRate} rate:{i.ProductionRate}";
+                }
             }
             else
             {
@@ -402,7 +419,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 OnPropertyChanged(nameof(Money));
             }
 
-            DebugText = $"X: {gridX} Y: {gridY}";
+            //DebugText = $"X: {gridX} Y: {gridY}";
             OnPropertyChanged(nameof(DebugText));
         }
 

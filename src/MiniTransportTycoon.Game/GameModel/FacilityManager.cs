@@ -22,6 +22,84 @@ namespace MiniTransportTycoon.Game.GameModel
                 facility.Tick(deltaTime);
             }
         }
+
+        internal static bool TryGrowCity(GameModel gameModel, City city)
+        {
+            Field[,] board = gameModel.Board;
+            int width = gameModel.Width;
+            int height = gameModel.Height;
+
+
+            var cityFieldsSet = new HashSet<Field>(city.Fields);
+
+            var possibleFields = new List<Field>();
+
+            foreach (var field in city.Fields)
+            {
+                int cx = field.X;
+                int cy = field.Y;
+
+                int[] dx = [0, 0, -1, 1];
+                int[] dy = [-1, 1, 0, 0];
+
+                for(int i=0;i<4;i++)
+                {
+                    if (cx + dx[i] < 0 || cx + dx[i] >= width || cy + dy[i] < 0 || cy + dy[i] >= height) continue;
+                    Field field2 = board[cx + dx[i], cy + dy[i]];
+
+                    if (field2.Type == FieldType.EMPTY /*||
+                        (field2.Type == FieldType.ROAD && !cityFieldsSet.Contains(field2)) //út mező belefoglalása a városba
+                        */
+                        )
+                    {
+                        // Mező szomszédainak vizsgálása, hogy akkor terjedjen oda, ha legalább 2 szomszédos mezője a város
+                        int citycount = 0;
+                        int cx2 = field2.X;
+                        int cy2 = field2.Y;
+
+                        for (int j=-1;j<=1;j++)
+                        {
+                            for(int k=-1;k<=1;k++)
+                            {
+                                if (i == 0 && k == 0) continue;
+                                if(cx2+j<0 || cx2+j>= width || cy2+k<0 || cy2+k>=height) continue;
+                                if (cityFieldsSet.Contains(board[cx2 + j, cy2 + k])) citycount++;
+                            }
+                        }
+                        if (citycount >= 2) possibleFields.Add(field2);
+                    }
+                }
+            }
+
+            if (possibleFields.Count == 0) return false;
+
+            var newField = possibleFields[_random.Next(possibleFields.Count)];
+            var type = newField.Type;
+
+            city.Fields.Add(newField);
+            newField.PlaceFacility(city);
+            if (type == FieldType.EMPTY)
+            {
+                int dx = (newField.X - city.CenterX)%3;
+                int dy = (newField.Y - city.CenterY)%3;
+
+                if(dx==0 || dy==0)
+                {
+                    newField.Type = FieldType.ROAD;
+                }
+                else
+                {
+                    newField.Type = FieldType.CITY;
+                }
+            }/*
+            else
+            {
+                newField.Type = FieldType.ROAD;
+            }*/
+            return true;
+        }
+
+        /*
         internal static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
@@ -114,7 +192,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
             return true;
         }
-
+        */
         private static bool Is3x3Empty(Field[,] board, int cx, int cy)
         {
             for (int dx = -1; dx <= 1; dx++)
