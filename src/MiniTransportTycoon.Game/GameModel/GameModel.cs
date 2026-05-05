@@ -179,6 +179,54 @@ namespace MiniTransportTycoon.Game.GameModel
                 vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
             }
         }
+
+        public void BuyVehicle(VehicleType type, Route route)
+        {
+            if (route == null || route.stops.Count == 0)
+                return;
+
+            int cost = VehicleFactory.GetPurchaseCost(type);
+
+            if (economyManager.GetBalance() < cost)
+                return;
+
+            Field startField = route.stops[0].assignedField;
+
+            if (startField.Type != FieldType.ROAD && startField.Type != FieldType.BRIDGE)
+                return;
+
+            if (startField.SlotR != null && startField.SlotL != null)
+                return;
+
+            economyManager.SubtractMoney(cost);
+
+            Vehicle vehicle = VehicleFactory.Create(type, startField);
+
+            vehicles.Add(vehicle);
+            vehicleManager.AssignVehicle(route, vehicle);
+
+            if (startField.SlotR == null)
+                startField.AssignToSlotR(vehicle);
+            else
+                startField.AssignToSlotL(vehicle);
+
+            vehicle.PreviousField = startField;
+            vehicle.CurrentField = startField;
+            vehicle.NextField = null!;
+
+            vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
+
+            MapUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void BuyVehicleOnFirstRoute(VehicleType type)
+        {
+            if (routes.Count == 0)
+                return;
+
+            BuyVehicle(type, routes[0]);
+        }
+
         private void RebuildDefaultRoute()
         {
             routes.Clear();
