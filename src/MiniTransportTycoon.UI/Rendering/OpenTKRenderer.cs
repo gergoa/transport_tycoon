@@ -25,6 +25,7 @@ namespace MiniTransportTycoon.UI.Rendering
         private WireframeRenderer _wireframeRenderer;
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
+        private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
 
@@ -58,11 +59,14 @@ namespace MiniTransportTycoon.UI.Rendering
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
 
             string modelPath = Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb");
+            string vehiclePath = Path.Combine(baseDirectory, "Assets", "Vehicles", "van.glb");
 
             try
             {
                 MeshData modelData = GlbMeshParser.LoadGlb(modelPath);
                 _testBuildingMesh = GLObjectBuilder.CreateGLObjectFromMesh(modelData);
+                MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
+                _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
             }
             catch (Exception e)
             {
@@ -159,6 +163,25 @@ namespace MiniTransportTycoon.UI.Rendering
 
                 // For testing
                 DrawInstancedMesh(_testBuildingMesh, vbo, count);
+            }
+
+            // just render vehicles iteratively
+            if (data.Vehicles != null)
+            {
+                GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
+                GL.BindVertexArray(_testVehicleMesh.VaoID);
+                int modelLocation = GL.GetUniformLocation(_shaderProgram, "m_model");
+
+                for (int i = 0; i < data.Vehicles.Count; i++)
+                {
+                    var vehicle = data.Vehicles[i];
+                    Matrix4 model = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(vehicle.CurrentField.X + 0.5f, 0.2f, vehicle.CurrentField.Y + 0.5f);
+
+                    GL.UniformMatrix4(modelLocation, false, ref model);
+
+                    // draw the mesh
+                    GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
+                }
             }
 
             GL.BindVertexArray(0);
@@ -339,6 +362,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
         private void DrawInstancedMesh(GLMeshObject mesh, int instanceVbo, int instanceCount, int textureId = 0)
         {
+            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 1);
             if (instanceCount == 0 || mesh.VaoID == 0) return;
 
             if (textureId != 0)
@@ -363,6 +387,7 @@ namespace MiniTransportTycoon.UI.Rendering
                 // Unbind the texture
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
+            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
 
         }
 

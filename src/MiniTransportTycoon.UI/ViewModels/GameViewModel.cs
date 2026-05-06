@@ -128,7 +128,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             _timer.Interval = TimeSpan.FromMilliseconds(33);
             _timer.Tick += OnTimerTick;
             _timer.Start();
-            tickMapData = new TickData(new Field[Width,Height], Width, Height);
+            tickMapData = new TickData(new Field[Width,Height], model.Vehicles, Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
