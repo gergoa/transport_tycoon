@@ -127,7 +127,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
 
                     FieldType currentType = data.Fields[i, j].Type;
-                    Vector3 tileColor = GetColorForFieldType(currentType);
+                    Vector3 tileColor = data.Fields[i,j].Stop == null ? GetColorForFieldType(currentType) : new Vector3(0.22f, 0.22f, 0.22f);
                     GL.Uniform3(colorLocation, tileColor);
 
                     GL.BindVertexArray(_quadMesh.VaoID);
