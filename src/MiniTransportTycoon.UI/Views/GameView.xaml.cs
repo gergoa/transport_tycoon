@@ -27,6 +27,11 @@ namespace MiniTransportTycoon.UI.Views
 
         public void MapRenderControl_OnReady()
         {
+
+        }
+        private void MapRenderControl_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            _renderer.Resize((int)e.NewSize.Width, (int)e.NewSize.Height);
         }
 
         public void MapRenderControl_OnRender(TimeSpan delta)

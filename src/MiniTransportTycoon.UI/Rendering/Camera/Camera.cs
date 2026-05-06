@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK.Mathematics;
 
 namespace MiniTransportTycoon.UI.Rendering.Camera
@@ -16,15 +12,15 @@ namespace MiniTransportTycoon.UI.Rendering.Camera
         public Vector3 At { get; private set; }
         public Vector3 WorldUp { get; private set; }
 
-        private float _fov = MathHelper.PiOver3;
-        private float _aspectRatio = 16f / 9f;
-        private float _zNear = 0.1f;
-        private float _zFar = 1000f;
+        private float _fov;
+        private float _aspectRatio;
+        private float _zNear;
+        private float _zFar;
 
-        public Camera()
+        public Camera(Vector3 eye, Vector3 target, Vector3 worldUp, float aspect)
         {
-            SetView(new Vector3(0, 0, -3), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-            SetProjection(_fov, _aspectRatio, _zNear, _zFar);
+            SetView(eye, target, worldUp);
+            SetProjection(MathHelper.PiOver3, aspect, 0.1f, 1000f);
         }
 
         public void SetView(Vector3 eye, Vector3 target, Vector3 worldUp)

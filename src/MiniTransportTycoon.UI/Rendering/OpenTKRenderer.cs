@@ -63,27 +63,36 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.Enable(EnableCap.DepthTest);
             Console.WriteLine("GL ERROR STATE: " + GL.GetError());
 
-            // camera initialization
-            _camera = new();
-            _camera.SetAspect((float)w / h);
-
-            _cameraManipulator = new();
             float mapCenterX = data.Width / 2f;
-            float mapCenterY = data.Height / 2f;
+            float mapCenterZ = data.Height / 2f;
+            float aspect = (float)w / h;
 
+            Vector3 eye = new Vector3(mapCenterX, 30f, 0f);
+            Vector3 at = new Vector3(mapCenterX, 0f, mapCenterZ);
+
+            Vector3 lookDir = at - eye;
+            float distance = lookDir.Length;
+            Vector3 normLook = lookDir / distance;
+
+            float v = MathF.Acos(normLook.Y);
+            float u = MathF.Atan2(normLook.Z, normLook.X);
+
+            _camera = new(eye, at, new Vector3(0, 1, 0), aspect);
+
+            _cameraManipulator = new Camera.CameraManipulator();
             _cameraManipulator.AttachCamera(_camera,
-                startingTarget: new Vector3(mapCenterX, mapCenterY, 0f),
-                startingDistance: 55f,
-                yaw: -MathHelper.PiOver2,
-                pitch: MathHelper.PiOver2
+                startingTarget: at,
+                startingDistance: distance,
+                yaw: -u,
+                pitch: v
             );
-    
+
+            _cameraManipulator.Rotate(0, 0);
 
             // attach wireframe renderer
             _wireframeRenderer = new();
             _wireframeRenderer.Initialize();
         }
-
         public void Resize(int w, int h)
         {
             _windowSize = new Vector2i(w, h);
@@ -97,6 +106,13 @@ namespace MiniTransportTycoon.UI.Rendering
         public void Render(TickData data, TimeSpan delta)
         {
             _elapsedTime += (float)delta.TotalSeconds;
+
+            // DEBUG
+            if (_elapsedTime % 5.0f < 0.05f)
+            {
+                Console.WriteLine($"Camera Pos: (" + _camera.Eye.X +" , "+ _camera.Eye.Y + " , " + _camera.Eye.Z + ")");
+                Console.WriteLine($"Camera Looking At: (" + _camera.At.X + " , " + _camera.At.Y + " , " + _camera.At.Z + ")");
+            }
 
             // clear screen
             GL.ClearColor(0.06f, 0.12f, 0.12f, 1f);
@@ -120,8 +136,7 @@ namespace MiniTransportTycoon.UI.Rendering
             {
                 for (int j = 0; j < data.Height; ++j)
                 {
-                    Matrix4 model = Matrix4.CreateTranslation(i + 0.5f, j + 0.5f, 0f);
-
+                    Matrix4 model = Matrix4.CreateTranslation(data.Fields[i, j].X + 0.5f, 0f, data.Fields[i, j].Y + 0.5f);
                     Matrix4 mvp = model * view * projection;
                     GL.UniformMatrix4(mvpLocation, false, ref mvp);
 

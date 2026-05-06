@@ -13,6 +13,7 @@
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="OpenTK.Compute" Version="4.9.4" />
     <PackageReference Include="OpenTK.GLWpfControl" Version="4.3.6" />
+    <PackageReference Include="SharpGLTF.Toolkit" Version="1.0.6" />
   </ItemGroup>
 
   <ItemGroup>

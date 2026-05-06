@@ -24,7 +24,7 @@ namespace MiniTransportTycoon.UI.Rendering.Misc
         public static Vector2i GetGridIntersection(float mouseX, float mouseY, float screenWidth, float screenHeight, Camera.Camera camera, float tileSize)
         {
             float ndcX = (2.0f * mouseX) / screenWidth - 1.0f;
-            float ndcY = 1.0f - (2.0f * mouseY) / screenHeight; // Y is flipped in 3D
+            float ndcY = 1.0f - (2.0f * mouseY) / screenHeight;
 
             Vector4 clipCoords = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
 
@@ -35,27 +35,27 @@ namespace MiniTransportTycoon.UI.Rendering.Misc
             Vector3 rayWorld = new Vector3(worldCoords.X, worldCoords.Y, worldCoords.Z);
             rayWorld.Normalize();
 
-            if (Math.Abs(rayWorld.Z) < 0.001f) return new Vector2i(-1, -1); // looking perfectly parallel to the ground
+            if (Math.Abs(rayWorld.Y) < 0.0001f) return new Vector2i(-1, -1);
 
-            float t = -camera.Eye.Z / rayWorld.Z;
+            float t = -camera.Eye.Y / rayWorld.Y;
 
             if (t < 0) return new Vector2i(-1, -1);
 
             Vector3 hit = camera.Eye + rayWorld * t;
 
             int gridX = (int)Math.Floor(hit.X / tileSize);
-            int gridY = (int)Math.Floor(hit.Y / tileSize);
+            int gridZ = (int)Math.Floor(hit.Z / tileSize);
 
-            return new Vector2i(gridX, gridY);
+            return new Vector2i(gridX, gridZ);
         }
 
         public static MeshData CreateQuad()
         {
             MeshData quadData = new MeshData();
-            quadData.Vertices.Add(new Vertex { Position = new Vector3(-0.5f, -0.5f, 0.0f), Normal = Vector3.UnitZ, TexCoord = new Vector2(0, 0) }); // Bottom-Left  (0)
-            quadData.Vertices.Add(new Vertex { Position = new Vector3(0.5f, -0.5f, 0.0f), Normal = Vector3.UnitZ, TexCoord = new Vector2(1, 0) }); // Bottom-Right (1)
-            quadData.Vertices.Add(new Vertex { Position = new Vector3(0.5f, 0.5f, 0.0f), Normal = Vector3.UnitZ, TexCoord = new Vector2(1, 1) }); // Top-Right    (2)
-            quadData.Vertices.Add(new Vertex { Position = new Vector3(-0.5f, 0.5f, 0.0f), Normal = Vector3.UnitZ, TexCoord = new Vector2(0, 1) }); // Top-Left     (3)
+            quadData.Vertices.Add(new Vertex { Position = new Vector3(-0.5f, 0.0f, - 0.5f), Normal = Vector3.UnitZ, TexCoord = new Vector2(0, 0) }); // Bottom-Left  (0)
+            quadData.Vertices.Add(new Vertex { Position = new Vector3(0.5f, 0.0f, -0.5f), Normal = Vector3.UnitZ, TexCoord = new Vector2(1, 0) }); // Bottom-Right (1)
+            quadData.Vertices.Add(new Vertex { Position = new Vector3(0.5f, 0.0f, 0.5f), Normal = Vector3.UnitZ, TexCoord = new Vector2(1, 1) }); // Top-Right    (2)
+            quadData.Vertices.Add(new Vertex { Position = new Vector3(-0.5f, 0.0f, 0.5f), Normal = Vector3.UnitZ, TexCoord = new Vector2(0, 1) }); // Top-Left     (3)
 
             quadData.Indices.Add(0, 1, 2);
             quadData.Indices.Add(2, 3, 0);
