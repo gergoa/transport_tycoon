@@ -30,7 +30,10 @@ namespace MiniTransportTycoon.UI.ViewModels
         private DispatcherTimer _timer;
         private TickData tickMapData;
         private (int X, int Y)? _bridgeStart = null;
+
         public TickData TickData => tickMapData;
+        public bool MapUpdateNeeded = false;
+
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
         public DelegateCommand FieldClickCommand { get; }
@@ -304,6 +307,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             break;
                     }
                     OnPropertyChanged(nameof(Money));
+                    MapUpdateNeeded = true;
                 }
 
                 //DebugText = $"X: {position.X} Y: {position.Y}";
@@ -358,6 +362,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                     SyncMap();
                 }
             });
+
+            MapUpdateNeeded = true;
         }
 
         private void SyncMap()
@@ -442,6 +448,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             _model.BuildStop(coreField);
                             break;
                     }
+                    MapUpdateNeeded = true;
                     OnPropertyChanged(nameof(Money));
                 }
             }

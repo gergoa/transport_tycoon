@@ -230,7 +230,7 @@ namespace MiniTransportTycoon.Game.GameModel
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Livestock) { ProductionRate = 1.2f });
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.CopperOre) { ProductionRate = 1.0f });
 
-            /*// TIER 1
+            // TIER 1
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Lumber)
             {
                 ProductionRate = 1.0f,
@@ -291,7 +291,7 @@ namespace MiniTransportTycoon.Game.GameModel
             {
                 ProductionRate = 1.0f,
                 InputRequirements = new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }
-            });*/
+            });
         }
 
         public static bool FacilityAcceptsCargo(Facility facility, CargoType type)

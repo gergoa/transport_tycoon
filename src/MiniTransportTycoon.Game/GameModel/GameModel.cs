@@ -24,8 +24,8 @@ namespace MiniTransportTycoon.Game.GameModel
         private Task? _simulationTask;
 
         // gamemodel data
-        private int width = 50;
-        private int height = 50;
+        private int width = 130;
+        private int height = 130;
         private float _spawnTimer = 0f;
         private const float SpawnInterval = 20f;
         private Field[,] board = null!;
