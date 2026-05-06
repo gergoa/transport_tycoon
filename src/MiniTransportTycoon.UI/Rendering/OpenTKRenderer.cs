@@ -12,6 +12,7 @@ using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.UI.Rendering.Misc;
 using MiniTransportTycoon.UI.Rendering.Camera;
 using System.Windows.Input;
+using System.IO;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -29,31 +30,17 @@ namespace MiniTransportTycoon.UI.Rendering
 
         private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
 
-        private readonly string _vertexShaderSource = @"
-        #version 460 core
-        layout (location = 0) in vec3 aPosition;
-        // location 1 is Normal (unused)
-        // location 2 is TexCoord (unused)
-
-        uniform mat4 mvp;
-
-        void main() {
-            gl_Position = mvp * vec4(aPosition, 1.0);
-        }";
-
-        private readonly string _fragmentShaderSource = @"
-        #version 460 core
-        uniform vec3 col; // The color of our quad
-        out vec4 FragColor;
-
-        void main() {
-            FragColor = vec4(col, 1.0);
-        }";
-
         public void Initialize(TickData data, int w, int h)
         {
             // core initialization
             _windowSize = new Vector2i(w, h);
+
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string vertPath = Path.Combine(baseDirectory, "Rendering", "shaders", "default.vert");
+            string fragPath = Path.Combine(baseDirectory, "Rendering", "shaders", "default.frag");
+
+            string _vertexShaderSource = LoadShaderSource(vertPath);
+            string _fragmentShaderSource = LoadShaderSource(fragPath);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
             MeshData quad = Misc.Utils.CreateQuad();
@@ -62,6 +49,11 @@ namespace MiniTransportTycoon.UI.Rendering
             // enable depth testing
             GL.Enable(EnableCap.DepthTest);
             Console.WriteLine("GL ERROR STATE: " + GL.GetError());
+
+            // backface culling
+            GL.Enable(EnableCap.CullFace);
+            GL.FrontFace(FrontFaceDirection.Cw);
+            GL.CullFace(TriangleFace.Back);
 
             float mapCenterX = data.Width / 2f;
             float mapCenterZ = data.Height / 2f;
@@ -106,13 +98,6 @@ namespace MiniTransportTycoon.UI.Rendering
         public void Render(TickData data, TimeSpan delta)
         {
             _elapsedTime += (float)delta.TotalSeconds;
-
-            // DEBUG
-            if (_elapsedTime % 5.0f < 0.05f)
-            {
-                Console.WriteLine($"Camera Pos: (" + _camera.Eye.X +" , "+ _camera.Eye.Y + " , " + _camera.Eye.Z + ")");
-                Console.WriteLine($"Camera Looking At: (" + _camera.At.X + " , " + _camera.At.Y + " , " + _camera.At.Z + ")");
-            }
 
             // clear screen
             GL.ClearColor(0.06f, 0.12f, 0.12f, 1f);
@@ -236,6 +221,19 @@ namespace MiniTransportTycoon.UI.Rendering
             {
                 string infoLog = GL.GetShaderInfoLog(shader);
                 Console.WriteLine($"ERROR::SHADER_COMPILATION_ERROR of type: {type}\n{infoLog}\n");
+            }
+        }
+
+        private string LoadShaderSource(string path)
+        {
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR::SHADER::FILE_NOT_READ: {path}\n{e.Message}");
+                return string.Empty;
             }
         }
 
