@@ -5,7 +5,6 @@ image: mcr.microsoft.com/dotnet/sdk:10.0
 stages:
   - build
   - test
-  - deploy
 
 include:
   # NuGet Dependency Scanning
@@ -94,26 +93,3 @@ test_model:
     key: "unittest-$CI_COMMIT_REF_SLUG"
     paths:
       - .nuget
-
-# Documentation
-# (Uses Linux-based runner, because windows tag is NOT specified.)
-pages:
-  stage: deploy
-  image: ubuntu:24.04
-  before_script:
-    - apt-get update -yqq
-    - apt-get install -yqq doxygen graphviz
-  script:
-  # doxygen documentation is not implemented yet so we ignore errors for now
-    - doxygen || true
-    - mkdir -p public/docs/
-    - cp -r doc/html/. public/docs/
-    - mkdir -p public/coverage
-    # Failsafe if the tests didn't run or coverage wasn't generated
-    - if [ -d "report/html" ]; then cp -r report/html/. public/coverage/; fi
-  artifacts:
-    paths:
-      - public
-    expire_in: 1 day
-  only:
-    - master
