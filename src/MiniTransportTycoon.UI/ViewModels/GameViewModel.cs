@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using MiniTransportTycoon.Game.Time;
-using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
 using MiniTransportTycoon.Core.Vehicles;
 
@@ -20,7 +19,8 @@ namespace MiniTransportTycoon.UI.ViewModels
     {
         Road,
         Bridge,
-        Stop
+        Stop,
+        Nothing
     }
 
     class GameViewModel : ViewModelBase
@@ -80,7 +80,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand CloseOverlayCommand { get; private set; }
 
         // build mode
-        private BuildMode _currentBuildMode = BuildMode.Road;
+        private BuildMode _currentBuildMode = BuildMode.Nothing;
         public BuildMode CurrentBuildMode
         {
             get => _currentBuildMode;
@@ -90,6 +90,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand SelectRoadModeCommand { get; private set; }
         public DelegateCommand SelectBridgeModeCommand { get; private set; }
         public DelegateCommand SelectStopModeCommand { get; private set; }
+        public DelegateCommand ClearBuildModeCommand { get; private set; }
 
         public int Money
         {
@@ -165,6 +166,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             SelectRoadModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Road);
             SelectBridgeModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Bridge);
             SelectStopModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Stop);
+            ClearBuildModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Nothing);
 
             BuySmallBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.SmallBus));
             BuyLargeBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LargeBus));
@@ -295,6 +297,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                         case BuildMode.Stop:
                             _model.BuildStop(coreField);
                             break;
+                        case BuildMode.Nothing:
+                            return;
                     }
                     OnPropertyChanged(nameof(Money));
                 }

@@ -150,11 +150,12 @@
                     </Grid>
 
                     <Button Style="{StaticResource ToolbarButton}"
+                            Command="{Binding ClearBuildModeCommand}"
                             Margin="6"
                             BorderBrush="#1FA2FF"
                             Foreground="#1FA2FF">
                         <TextBlock>
-                            <Run Text="Active: "/>
+                            <Run Text="Active:"/>
                             <Run Text="{Binding CurrentBuildMode}"/>
                         </TextBlock>
                     </Button>
