@@ -75,9 +75,10 @@
                         <ToggleButton x:Name="BuyBtn"
                                       Content="Vehicle"
                                       Style="{StaticResource ToolbarButton}"
+                                      IsChecked="{Binding IsVehicleMenuOpen}"
                                       Margin="6"/>
 
-                        <Popup IsOpen="{Binding IsChecked, ElementName=BuyBtn}"
+                        <Popup IsOpen="{Binding IsVehicleMenuOpen}"
                                PlacementTarget="{Binding ElementName=BuyBtn}"
                                Placement="Bottom"
                                StaysOpen="False"
@@ -85,52 +86,89 @@
 
                             <StackPanel Background="#0F1E1E">
 
-                                <Button Content="Small Bus"
-                                        Command="{Binding BuySmallBusCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                <!-- OWNED VEHICLES -->
+                                <ItemsControl ItemsSource="{Binding Vehicles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource ToolbarButton}">
                                                 <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
                                                          Background="Transparent"
                                                          Foreground="White"
                                                          BorderThickness="0"
                                                          FontWeight="Bold"
                                                          KeyDown="VehicleNameTextBox_KeyDown"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                                <Button Content="Large Bus"
-                                        Command="{Binding BuyLargeBusCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                <!-- BUY SUBMENU -->
+                                <Grid>
+                                    <ToggleButton x:Name="BuyVehicleBtn"
+                                                  Content="Buy..."
+                                                  Style="{StaticResource ToolbarButton}"/>
 
-                                <Button Content="Small Raw Material Truck"
-                                        Command="{Binding BuyLightTier0TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                    <Popup IsOpen="{Binding IsChecked, ElementName=BuyVehicleBtn}"
+                                           PlacementTarget="{Binding ElementName=BuyVehicleBtn}"
+                                           Placement="Right"
+                                           StaysOpen="True"
+                                           DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
 
-                                <Button Content="Large Raw Material Truck"
-                                        Command="{Binding BuyHeavyTier0TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                        <Grid Background="#0F1E1E">
 
-                                <Button Content="Small Processing Truck"
-                                        Command="{Binding BuyLightTier1TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                            <!-- VEHICLE TYPE LIST -->
+                                            <StackPanel>
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelectingVehicleRoute}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
 
-                                <Button Content="Large Processing Truck"
-                                        Command="{Binding BuyHeavyTier1TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Small Bus" Command="{Binding BuySmallBusCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Large Bus" Command="{Binding BuyLargeBusCommand}" Style="{StaticResource ToolbarButton}"/>
 
-                                <Button Content="Small Industrial Truck"
-                                        Command="{Binding BuyLightTier2TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Small Raw Material Truck" Command="{Binding BuyLightTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Large Raw Material Truck" Command="{Binding BuyHeavyTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
 
-                                <Button Content="Large Industrial Truck"
-                                        Command="{Binding BuyHeavyTier2TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Small Processing Truck" Command="{Binding BuyLightTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Large Processing Truck" Command="{Binding BuyHeavyTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
 
-                                <Button Content="Small High-Tech Truck"
-                                        Command="{Binding BuyLightTier3TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Small Industrial Truck" Command="{Binding BuyLightTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Large Industrial Truck" Command="{Binding BuyHeavyTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
 
-                                <Button Content="Large High-Tech Truck"
-                                        Command="{Binding BuyHeavyTier3TruckCommand}"
-                                        Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Small High-Tech Truck" Command="{Binding BuyLightTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                <Button Content="Large High-Tech Truck" Command="{Binding BuyHeavyTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                            </StackPanel>
 
+                                            <!-- ROUTE SELECTION -->
+                                            <StackPanel Visibility="{Binding IsSelectingVehicleRoute,
+                                                        Converter={StaticResource BoolToVis}}">
+
+                                                <TextBlock Text="Select route stops"
+                                                           Foreground="White"
+                                                           FontWeight="Bold"
+                                                           Margin="8"/>
+
+                                                <TextBlock Text="{Binding PendingRouteText}"
+                                                           Foreground="#B8FFF2"
+                                                           FontWeight="Bold"
+                                                           TextWrapping="Wrap"
+                                                           Width="220"
+                                                           Margin="8,0,8,8"/>
+
+                                                <Button Content="Cancel"
+                                                        Command="{Binding CancelVehiclePurchaseCommand}"
+                                                        Style="{StaticResource ToolbarButton}"
+                                                        Margin="8,0,8,8"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Popup>
+                                </Grid>
                             </StackPanel>
                         </Popup>
                     </Grid>

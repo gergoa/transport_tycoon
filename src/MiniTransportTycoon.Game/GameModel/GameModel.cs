@@ -266,14 +266,6 @@ namespace MiniTransportTycoon.Game.GameModel
             MapUpdated?.Invoke(this, EventArgs.Empty);
         }
 
-        public void BuyVehicleOnFirstRoute(VehicleType type)
-        {
-            if (routes.Count == 0)
-                return;
-
-            BuyVehicle(type, routes[0]);
-        }
-
         private void RebuildDefaultRoute()
         {
             routes.Clear();
@@ -299,6 +291,24 @@ namespace MiniTransportTycoon.Game.GameModel
                 route.AddStop(stop);
 
             routes.Add(route);
+        }
+
+        public void BuyVehicleWithStops(VehicleType type, List<Stop> stops)
+        {
+            if (stops.Count < 2)
+                return;
+
+            var route = new Route();
+            route.loop = true;
+
+            foreach (var stop in stops)
+            {
+                route.AddStop(stop);
+            }
+
+            routes.Add(route);
+
+            BuyVehicle(type, route);
         }
 
         #region Forest management
