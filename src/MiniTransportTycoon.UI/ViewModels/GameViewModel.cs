@@ -475,7 +475,6 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             float tileSize = 10f;
 
-            // add missing viewvehicles
             foreach (var coreVehicle in _model.Vehicles)
             {
                 var existing = Vehicles.FirstOrDefault(
