@@ -14,6 +14,7 @@ namespace MiniTransportTycoon.Core.Vehicles
         public float MaxSpeed { get; set; } = 2.0f;
         public float CurrentSpeed { get; set; }
         public float Progress { get; set; } // [0,1] range
+        public string DisplayName { get; set; } = "Vehicle";
 
         public VehicleState State { get; set; }
         public float elapsedInState { get; set; }

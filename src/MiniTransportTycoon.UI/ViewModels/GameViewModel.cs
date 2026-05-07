@@ -436,6 +436,19 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             foreach (var coreVehicle in _model.Vehicles)
             {
+                var existing = Vehicles.FirstOrDefault(
+                    v => v.CoreVehicleRef == coreVehicle);
+
+                if (existing == null)
+                {
+                    existing = new ViewVehicle
+                    {
+                        CoreVehicleRef = coreVehicle
+                    };
+
+                    Vehicles.Add(existing);
+                }
+
                 float x = coreVehicle.CurrentField.X * tileSize + (tileSize / 2f);
                 float y = coreVehicle.CurrentField.Y * tileSize + (tileSize / 2f);
 
@@ -446,10 +459,19 @@ namespace MiniTransportTycoon.UI.ViewModels
 
                     x += (targetX - x) * coreVehicle.Progress;
                     y += (targetY - y) * coreVehicle.Progress;
-
                 }
 
-                Vehicles.Add(new ViewVehicle { X = x, Y = y });
+                existing.X = x;
+                existing.Y = y;
+                }
+
+            // remove deleted vehicles
+            for (int i = Vehicles.Count - 1; i >= 0; i--)
+            {
+                if (!_model.Vehicles.Contains(Vehicles[i].CoreVehicleRef))
+                {
+                    Vehicles.RemoveAt(i);
+                }
             }
         }
 

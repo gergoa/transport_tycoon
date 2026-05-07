@@ -259,6 +259,7 @@ namespace MiniTransportTycoon.Game.GameModel
             vehicle.PreviousField = startField;
             vehicle.CurrentField = startField;
             vehicle.NextField = null!;
+            vehicle.DisplayName = type.ToString();
 
             vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
 

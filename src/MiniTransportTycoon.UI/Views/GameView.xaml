@@ -88,6 +88,12 @@
                                 <Button Content="Small Bus"
                                         Command="{Binding BuySmallBusCommand}"
                                         Style="{StaticResource ToolbarButton}"/>
+                                                <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                                         Background="Transparent"
+                                                         Foreground="White"
+                                                         BorderThickness="0"
+                                                         FontWeight="Bold"
+                                                         KeyDown="VehicleNameTextBox_KeyDown"/>
 
                                 <Button Content="Large Bus"
                                         Command="{Binding BuyLargeBusCommand}"
