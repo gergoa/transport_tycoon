@@ -52,10 +52,7 @@ namespace MiniTransportTycoon.Game.GameModel
                     if (cx + dx[i] < 0 || cx + dx[i] >= width || cy + dy[i] < 0 || cy + dy[i] >= height) continue;
                     Field field2 = board[cx + dx[i], cy + dy[i]];
 
-                    if (field2.Type == FieldType.EMPTY /*||
-                        (field2.Type == FieldType.ROAD && !cityFieldsSet.Contains(field2)) //út mező belefoglalása a városba
-                        */
-                        )
+                    if (field2.Type == FieldType.EMPTY || field2.Type == FieldType.FOREST)
                     {
                         // Mező szomszédainak vizsgálása, hogy akkor terjedjen oda, ha legalább 2 szomszédos mezője a város
                         int citycount = 0;
@@ -83,7 +80,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
             city.Fields.Add(newField);
             newField.PlaceFacility(city);
-            if (type == FieldType.EMPTY)
+            if (type == FieldType.EMPTY || type == FieldType.FOREST)
             {
                 int dx = (newField.X - city.CenterX)%3;
                 int dy = (newField.Y - city.CenterY)%3;
@@ -97,11 +94,7 @@ namespace MiniTransportTycoon.Game.GameModel
                     newField.Type = FieldType.CITY;
                     city.Population += city.Population / city.Fields.Count;
                 }
-            }/*
-            else
-            {
-                newField.Type = FieldType.ROAD;
-            }*/
+            }
             return true;
         }
 
