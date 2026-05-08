@@ -349,7 +349,7 @@
                         <TextBlock Grid.Row="0" Text="{Binding OverlayTitle}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                         <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                            <TextBlock Text="Production:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                            <TextBlock Text="Production / Passanger:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
                             <Grid Margin="0,2">
                                 <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
                                 <TextBlock Text="{Binding FacilityRateText}" Foreground="#2ECC71" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
