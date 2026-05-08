@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using MiniTransportTycoon.Game.Time;
-using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Cargo;
 using MiniTransportTycoon.Core.Vehicles;
+using MiniTransportTycoon.Core.Buildings;
 
 namespace MiniTransportTycoon.UI.ViewModels
 {
@@ -21,7 +21,8 @@ namespace MiniTransportTycoon.UI.ViewModels
     {
         Road,
         Bridge,
-        Stop
+        Stop,
+        Nothing
     }
 
     class GameViewModel : ViewModelBase
@@ -30,7 +31,8 @@ namespace MiniTransportTycoon.UI.ViewModels
         private DispatcherTimer _timer;
         private TickData tickMapData;
         private (int X, int Y)? _bridgeStart = null;
-
+        private VehicleType? _pendingVehicleType = null;
+        private List<Stop> _pendingRouteStops = new();
         public TickData TickData => tickMapData;
         public bool MapUpdateNeeded = false;
 
@@ -62,6 +64,24 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand BuyLightTier3TruckCommand { get; private set; }
         public DelegateCommand BuyHeavyTier3TruckCommand { get; private set; }
 
+        public DelegateCommand CancelVehiclePurchaseCommand { get; private set; }
+
+        public bool IsSelectingVehicleRoute => _pendingVehicleType != null;
+
+        private bool _isVehicleMenuOpen;
+        public bool IsVehicleMenuOpen
+        {
+            get => _isVehicleMenuOpen;
+            set
+            {
+                if (_isVehicleMenuOpen != value)
+                {
+                    _isVehicleMenuOpen = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         // facility overlay, will have to abstract over or something
         private Facility? _selectedFacility;
 
@@ -83,8 +103,22 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public DelegateCommand CloseOverlayCommand { get; private set; }
 
+        public string FacilityRateText
+        {
+            get
+            {
+                if (_selectedFacility is City city)
+                    return $"{city.PassengerRate:0.00}";
+
+                if (_selectedFacility is Industry industry)
+                    return $"{industry.ProductionRate:0.00}";
+
+                return "";
+            }
+        }
+
         // build mode
-        private BuildMode _currentBuildMode = BuildMode.Road;
+        private BuildMode _currentBuildMode = BuildMode.Nothing;
         public BuildMode CurrentBuildMode
         {
             get => _currentBuildMode;
@@ -94,6 +128,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand SelectRoadModeCommand { get; private set; }
         public DelegateCommand SelectBridgeModeCommand { get; private set; }
         public DelegateCommand SelectStopModeCommand { get; private set; }
+        public DelegateCommand ClearBuildModeCommand { get; private set; }
 
         public int Money
         {
@@ -173,21 +208,33 @@ namespace MiniTransportTycoon.UI.ViewModels
             SelectRoadModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Road);
             SelectBridgeModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Bridge);
             SelectStopModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Stop);
+            ClearBuildModeCommand = new DelegateCommand(_ => CurrentBuildMode = BuildMode.Nothing);
 
-            BuySmallBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.SmallBus));
-            BuyLargeBusCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LargeBus));
+            BuySmallBusCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.SmallBus));
+            BuyLargeBusCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.LargeBus));
 
-            BuyLightTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier0Truck));
-            BuyHeavyTier0TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier0Truck));
+            BuyLightTier0TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.LightTier0Truck));
+            BuyHeavyTier0TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.HeavyTier0Truck));
 
-            BuyLightTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier1Truck));
-            BuyHeavyTier1TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier1Truck));
+            BuyLightTier1TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.LightTier1Truck));
+            BuyHeavyTier1TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.HeavyTier1Truck));
 
-            BuyLightTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier2Truck));
-            BuyHeavyTier2TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier2Truck));
+            BuyLightTier2TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.LightTier2Truck));
+            BuyHeavyTier2TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.HeavyTier2Truck));
 
-            BuyLightTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.LightTier3Truck));
-            BuyHeavyTier3TruckCommand = new DelegateCommand(_ => BuyVehicle(VehicleType.HeavyTier3Truck));
+            BuyLightTier3TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.LightTier3Truck));
+            BuyHeavyTier3TruckCommand = new DelegateCommand(_ => StartVehiclePurchase(VehicleType.HeavyTier3Truck));
+
+            CancelVehiclePurchaseCommand = new DelegateCommand(_ =>
+            {
+                _pendingVehicleType = null;
+                _pendingRouteStops.Clear();
+
+                IsVehicleMenuOpen = false;
+
+                OnPropertyChanged(nameof(IsSelectingVehicleRoute));
+                OnPropertyChanged(nameof(PendingRouteText));
+            });
 
             _model.FieldChanged += OnFieldChanged;
 
@@ -244,6 +291,12 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
 
                 var coreField = _model.Board[position.X, position.Y];
+
+                if (IsSelectingVehicleRoute)
+                {
+                    FinishVehiclePurchase(coreField);
+                    return;
+                }
 
                 // check if facility is clicked
                 if (coreField.Facility != null)
@@ -305,6 +358,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                         case BuildMode.Stop:
                             _model.BuildStop(coreField);
                             break;
+                        case BuildMode.Nothing:
+                            return;
                     }
                     OnPropertyChanged(nameof(Money));
                     MapUpdateNeeded = true;
@@ -386,18 +441,24 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 var coreField = _model.Board[gridX, gridY];
 
-                // check if facility is clicked
-                if (coreField.Facility != null)
+            if (IsSelectingVehicleRoute)
+            {
+                FinishVehiclePurchase(coreField);
+                return;
+            }
+
+            // check if facility is clicked
+            if (coreField.Facility != null)
+            {
+                if (_selectedFacility != coreField.Facility)
                 {
-                    if (_selectedFacility != coreField.Facility)
-                    {
-                        _selectedFacility = coreField.Facility;
-                        InventoryInList.Clear();
-                        InventoryOutList.Clear();
-                    }
-                    OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
-                    IsOverlayVisible = true;
-                    SyncOverlay();
+                    _selectedFacility = coreField.Facility;
+                    InventoryInList.Clear();
+                    InventoryOutList.Clear();
+                }
+                OverlayTitle = _selectedFacility is City ? "City Inventory" : "Industry Inventory";
+                IsOverlayVisible = true;
+                SyncOverlay();
 
                     if (_selectedFacility is City c)
                     {
@@ -459,12 +520,22 @@ namespace MiniTransportTycoon.UI.ViewModels
         private void SyncVehicles()
         {
             float tileSize = 10f;
-            float laneOffset = 2f;
-
-            Vehicles.Clear();
 
             foreach (var coreVehicle in _model.Vehicles)
             {
+                var existing = Vehicles.FirstOrDefault(
+                    v => v.CoreVehicleRef == coreVehicle);
+
+                if (existing == null)
+                {
+                    existing = new ViewVehicle
+                    {
+                        CoreVehicleRef = coreVehicle
+                    };
+
+                    Vehicles.Add(existing);
+                }
+
                 float x = coreVehicle.CurrentField.X * tileSize + (tileSize / 2f);
                 float y = coreVehicle.CurrentField.Y * tileSize + (tileSize / 2f);
 
@@ -475,10 +546,19 @@ namespace MiniTransportTycoon.UI.ViewModels
 
                     x += (targetX - x) * coreVehicle.Progress;
                     y += (targetY - y) * coreVehicle.Progress;
-
                 }
 
-                Vehicles.Add(new ViewVehicle { X = x, Y = y });
+                existing.X = x;
+                existing.Y = y;
+            }
+
+            // remove deleted vehicles
+            for (int i = Vehicles.Count - 1; i >= 0; i--)
+            {
+                if (!_model.Vehicles.Contains(Vehicles[i].CoreVehicleRef))
+                {
+                    Vehicles.RemoveAt(i);
+                }
             }
         }
 
@@ -488,6 +568,8 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             SyncDictToOBC(_selectedFacility.InventoryIn, InventoryInList);
             SyncDictToOBC(_selectedFacility.InventoryOut, InventoryOutList);
+
+            OnPropertyChanged(nameof(FacilityRateText));
         }
 
         private void SyncDictToOBC(Dictionary<CargoType, int> sourceDict, ObservableCollection<InventoryItem> targetList)
@@ -513,21 +595,71 @@ namespace MiniTransportTycoon.UI.ViewModels
             return BridgeType.Highway;
         }
 
-        private void BuyVehicle(VehicleType type)
+        private void StartVehiclePurchase(VehicleType type)
         {
-            lock (_model.StateLock)
-            {
-                DebugText = $"Buy clicked: {type}";
-                
-                _model.BuyVehicleOnFirstRoute(type);
+            _pendingVehicleType = type;
+            _pendingRouteStops.Clear();
 
-                DebugText += $" | Routes: {_model.Routes.Count}";
-                
+            OnPropertyChanged(nameof(IsSelectingVehicleRoute));
+            OnPropertyChanged(nameof(PendingRouteText));
+        }
+
+        private void FinishVehiclePurchase(Field coreField)
+        {
+            if (_pendingVehicleType == null)
+                return;
+
+            if (coreField.Stop == null)
+                return;
+
+            Stop clickedStop = coreField.Stop;
+
+            // loop close: A -> B -> A
+            if (_pendingRouteStops.Count >= 2 &&
+                clickedStop == _pendingRouteStops.First())
+            {
+                _pendingRouteStops.Add(clickedStop);
+
+                _model.BuyVehicleWithStops(
+                    _pendingVehicleType.Value,
+                    _pendingRouteStops);
+
+                _pendingVehicleType = null;
+                _pendingRouteStops.Clear();
+
+                IsVehicleMenuOpen = false;
+
+                OnPropertyChanged(nameof(IsSelectingVehicleRoute));
+                OnPropertyChanged(nameof(PendingRouteText));
+                OnPropertyChanged(nameof(Money));
+
                 SyncVehicles();
+                return;
             }
 
-            OnPropertyChanged(nameof(DebugText));
-            OnPropertyChanged(nameof(Money));
+            if (_pendingRouteStops.Contains(clickedStop))
+                return;
+
+            _pendingRouteStops.Add(clickedStop);
+
+            OnPropertyChanged(nameof(PendingRouteText));
+        }
+
+        public string PendingRouteText
+        {
+            get
+            {
+                if (_pendingVehicleType == null)
+                    return "";
+
+                if (_pendingRouteStops.Count == 0)
+                    return $"Buying: {_pendingVehicleType}\nClick the first stop.";
+
+                if (_pendingRouteStops.Count == 1)
+                    return $"Buying: {_pendingVehicleType}\nSelected stops: 1\nClick at least one more stop.";
+
+                return $"Buying: {_pendingVehicleType}\nSelected stops: {_pendingRouteStops.Count}\nClick the first stop again to complete the loop.";
+            }
         }
     }
 }

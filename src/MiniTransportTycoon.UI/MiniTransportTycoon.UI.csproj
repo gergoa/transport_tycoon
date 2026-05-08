@@ -46,4 +46,10 @@
     <Folder Include="Assets\Roads\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Views\LoadingView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
 </Project>

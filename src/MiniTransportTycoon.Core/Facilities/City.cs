@@ -46,7 +46,8 @@ namespace MiniTransportTycoon.Core.Facilities
 
             while (_passengerAccumulator >= 1.0f)
             {
-                InventoryOut[CargoType.Passengers]++;
+                if (InventoryOut[CargoType.Passengers]<Population/10)
+                    InventoryOut[CargoType.Passengers]++;
                 _passengerAccumulator -= 1.0f;
             }
         }
