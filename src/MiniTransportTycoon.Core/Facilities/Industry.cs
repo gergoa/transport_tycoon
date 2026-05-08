@@ -13,10 +13,17 @@ namespace MiniTransportTycoon.Core.Facilities
         private float status = 0.0f;
         private bool producing = false;
 
-        public Industry(List<Field> fields, CargoType outputType) : base(fields)
+        public Industry( List<Field> fields, CargoType outputType, Dictionary<CargoType, int>? inputRequirements = null) : base(fields)
         {
-            this.OutputType = outputType;
-            this.InventoryOut[outputType] = 0;
+            OutputType = outputType;
+            InputRequirements = inputRequirements ?? new Dictionary<CargoType, int>();
+
+            InventoryOut[outputType] = 0;
+
+            foreach (var input in InputRequirements.Keys)
+            {
+                InventoryIn[input] = 0;
+            }
         }
 
         public void Produce(float deltaTime)

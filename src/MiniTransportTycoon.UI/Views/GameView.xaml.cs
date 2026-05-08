@@ -25,6 +25,15 @@ namespace MiniTransportTycoon.UI.Views
             MapRenderControl.Start(new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 6 });
         }
 
+        private void VehicleNameTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && sender is TextBox textBox)
+            {
+                Keyboard.ClearFocus();
+                e.Handled = true;
+            }
+        }
+
         public void MapRenderControl_OnReady()
         {
         }

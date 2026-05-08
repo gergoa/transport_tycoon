@@ -15,11 +15,16 @@ namespace MiniTransportTycoon.Game.GameModel
     {
         private static readonly Random _random = new Random();
 
-        internal static void TickFacilities(List<Facility> facilities, float deltaTime)
+        internal static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
         {
             foreach (var facility in facilities)
             {
                 facility.Tick(deltaTime);
+                if(facility is City c && c.GrowthPoints>=c.Population/10)
+                {
+                    c.GrowthPoints = 0;
+                    TryGrowCity(gameModel, c);
+                }
             }
         }
 
@@ -47,10 +52,7 @@ namespace MiniTransportTycoon.Game.GameModel
                     if (cx + dx[i] < 0 || cx + dx[i] >= width || cy + dy[i] < 0 || cy + dy[i] >= height) continue;
                     Field field2 = board[cx + dx[i], cy + dy[i]];
 
-                    if (field2.Type == FieldType.EMPTY /*||
-                        (field2.Type == FieldType.ROAD && !cityFieldsSet.Contains(field2)) //út mező belefoglalása a városba
-                        */
-                        )
+                    if (field2.Type == FieldType.EMPTY || field2.Type == FieldType.FOREST)
                     {
                         // Mező szomszédainak vizsgálása, hogy akkor terjedjen oda, ha legalább 2 szomszédos mezője a város
                         int citycount = 0;
@@ -78,7 +80,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
             city.Fields.Add(newField);
             newField.PlaceFacility(city);
-            if (type == FieldType.EMPTY)
+            if (type == FieldType.EMPTY || type == FieldType.FOREST)
             {
                 int dx = (newField.X - city.CenterX)%3;
                 int dy = (newField.Y - city.CenterY)%3;
@@ -90,12 +92,9 @@ namespace MiniTransportTycoon.Game.GameModel
                 else
                 {
                     newField.Type = FieldType.CITY;
+                    city.Population += city.Population / city.Fields.Count;
                 }
-            }/*
-            else
-            {
-                newField.Type = FieldType.ROAD;
-            }*/
+            }
             return true;
         }
 
@@ -218,10 +217,16 @@ namespace MiniTransportTycoon.Game.GameModel
         {
             var facilities = model.Facilities;
 
-            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis"));
-            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville"));
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis")
+            {
+                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1} }
+            });
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville")
+            {
+                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1 } }
+            });
 
-            // TIER 0
+            // TIER 0 - raw producers, no input needed
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Wood) { ProductionRate = 1.0f });
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.IronOre) { ProductionRate = 1.0f });
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Coal) { ProductionRate = 1.0f });
@@ -230,68 +235,21 @@ namespace MiniTransportTycoon.Game.GameModel
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Livestock) { ProductionRate = 1.2f });
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.CopperOre) { ProductionRate = 1.0f });
 
-            /*// TIER 1
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Lumber)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Wood, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Steel)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.IronOre, 2 }, { CargoType.Coal, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Plastic)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CrudeOil, 2 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.CopperWire)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CopperOre, 1 } }
-            });
+            // TIER 1
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Lumber, new Dictionary<CargoType, int> { { CargoType.Wood, 1 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.CopperWire, new Dictionary<CargoType, int> { { CargoType.CopperOre, 1 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Plastic, new Dictionary<CargoType, int> { { CargoType.CrudeOil, 2 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Steel, new Dictionary<CargoType, int> { { CargoType.IronOre, 2 }, { CargoType.Coal, 1 } }) { ProductionRate = 1.0f });
 
             // TIER 2
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.ProcessedFood)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Grain, 1 }, { CargoType.Livestock, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Furniture)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Lumber, 3 }, { CargoType.Steel, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Tools)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Steel, 2 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Microchips)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.CopperWire, 3 }, { CargoType.Plastic, 1 } }
-            });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.ProcessedFood, new Dictionary<CargoType, int> { { CargoType.Grain, 1 }, { CargoType.Livestock, 1 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Microchips, new Dictionary<CargoType, int> { { CargoType.CopperWire, 3 }, { CargoType.Plastic, 1 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Tools, new Dictionary<CargoType, int> { { CargoType.Steel, 2 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Furniture, new Dictionary<CargoType, int> { { CargoType.Lumber, 3 }, { CargoType.Steel, 1 } }) { ProductionRate = 1.0f });
 
             // TIER 3
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Automobiles)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Steel, 4 }, { CargoType.Plastic, 1 }, { CargoType.Tools, 1 } }
-            });
-
-            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Electronics)
-            {
-                ProductionRate = 1.0f,
-                InputRequirements = new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }
-            });*/
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Automobiles, new Dictionary<CargoType, int> { { CargoType.Steel, 4 }, { CargoType.Plastic, 1 }, { CargoType.Tools, 1 } }) { ProductionRate = 1.0f });
+            facilities.Add(new Industry(FindEmptyFields(model), CargoType.Electronics, new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }) { ProductionRate = 1.0f });
         }
 
         public static bool FacilityAcceptsCargo(Facility facility, CargoType type)

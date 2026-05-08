@@ -32,5 +32,18 @@ namespace MiniTransportTycoon.UI.ViewModels
             }
         }
         public Vehicle CoreVehicleRef { get; set; } = null!;
+
+        public string DisplayName
+        {
+            get => CoreVehicleRef.DisplayName;
+            set
+            {
+                if (CoreVehicleRef.DisplayName != value)
+                {
+                    CoreVehicleRef.DisplayName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
     }
 }

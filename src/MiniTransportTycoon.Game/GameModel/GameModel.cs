@@ -95,7 +95,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
             UpdateSpawn(scaledTime);
 
-            FacilityManager.TickFacilities(facilities, scaledTime);
+            FacilityManager.TickFacilities(facilities, scaledTime, this);
 
             vehicleManager.UpdateVehicles(scaledTime, board, pathfinder, economyManager, vehicles);
 
@@ -259,18 +259,11 @@ namespace MiniTransportTycoon.Game.GameModel
             vehicle.PreviousField = startField;
             vehicle.CurrentField = startField;
             vehicle.NextField = null!;
+            vehicle.DisplayName = type.ToString();
 
             vehicleManager.RecalculateAllPaths(pathfinder, vehicles);
 
             MapUpdated?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void BuyVehicleOnFirstRoute(VehicleType type)
-        {
-            if (routes.Count == 0)
-                return;
-
-            BuyVehicle(type, routes[0]);
         }
 
         private void RebuildDefaultRoute()
@@ -298,6 +291,24 @@ namespace MiniTransportTycoon.Game.GameModel
                 route.AddStop(stop);
 
             routes.Add(route);
+        }
+
+        public void BuyVehicleWithStops(VehicleType type, List<Stop> stops)
+        {
+            if (stops.Count < 2)
+                return;
+
+            var route = new Route();
+            route.loop = true;
+
+            foreach (var stop in stops)
+            {
+                route.AddStop(stop);
+            }
+
+            routes.Add(route);
+
+            BuyVehicle(type, route);
         }
 
         #region Forest management
