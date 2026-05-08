@@ -36,6 +36,11 @@ namespace MiniTransportTycoon.UI.Views
 
         public void MapRenderControl_OnReady()
         {
+
+        }
+        private void MapRenderControl_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            _renderer.Resize((int)e.NewSize.Width, (int)e.NewSize.Height);
         }
 
         public void MapRenderControl_OnRender(TimeSpan delta)
@@ -48,6 +53,13 @@ namespace MiniTransportTycoon.UI.Views
                 _renderer.Resize(vm.Width, vm.Height);
 
                 _isRendererInitialized = true;
+            }
+
+            // check if tiles have updated
+            if (vm.MapUpdateNeeded)
+            {
+                _renderer.Refresh(vm.TickData);
+                vm.MapUpdateNeeded = false;
             }
 
             bool w = Keyboard.IsKeyDown(Key.W);
@@ -79,8 +91,6 @@ namespace MiniTransportTycoon.UI.Views
 
             _renderer.MoveCamera(delta);
             _renderer.Render(vm.TickData, delta);
-
-            UpdateMinimapFrustum();
         }
 
         private void MapRenderControl_MouseDown(object sender, MouseButtonEventArgs e)
@@ -113,29 +123,6 @@ namespace MiniTransportTycoon.UI.Views
             _renderer.ZoomCamera(e.Delta);
         }
 
-        private void UpdateMinimapFrustum()
-        {
-            var camera = _renderer?.GetCamera();
-            if (camera == null || MapRenderControl.ActualWidth == 0) return;
-
-            float w = (float)MapRenderControl.ActualWidth;
-            float h = (float)MapRenderControl.ActualHeight;
-
-            Vector2 tl = GetExactMapIntersection(0, 0, w, h, camera);
-            Vector2 tr = GetExactMapIntersection(w, 0, w, h, camera);
-            Vector2 br = GetExactMapIntersection(w, h, w, h, camera);
-            Vector2 bl = GetExactMapIntersection(0, h, w, h, camera);
-
-            float tileSize = 1.0f;
-            float sX = 500f / vm!.Width;
-            float sY = 500f / vm!.Height;
-
-            MinimapFrustum.Points.Clear();
-            MinimapFrustum.Points.Add(new System.Windows.Point((tl.X / tileSize) * sX, (tl.Y / tileSize) * sY));
-            MinimapFrustum.Points.Add(new System.Windows.Point((tr.X / tileSize) * sX, (tr.Y / tileSize) * sY));
-            MinimapFrustum.Points.Add(new System.Windows.Point((br.X / tileSize) * sX, (br.Y / tileSize) * sY));
-            MinimapFrustum.Points.Add(new System.Windows.Point((bl.X / tileSize) * sX, (bl.Y / tileSize) * sY));
-        }
 
         private Vector2 GetExactMapIntersection(float mouseX, float mouseY, float screenWidth, float screenHeight, MiniTransportTycoon.UI.Rendering.Camera.Camera camera)
         {

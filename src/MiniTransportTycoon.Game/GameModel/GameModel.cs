@@ -10,12 +10,22 @@ using System;
 using MiniTransportTycoon.Core.Buildings;
 using MiniTransportTycoon.Game.Routes;
 
+using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
+
 namespace MiniTransportTycoon.Game.GameModel
 {
     public class GameModel
     {
-        private int width = 50;
-        private int height = 50;
+        // multithreading
+        public readonly object StateLock = new object();
+        private CancellationTokenSource? _cancellationTokenSource;
+        private Task? _simulationTask;
+
+        // gamemodel data
+        private int width = 130;
+        private int height = 130;
         private float _spawnTimer = 0f;
         private const float SpawnInterval = 20f;
         private Field[,] board = null!;
@@ -55,6 +65,8 @@ namespace MiniTransportTycoon.Game.GameModel
             IsGameOver = false;
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
+            vehicles = new();
+            routes = new();
             FacilityManager.CleanFacilities(this);
             FacilityManager.InitializeFacilities(this);
             forestFields.Clear();
@@ -78,6 +90,56 @@ namespace MiniTransportTycoon.Game.GameModel
             OnGameStarted();
         }
 
+        public void StartSimulation(int targetTicksPerSecond = 60)
+        {
+            StopSimulation();
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken token = _cancellationTokenSource.Token;
+
+            _simulationTask = Task.Run(() => SimulationLoop(targetTicksPerSecond, token), token);
+        }
+
+        public void StopSimulation()
+        {
+            if (_cancellationTokenSource != null)
+            {
+                _cancellationTokenSource.Cancel();
+                _simulationTask?.Wait();
+                _cancellationTokenSource.Dispose();
+                _cancellationTokenSource = null;
+            }
+        }
+
+        private void SimulationLoop(int targetTicksPerSecond, CancellationToken token)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            long lastTime = stopwatch.ElapsedMilliseconds;
+            int targetFrameTimeMs = 1000 / targetTicksPerSecond;
+
+            while (!token.IsCancellationRequested)
+            {
+                long currentTime = stopwatch.ElapsedMilliseconds;
+                float deltaTime = (currentTime - lastTime) / 1000f;
+                lastTime = currentTime;
+
+                // lock to prevent conflicts
+                lock (StateLock)
+                {
+                    // update
+                    GameTick(deltaTime);
+                }
+
+                // sleep
+                long elapsedTickTime = stopwatch.ElapsedMilliseconds - currentTime;
+                int sleepTime = targetFrameTimeMs - (int)elapsedTickTime;
+
+                if (sleepTime > 0)
+                {
+                    Thread.Sleep(sleepTime);
+                }
+            }
+        }
         public void GameTick(float deltaTime, bool ignoreTimeScale = false)
         {
             float scaledTime = ignoreTimeScale

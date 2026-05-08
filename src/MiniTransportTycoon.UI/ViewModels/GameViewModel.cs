@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using MiniTransportTycoon.Game.Time;
 using MiniTransportTycoon.Core.Cargo;
@@ -33,6 +34,8 @@ namespace MiniTransportTycoon.UI.ViewModels
         private VehicleType? _pendingVehicleType = null;
         private List<Stop> _pendingRouteStops = new();
         public TickData TickData => tickMapData;
+        public bool MapUpdateNeeded = false;
+
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
         public DelegateCommand FieldClickCommand { get; }
@@ -157,36 +160,40 @@ namespace MiniTransportTycoon.UI.ViewModels
         {
             _model = model;
             _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromMilliseconds(100);
+            _timer.Interval = TimeSpan.FromMilliseconds(33);
             _timer.Tick += OnTimerTick;
             _timer.Start();
-            tickMapData = new TickData(new Field[Width,Height], Width, Height);
+            tickMapData = new TickData(new Field[Width,Height], model.Vehicles, Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
+            _model.StartSimulation(60);
 
-            TickCommand = new DelegateCommand(param => { model.GameTick(0.1f, true); OnPropertyChanged(nameof(Time)); });
+            TickCommand = new DelegateCommand(param => {
+                lock (_model.StateLock) _model.GameTick(0.1f, true);
+                OnPropertyChanged(nameof(Time));
+            });
 
-            NewGameCommand = new DelegateCommand(param => { model.StartNewGame(Width, Height); OnPropertyChanged(nameof(Money)); OnPropertyChanged(nameof(Time)); _timer.Start(); });
+            NewGameCommand = new DelegateCommand(param => {
+                lock (_model.StateLock) _model.StartNewGame(Width, Height);
+                OnPropertyChanged(nameof(Money));
+                OnPropertyChanged(nameof(Time));
+                _timer.Start();
+            });
 
-            PauseCommand = new DelegateCommand(_ =>
-                _model.TimeManager.SetSpeed(TimeSpeed.Paused));
+            PauseCommand = new DelegateCommand(_ => { lock (_model.StateLock) _model.TimeManager.SetSpeed(TimeSpeed.Paused); });
+            NormalSpeedCommand = new DelegateCommand(_ => { lock (_model.StateLock) _model.TimeManager.SetSpeed(TimeSpeed.Normal); });
+            FastSpeedCommand = new DelegateCommand(_ => { lock (_model.StateLock) _model.TimeManager.SetSpeed(TimeSpeed.Fast); });
+            VeryFastSpeedCommand = new DelegateCommand(_ => { lock (_model.StateLock) _model.TimeManager.SetSpeed(TimeSpeed.VeryFast); });
 
-            NormalSpeedCommand = new DelegateCommand(_ =>
-                _model.TimeManager.SetSpeed(TimeSpeed.Normal));
-
-            FastSpeedCommand = new DelegateCommand(_ =>
-                _model.TimeManager.SetSpeed(TimeSpeed.Fast));
-
-            VeryFastSpeedCommand = new DelegateCommand(_ =>
-                _model.TimeManager.SetSpeed(TimeSpeed.VeryFast));
-
-            DebugGrowCitiesCommand = new DelegateCommand(_ => _model.DebugGrowCities());
-
+            DebugGrowCitiesCommand = new DelegateCommand(_ => { lock (_model.StateLock) _model.DebugGrowCities(); });
             DebugSpawnVehicleCommand = new DelegateCommand(_ =>
             {
-                _model.DebugSpawnVehicle();
-                SyncVehicles();
+                lock (_model.StateLock)
+                {
+                    _model.DebugSpawnVehicle();
+                    SyncVehicles();
+                }
             });
 
             CloseOverlayCommand = new DelegateCommand(_ =>
@@ -256,19 +263,21 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnTimerTick(object? sender, EventArgs e)
         {
-            if (_model.IsGameOver)
+            lock (_model.StateLock)
             {
-                _timer.Stop();
-                OnPropertyChanged(nameof(IsGameOver));
-                return;
-            }
-            _model.GameTick(0.1f); // 100ms = 0.1 sec
+                if (_model.IsGameOver)
+                {
+                    _timer.Stop();
+                    OnPropertyChanged(nameof(IsGameOver));
+                    return;
+                }
 
-            SyncVehicles();
+                SyncVehicles();
 
-            if (IsOverlayVisible)
-            {
-                SyncOverlay();
+                if (IsOverlayVisible)
+                {
+                    SyncOverlay();
+                }
             }
 
             OnPropertyChanged(nameof(Time));
@@ -353,6 +362,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             return;
                     }
                     OnPropertyChanged(nameof(Money));
+                    MapUpdateNeeded = true;
                 }
 
                 //DebugText = $"X: {position.X} Y: {position.Y}";
@@ -362,34 +372,53 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void OnFieldChanged(int x, int y, FieldType newType)
         {
-            if (0 <= x && x < Width && 0 <= y && y < Height)
+            Application.Current.Dispatcher.BeginInvoke(() =>
             {
-                Fields[y * Width + x].Type = newType;
-                Fields[y * Width + x].HasStop = _model.Board[x, y].HasStop;
-                Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
-            }
+                lock (_model.StateLock)
+                {
+                    if (0 <= x && x < Width && 0 <= y && y < Height)
+                    {
+                        Fields[y * Width + x].Type = newType;
+                        Fields[y * Width + x].HasStop = _model.Board[x, y].HasStop;
+                        Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
+                    }
 
-            tickMapData.Fields[x,y].Type = newType;
-            
+                    tickMapData.Fields[x, y].Type = newType;
+                }
+            });
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)
         {
-            for (int j = 0; j < Height; j++)
+            Application.Current.Dispatcher.BeginInvoke(() =>
             {
-                for (int i = 0; i < Width; i++)
+                lock (_model.StateLock)
                 {
-                    Fields[j*Width+i].Type = _model.Board[i, j].Type;
-                    tickMapData.Fields[i, j] = _model.Board[i, j];
+                    for (int j = 0; j < Height; j++)
+                    {
+                        for (int i = 0; i < Width; i++)
+                        {
+                            Fields[j * Width + i].Type = _model.Board[i, j].Type;
+                            tickMapData.Fields[i, j] = _model.Board[i, j];
+                        }
+                    }
+                    tickMapData.Height = Height;
+                    tickMapData.Width = Width;
                 }
-            }
-            tickMapData.Height = Height;
-            tickMapData.Width = Width;
+            });
         }
 
         private void _model_MapUpdated(object? sender, EventArgs e)
         {
-            SyncMap();
+            Application.Current?.Dispatcher?.BeginInvoke(() =>
+            {
+                lock (_model.StateLock)
+                {
+                    SyncMap();
+                }
+            });
+
+            MapUpdateNeeded = true;
         }
 
         private void SyncMap()
@@ -407,7 +436,10 @@ namespace MiniTransportTycoon.UI.ViewModels
         public void HandleGridClick(int gridX, int gridY)
         {
             if (0 > gridX || gridX >= Width || 0 > gridY || gridY >= Height) return;
-            var coreField = _model.Board[gridX, gridY];
+
+            lock (_model.StateLock)
+            {
+                var coreField = _model.Board[gridX, gridY];
 
             if (IsSelectingVehicleRoute)
             {
@@ -428,31 +460,30 @@ namespace MiniTransportTycoon.UI.ViewModels
                 IsOverlayVisible = true;
                 SyncOverlay();
 
-                if (_selectedFacility is City c)
-                {
-                    DebugText = $"time:{c.TimeToRateChange} change:{c.ChangeRate} rate:{c.PassengerRate}";
+                    if (_selectedFacility is City c)
+                    {
+                        DebugText = $"time:{c.TimeToRateChange} change:{c.ChangeRate} rate:{c.PassengerRate}";
+                    }
+                    if (_selectedFacility is Industry i)
+                    {
+                        DebugText = $"time:{i.TimeToRateChange} change:{i.ChangeRate} rate:{i.ProductionRate}";
+                    }
                 }
-                if (_selectedFacility is Industry i)
+                else
                 {
-                    DebugText = $"time:{i.TimeToRateChange} change:{i.ChangeRate} rate:{i.ProductionRate}";
-                }
-            }
-            else
-            {
-                switch (CurrentBuildMode)
-                {
-                    case BuildMode.Road:
-                        _model.BuildRoad(coreField);
-                        break;
-                    case BuildMode.Bridge:
-
+                    switch (CurrentBuildMode)
+                    {
+                        case BuildMode.Road:
+                            _model.BuildRoad(coreField);
+                            break;
+                        case BuildMode.Bridge:
                             if (_bridgeStart == null)
                             {
-                            _bridgeStart = (gridX, gridY);
-                            DebugText = $"Bridge start set: {gridX},{gridY}";
-                            OnPropertyChanged(nameof(DebugText));
-                            return;
-                        }
+                                _bridgeStart = (gridX, gridY);
+                                DebugText = $"Bridge start set: {gridX},{gridY}";
+                                OnPropertyChanged(nameof(DebugText));
+                                return;
+                            }
 
                             var start = _model.Board[_bridgeStart.Value.X, _bridgeStart.Value.Y];
                             var end = coreField;
@@ -466,22 +497,23 @@ namespace MiniTransportTycoon.UI.ViewModels
                                 _bridgeStart = null;
                                 return;
                             }
-                            path.Insert(0, start);
 
+                            path.Insert(0, start);
                             var type = GetBridgeTypeByLength(path.Count);
 
                             _model.BuildBridge(path, type);
 
                             _bridgeStart = null;
                             break;
-                    case BuildMode.Stop:
-                        _model.BuildStop(coreField);
-                        break;
+                        case BuildMode.Stop:
+                            _model.BuildStop(coreField);
+                            break;
+                    }
+                    MapUpdateNeeded = true;
+                    OnPropertyChanged(nameof(Money));
                 }
-                OnPropertyChanged(nameof(Money));
             }
 
-            //DebugText = $"X: {gridX} Y: {gridY}";
             OnPropertyChanged(nameof(DebugText));
         }
 

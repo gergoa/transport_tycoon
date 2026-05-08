@@ -12,6 +12,9 @@ using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.UI.Rendering.Misc;
 using MiniTransportTycoon.UI.Rendering.Camera;
 using System.Windows.Input;
+using System.IO;
+using System.Runtime.InteropServices;
+using SharpGLTF.Schema2;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -21,6 +24,15 @@ namespace MiniTransportTycoon.UI.Rendering
         private int _shaderProgram;
         private WireframeRenderer _wireframeRenderer;
         private GLMeshObject _quadMesh;
+        private GLMeshObject _testBuildingMesh;
+        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet;
+        private GLMeshObject _testVehicleMesh;
+
+        private int _colormapTexID;
+
+        private int _quadInstanceVbo;
+        private int _quadInstanceCount;
+        private readonly Dictionary<int, (int VboID, int Count)> _buildingVbos = new();
 
         protected float _elapsedTime;
 
@@ -28,64 +40,95 @@ namespace MiniTransportTycoon.UI.Rendering
         protected Camera.CameraManipulator _cameraManipulator;
 
         private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
-
-        private readonly string _vertexShaderSource = @"
-        #version 460 core
-        layout (location = 0) in vec3 aPosition;
-        // location 1 is Normal (unused)
-        // location 2 is TexCoord (unused)
-
-        uniform mat4 mvp;
-
-        void main() {
-            gl_Position = mvp * vec4(aPosition, 1.0);
-        }";
-
-        private readonly string _fragmentShaderSource = @"
-        #version 460 core
-        uniform vec3 col; // The color of our quad
-        out vec4 FragColor;
-
-        void main() {
-            FragColor = vec4(col, 1.0);
-        }";
+        private bool _isInitialized = false;
 
         public void Initialize(TickData data, int w, int h)
         {
             // core initialization
             _windowSize = new Vector2i(w, h);
+
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string vertPath = Path.Combine(baseDirectory, "Rendering", "shaders", "default.vert");
+            string fragPath = Path.Combine(baseDirectory, "Rendering", "shaders", "default.frag");
+
+            // Shader initialization
+            string _vertexShaderSource = LoadShaderSource(vertPath);
+            string _fragmentShaderSource = LoadShaderSource(fragPath);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
+            // Mesh parsing and object creation
             MeshData quad = Misc.Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
+
+            string modelPath = Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb");
+            string vehiclePath = Path.Combine(baseDirectory, "Assets", "Vehicles", "van.glb");
+
+            try
+            {
+                MeshData modelData = GlbMeshParser.LoadGlb(modelPath);
+                _testBuildingMesh = GLObjectBuilder.CreateGLObjectFromMesh(modelData);
+                MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
+                _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR::MESHDATA: Failure to load model: {e.Message}");
+            }
+            Console.WriteLine($"INFO: Loaded all models successfully.");
+
+            // textures
+            string texturePath = Path.Combine(baseDirectory, "Assets", "Buildings", "Textures", "colormap.png");
+            _colormapTexID = TextureLoader.LoadTexture(texturePath);
+
+            // Instancing setup
+            ConfigureInstancedVAO(_quadMesh.VaoID);
+            ConfigureInstancedVAO(_testBuildingMesh.VaoID);
+            BuildStaticInstanceBuffers(data);
 
             // enable depth testing
             GL.Enable(EnableCap.DepthTest);
             Console.WriteLine("GL ERROR STATE: " + GL.GetError());
 
-            // camera initialization
-            _camera = new();
-            _camera.SetAspect((float)w / h);
+            // backface culling
+            GL.Enable(EnableCap.CullFace);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+            GL.CullFace(TriangleFace.Back);
 
-            _cameraManipulator = new();
             float mapCenterX = data.Width / 2f;
-            float mapCenterY = data.Height / 2f;
+            float mapCenterZ = data.Height / 2f;
+            float aspect = (float)w / h;
 
+            Vector3 eye = new Vector3(mapCenterX, 30f, 0f);
+            Vector3 at = new Vector3(mapCenterX, 0f, mapCenterZ);
+
+            Vector3 lookDir = at - eye;
+            float distance = lookDir.Length;
+            Vector3 normLook = lookDir / distance;
+
+            float v = MathF.Acos(normLook.Y);
+            float u = MathF.Atan2(normLook.Z, normLook.X);
+
+            _camera = new(eye, at, new Vector3(0, 1, 0), aspect);
+
+            _cameraManipulator = new Camera.CameraManipulator();
             _cameraManipulator.AttachCamera(_camera,
-                startingTarget: new Vector3(mapCenterX, mapCenterY, 0f),
-                startingDistance: 55f,
-                yaw: -MathHelper.PiOver2,
-                pitch: MathHelper.PiOver2
+                startingTarget: at,
+                startingDistance: distance,
+                yaw: -u,
+                pitch: v
             );
-    
+
+            _cameraManipulator.Rotate(0, 0);
 
             // attach wireframe renderer
             _wireframeRenderer = new();
             _wireframeRenderer.Initialize();
-        }
 
+            _isInitialized = true;
+        }
         public void Resize(int w, int h)
         {
+            if (!_isInitialized) return;
             _windowSize = new Vector2i(w, h);
 
             GL.Viewport(0, 0, w, h);
@@ -105,44 +148,83 @@ namespace MiniTransportTycoon.UI.Rendering
             // attach shader program
             GL.UseProgram(_shaderProgram);
 
-            // calculate simple ortho projection, to replace with cam
-            float aspect = (float)_windowSize.X / _windowSize.Y;
+            Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
+            GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "m_viewProj"),
+                false, 
+                ref viewProj);
 
-            Matrix4 projection = _camera.ProjectionMatrix;
-            Matrix4 view = _camera.ViewMatrix;
+            // instances grouping
+            GL.FrontFace(FrontFaceDirection.Cw);
+            DrawInstancedMesh(_quadMesh, _quadInstanceVbo, _quadInstanceCount, 0);
+            GL.FrontFace(FrontFaceDirection.Ccw);
 
-            int mvpLocation = GL.GetUniformLocation(_shaderProgram, "mvp");
-            int colorLocation = GL.GetUniformLocation(_shaderProgram, "col");
-
-            GL.UseProgram(_shaderProgram);
-            GL.BindVertexArray(_quadMesh.VaoID);
-            for (int i = 0; i < data.Width; ++i)
+            // draw buildings
+            foreach (var kvp in _buildingVbos)
             {
-                for (int j = 0; j < data.Height; ++j)
+                int variety = kvp.Key;
+                int vbo = kvp.Value.VboID;
+                int count = kvp.Value.Count;
+
+                // GLMeshObject varietyMesh = _buildingMeshes[variety];
+                // DrawInstancedMesh(varietyMesh, vbo, count);
+
+                // For testing
+                DrawInstancedMesh(_testBuildingMesh, vbo, count, _colormapTexID);
+            }
+
+            // just render vehicles iteratively
+            if (data.Vehicles != null)
+            {
+                GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
+                GL.BindVertexArray(_testVehicleMesh.VaoID);
+                int modelLocation = GL.GetUniformLocation(_shaderProgram, "m_model");
+
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
+                int texLocation = GL.GetUniformLocation(_shaderProgram, "u_texture");
+                GL.Uniform1(texLocation, 0);
+
+                for (int i = 0; i < data.Vehicles.Count; i++)
                 {
-                    Matrix4 model = Matrix4.CreateTranslation(i + 0.5f, j + 0.5f, 0f);
+                    var vehicle = data.Vehicles[i];
+                    Matrix4 model = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(vehicle.CurrentField.X + 0.5f, 0.2f, vehicle.CurrentField.Y + 0.5f);
 
-                    Matrix4 mvp = model * view * projection;
-                    GL.UniformMatrix4(mvpLocation, false, ref mvp);
+                    GL.UniformMatrix4(modelLocation, false, ref model);
 
-
-                    FieldType currentType = data.Fields[i, j].Type;
-                    Vector3 tileColor = data.Fields[i,j].Stop == null ? GetColorForFieldType(currentType) : new Vector3(0.22f, 0.22f, 0.22f);
-                    GL.Uniform3(colorLocation, tileColor);
-
-                    GL.BindVertexArray(_quadMesh.VaoID);
-                    GL.DrawElements(_quadMesh.DrawMode, _quadMesh.Count, DrawElementsType.UnsignedInt, 0);
-
-
-                    Vector3 borderColor = new Vector3(0.0f, 0.0f, 0.0f);
-                    GL.Disable(EnableCap.DepthTest);
-                    _wireframeRenderer.DrawMeshWireframe(_quadMesh, mvp, borderColor);
-                    GL.Enable(EnableCap.DepthTest);
+                    // draw the mesh
+                    GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
+
+                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
 
             GL.BindVertexArray(0);
             GL.UseProgram(0);
+        }
+
+        public void Refresh(TickData data)
+        {
+            CleanupInstanceBuffers();
+            BuildStaticInstanceBuffers(data);
+        }
+
+        private void CleanupInstanceBuffers()
+        {
+            if (!_isInitialized) return;
+            if (_quadInstanceVbo != 0)
+            {
+                GL.DeleteBuffer(_quadInstanceVbo);
+                _quadInstanceVbo = 0;
+            }
+
+            foreach (var kvp in _buildingVbos)
+            {
+                if (kvp.Value.VboID != 0)
+                {
+                    GL.DeleteBuffer(kvp.Value.VboID);
+                }
+            }
+            _buildingVbos.Clear();
         }
 
         // camera interaction
@@ -187,7 +269,6 @@ namespace MiniTransportTycoon.UI.Rendering
         }
 
         // shadercode management
-        // todo wrap in an actual class
         private int CompileShaders(string vertexSrc, string fragmentSrc)
         {
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -222,6 +303,126 @@ namespace MiniTransportTycoon.UI.Rendering
                 string infoLog = GL.GetShaderInfoLog(shader);
                 Console.WriteLine($"ERROR::SHADER_COMPILATION_ERROR of type: {type}\n{infoLog}\n");
             }
+        }
+
+        private string LoadShaderSource(string path)
+        {
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR::SHADER::FILE_NOT_READ: {path}\n{e.Message}");
+                return string.Empty;
+            }
+        }
+
+        // Instancing methods
+        private void ConfigureInstancedVAO(int vao)
+        {
+            int bindingIndex = 1;
+
+            GL.VertexArrayBindingDivisor(vao, bindingIndex, 1);
+
+            // model matrix (Locations 3, 4, 5, 6)
+            for (int i = 0; i < 4; i++)
+            {
+                int location = 3 + i;
+                GL.EnableVertexArrayAttrib(vao, location);
+                GL.VertexArrayAttribFormat(vao, location, 4, VertexAttribType.Float, false, i * 16);
+                GL.VertexArrayAttribBinding(vao, location, bindingIndex);
+            }
+
+            // col (Location 7)
+            GL.EnableVertexArrayAttrib(vao, 7);
+            GL.VertexArrayAttribFormat(vao, 7, 3, VertexAttribType.Float, false, 64);
+            GL.VertexArrayAttribBinding(vao, 7, bindingIndex);
+        }
+
+        private void BuildStaticInstanceBuffers(TickData data)
+        {
+            List<InstanceData> quadInstances = new();
+            Dictionary<int, List<InstanceData>> buildingGroups = new();
+
+            for (int i = 0; i < data.Width; ++i)
+            {
+                for (int j = 0; j < data.Height; ++j)
+                {
+                    Field field = data.Fields[i, j];
+                    Vector3 color = GetColorForFieldType(field.Type);
+
+                    // base quad
+                    Matrix4 quadModel = Matrix4.CreateTranslation(field.X + 0.5f, 0f, field.Y + 0.5f);
+                    quadInstances.Add(new InstanceData(quadModel, color));
+
+                    // buildings
+                    if (field.Type == FieldType.CITY)
+                    {
+                        // Default to 1 for now
+                        int variety = 1; // variety = field.Variety; 
+
+                        if (!buildingGroups.ContainsKey(variety))
+                            buildingGroups[variety] = new List<InstanceData>();
+
+                        Matrix4 scale = Matrix4.CreateScale(0.5f);
+                        Matrix4 buildingModel = scale * Matrix4.CreateTranslation(field.X + 0.5f, 0.01f, field.Y + 0.5f);
+
+                        buildingGroups[variety].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
+                    }
+                }
+            }
+
+            // Upload quads
+            _quadInstanceCount = quadInstances.Count;
+            GL.CreateBuffers(1, out _quadInstanceVbo);
+            UploadInstanceData(_quadInstanceVbo, quadInstances);
+
+            // Upload buildings
+            foreach (var kvp in buildingGroups)
+            {
+                GL.CreateBuffers(1, out int vbo);
+                UploadInstanceData(vbo, kvp.Value);
+                _buildingVbos[kvp.Key] = (vbo, kvp.Value.Count);
+            }
+        }
+
+        private void UploadInstanceData(int vbo, List<InstanceData> data)
+        {
+            Span<InstanceData> span = CollectionsMarshal.AsSpan(data);
+            // use staticdraw
+            GL.NamedBufferData(vbo, span.Length * Marshal.SizeOf<InstanceData>(), ref MemoryMarshal.GetReference(span), BufferUsageHint.StaticDraw);
+        }
+
+        private void DrawInstancedMesh(GLMeshObject mesh, int instanceVbo, int instanceCount, int textureId = 0)
+        {
+            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 1);
+            if (instanceCount == 0 || mesh.VaoID == 0) return;
+
+            if (textureId != 0)
+            {
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, textureId);
+                int texLocation = GL.GetUniformLocation(_shaderProgram, "u_texture");
+                GL.Uniform1(texLocation, 0);
+            }
+
+            int stride = Marshal.SizeOf<InstanceData>();
+
+            // plug the instance vbo into given mesh's vao
+            GL.VertexArrayVertexBuffer(mesh.VaoID, 1, instanceVbo, IntPtr.Zero, stride);
+
+            // issue draw call
+            GL.BindVertexArray(mesh.VaoID);
+            GL.DrawElementsInstanced(mesh.DrawMode, mesh.Count, DrawElementsType.UnsignedInt, IntPtr.Zero, instanceCount);
+
+            if (textureId != 0)
+            {
+                // Unbind the texture
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+            }
+            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
+
         }
 
         // for debugging
