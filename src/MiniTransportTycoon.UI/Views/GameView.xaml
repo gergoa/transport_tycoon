@@ -191,7 +191,7 @@
                             <Run Text="Active:"/>
                             <Run Text="{Binding CurrentBuildMode}"/>
                         </TextBlock>
-                    </Border>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center">
@@ -216,64 +216,61 @@
             </Grid>
         </Border>
 
-        
+        <Border Background="#E6000000" CornerRadius="10" 
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVis}}">
 
-                <Border Background="#E6000000" CornerRadius="10" 
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVis}}">
-
-                    <Grid Margin="15">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+            <Grid Margin="15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Text="{Binding OverlayTitle}" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
-                        <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                            <TextBlock Text="Production / Passanger:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <Grid Margin="0,2">
-                                <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                <TextBlock Text="{Binding FacilityRateText}" Foreground="#2ECC71" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                            </Grid>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Margin="0,0,0,10">
-                            <TextBlock Text="Requires / Accepts:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <ItemsControl ItemsSource="{Binding InventoryInList}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                            <TextBlock Text="{Binding Amount}" Foreground="#1FA2FF" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3">
-                            <TextBlock Text="Produces / Holding:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <ItemsControl ItemsSource="{Binding InventoryOutList}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                            <TextBlock Text="{Binding Amount}" Foreground="Yellow" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <Button Grid.Row="4" Content="Close" Command="{Binding CloseOverlayCommand}" Padding="5" Margin="0,10,0,0" Background="#444" Foreground="White" BorderThickness="0"/>
+                <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                    <TextBlock Text="Production / Passenger:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                    <Grid Margin="0,2">
+                        <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                        <TextBlock Text="{Binding FacilityRateText}" Foreground="#2ECC71" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
                     </Grid>
-                </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                    <TextBlock Text="Requires / Accepts:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                    <ItemsControl ItemsSource="{Binding InventoryInList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                    <TextBlock Text="{Binding Amount}" Foreground="#1FA2FF" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <StackPanel Grid.Row="3">
+                    <TextBlock Text="Produces / Holding:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                    <ItemsControl ItemsSource="{Binding InventoryOutList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                    <TextBlock Text="{Binding Amount}" Foreground="Yellow" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <Button Grid.Row="4" Content="Close" Command="{Binding CloseOverlayCommand}" Padding="5" Margin="0,10,0,0" Background="#444" Foreground="White" BorderThickness="0"/>
             </Grid>
-        </Viewbox>
+        </Border>
+
         <Grid Grid.RowSpan="4" IsHitTestVisible="False">
             <Grid.Style>
                 <Style TargetType="Grid">
@@ -286,14 +283,15 @@
                 </Style>
             </Grid.Style>
 
-        <Grid IsHitTestVisible="False" Visibility="{Binding IsGameOver, Converter={StaticResource BoolToVis}}">
-            <Border Background="#CC000000">
-                <TextBlock Text="GAME OVER" FontSize="72" Foreground="Red" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock.Effect>
-                        <DropShadowEffect BlurRadius="10" Color="Black" ShadowDepth="0"/>
-                    </TextBlock.Effect>
-                </TextBlock>
-            </Border>
+            <Grid IsHitTestVisible="False" Visibility="{Binding IsGameOver, Converter={StaticResource BoolToVis}}">
+                <Border Background="#CC000000">
+                    <TextBlock Text="GAME OVER" FontSize="72" Foreground="Red" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="10" Color="Black" ShadowDepth="0"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>
