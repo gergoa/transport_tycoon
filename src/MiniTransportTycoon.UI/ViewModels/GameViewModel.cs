@@ -100,6 +100,20 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         public DelegateCommand CloseOverlayCommand { get; private set; }
 
+        public string FacilityRateText
+        {
+            get
+            {
+                if (_selectedFacility is City city)
+                    return $"{city.PassengerRate:0.00}";
+
+                if (_selectedFacility is Industry industry)
+                    return $"{industry.ProductionRate:0.00}";
+
+                return "";
+            }
+        }
+
         // build mode
         private BuildMode _currentBuildMode = BuildMode.Nothing;
         public BuildMode CurrentBuildMode
@@ -522,6 +536,8 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             SyncDictToOBC(_selectedFacility.InventoryIn, InventoryInList);
             SyncDictToOBC(_selectedFacility.InventoryOut, InventoryOutList);
+
+            OnPropertyChanged(nameof(FacilityRateText));
         }
 
         private void SyncDictToOBC(Dictionary<CargoType, int> sourceDict, ObservableCollection<InventoryItem> targetList)
