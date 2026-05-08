@@ -410,7 +410,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
         private void _model_MapUpdated(object? sender, EventArgs e)
         {
-            Application.Current.Dispatcher.BeginInvoke(() =>
+            Application.Current?.Dispatcher?.BeginInvoke(() =>
             {
                 lock (_model.StateLock)
                 {
