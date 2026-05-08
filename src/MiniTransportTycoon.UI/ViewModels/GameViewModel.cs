@@ -253,7 +253,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                     Fields.Add(new ViewField
                     { Type = _model.Board[i, j].Type,
                       X = i, 
-                      Y = j
+                      Y = j,
+                      BridgeType = null
                     });
                     tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
@@ -399,6 +400,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                         for (int i = 0; i < Width; i++)
                         {
                             Fields[j * Width + i].Type = _model.Board[i, j].Type;
+                            Fields[j * Width + i].BridgeType = _model.Board[i, j].Bridge?.Type;
                             tickMapData.Fields[i, j] = _model.Board[i, j];
                         }
                     }
@@ -428,6 +430,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for (int i = 0; i < Width; i++)
                 {
                     Fields[j * Width + i].Type = _model.Board[i, j].Type;
+                    Fields[j * Width + i].BridgeType = _model.Board[i, j].Bridge?.Type;
                     tickMapData.Fields[i, j] = _model.Board[i, j];
                 }
             }
