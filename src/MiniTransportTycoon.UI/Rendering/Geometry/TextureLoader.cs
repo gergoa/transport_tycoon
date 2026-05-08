@@ -19,16 +19,16 @@ namespace MiniTransportTycoon.UI.Rendering.Geometry
                 return 0;
             }
 
-            GL.CreateTextures(TextureTarget.Texture2D, 1, out int textureId);
+            GL.GenTextures(1, out int textureId);
             GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
-            StbImage.stbi_set_flip_vertically_on_load(1);
+            //StbImage.stbi_set_flip_vertically_on_load(1);
 
             using (Stream stream = File.OpenRead(filePath))
             {
@@ -47,7 +47,7 @@ namespace MiniTransportTycoon.UI.Rendering.Geometry
                 );
             }
 
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
             return textureId;

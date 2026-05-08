@@ -65,6 +65,8 @@ namespace MiniTransportTycoon.Game.GameModel
             IsGameOver = false;
             MapGenerator generator = new MapGenerator(width, height);
             board = generator.Generate();
+            vehicles = new();
+            routes = new();
             FacilityManager.CleanFacilities(this);
             FacilityManager.InitializeFacilities(this);
             forestFields.Clear();

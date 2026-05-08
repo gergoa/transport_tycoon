@@ -13,8 +13,8 @@ uniform vec3 u_lightColor = vec3(1.0, 0.95, 0.9);
 uniform float u_ambient = 0.5;
 
 void main() {
-    //vec4 texColor = texture(u_texture, vs_out_texCoord);
-    vec3 baseColor = vs_out_col; 
+    vec4 texColor = texture(u_texture, vs_out_texCoord);
+    vec3 baseColor = length(texColor.rgb) > 0.0 ? vs_out_col * texColor.rgb : vs_out_col; 
     
     // ambient
     vec3 ambient = u_ambient * u_lightColor;

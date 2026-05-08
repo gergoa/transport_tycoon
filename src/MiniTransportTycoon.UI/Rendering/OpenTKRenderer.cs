@@ -25,6 +25,7 @@ namespace MiniTransportTycoon.UI.Rendering
         private WireframeRenderer _wireframeRenderer;
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
+        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet;
         private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
@@ -39,6 +40,7 @@ namespace MiniTransportTycoon.UI.Rendering
         protected Camera.CameraManipulator _cameraManipulator;
 
         private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
+        private bool _isInitialized = false;
 
         public void Initialize(TickData data, int w, int h)
         {
@@ -88,9 +90,9 @@ namespace MiniTransportTycoon.UI.Rendering
             Console.WriteLine("GL ERROR STATE: " + GL.GetError());
 
             // backface culling
-            //GL.Enable(EnableCap.CullFace);
-            //GL.FrontFace(FrontFaceDirection.Cw);
-            //GL.CullFace(TriangleFace.Back);
+            GL.Enable(EnableCap.CullFace);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+            GL.CullFace(TriangleFace.Back);
 
             float mapCenterX = data.Width / 2f;
             float mapCenterZ = data.Height / 2f;
@@ -121,9 +123,12 @@ namespace MiniTransportTycoon.UI.Rendering
             // attach wireframe renderer
             _wireframeRenderer = new();
             _wireframeRenderer.Initialize();
+
+            _isInitialized = true;
         }
         public void Resize(int w, int h)
         {
+            if (!_isInitialized) return;
             _windowSize = new Vector2i(w, h);
 
             GL.Viewport(0, 0, w, h);
@@ -149,7 +154,9 @@ namespace MiniTransportTycoon.UI.Rendering
                 ref viewProj);
 
             // instances grouping
-            DrawInstancedMesh(_quadMesh, _quadInstanceVbo, _quadInstanceCount);
+            GL.FrontFace(FrontFaceDirection.Cw);
+            DrawInstancedMesh(_quadMesh, _quadInstanceVbo, _quadInstanceCount, 0);
+            GL.FrontFace(FrontFaceDirection.Ccw);
 
             // draw buildings
             foreach (var kvp in _buildingVbos)
@@ -162,7 +169,7 @@ namespace MiniTransportTycoon.UI.Rendering
                 // DrawInstancedMesh(varietyMesh, vbo, count);
 
                 // For testing
-                DrawInstancedMesh(_testBuildingMesh, vbo, count);
+                DrawInstancedMesh(_testBuildingMesh, vbo, count, _colormapTexID);
             }
 
             // just render vehicles iteratively
@@ -171,6 +178,11 @@ namespace MiniTransportTycoon.UI.Rendering
                 GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
                 GL.BindVertexArray(_testVehicleMesh.VaoID);
                 int modelLocation = GL.GetUniformLocation(_shaderProgram, "m_model");
+
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
+                int texLocation = GL.GetUniformLocation(_shaderProgram, "u_texture");
+                GL.Uniform1(texLocation, 0);
 
                 for (int i = 0; i < data.Vehicles.Count; i++)
                 {
@@ -182,6 +194,8 @@ namespace MiniTransportTycoon.UI.Rendering
                     // draw the mesh
                     GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
+
+                GL.BindTexture(TextureTarget.Texture2D, 0);
             }
 
             GL.BindVertexArray(0);
@@ -190,7 +204,27 @@ namespace MiniTransportTycoon.UI.Rendering
 
         public void Refresh(TickData data)
         {
+            CleanupInstanceBuffers();
             BuildStaticInstanceBuffers(data);
+        }
+
+        private void CleanupInstanceBuffers()
+        {
+            if (!_isInitialized) return;
+            if (_quadInstanceVbo != 0)
+            {
+                GL.DeleteBuffer(_quadInstanceVbo);
+                _quadInstanceVbo = 0;
+            }
+
+            foreach (var kvp in _buildingVbos)
+            {
+                if (kvp.Value.VboID != 0)
+                {
+                    GL.DeleteBuffer(kvp.Value.VboID);
+                }
+            }
+            _buildingVbos.Clear();
         }
 
         // camera interaction

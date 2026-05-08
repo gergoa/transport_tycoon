@@ -20,9 +20,11 @@ void main()
 {
     vs_out_col = (m_isInstanced == 1) ? iColor : vec3(0.5, 0.5, 0.88);
     vs_out_texCoord = aTexCoord;
-    mat4 mvp = (m_isInstanced == 1) ? m_viewProj * iModel : m_viewProj * m_model;
-    mat3 invTranspose = transpose(inverse(mat3(mvp)));
+
+    mat4 model = (m_isInstanced == 1) ? iModel : m_model;
+    
+    mat3 invTranspose = transpose(inverse(mat3(model)));
     vs_out_normal = invTranspose * aNormal;
     
-    gl_Position = mvp * vec4(aPosition, 1.0);
+    gl_Position = m_viewProj * model * vec4(aPosition, 1.0);
 }

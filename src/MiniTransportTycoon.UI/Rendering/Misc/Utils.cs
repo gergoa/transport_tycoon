@@ -11,6 +11,15 @@ using MiniTransportTycoon.UI.Rendering.Camera;
 
 namespace MiniTransportTycoon.UI.Rendering.Misc
 {
+    public enum OBJECT_TYPE
+    {
+        CITY_1, CITY_2, CITY_3,
+        FOREST,
+        FARM, LIVESTOCK, WOOD, MINE,
+        PROCESSING,
+        FOODPROCESSING, ASSEMBLY,
+        HIGH_END_FACTORY
+    }
     public static class Utils
     {
         public static void Add<T>(this List<T> list, params T[] values)
