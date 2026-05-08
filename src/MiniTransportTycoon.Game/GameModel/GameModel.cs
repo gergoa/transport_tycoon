@@ -95,7 +95,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
             UpdateSpawn(scaledTime);
 
-            FacilityManager.TickFacilities(facilities, scaledTime);
+            FacilityManager.TickFacilities(facilities, scaledTime, this);
 
             vehicleManager.UpdateVehicles(scaledTime, board, pathfinder, economyManager, vehicles);
 

@@ -15,11 +15,16 @@ namespace MiniTransportTycoon.Game.GameModel
     {
         private static readonly Random _random = new Random();
 
-        internal static void TickFacilities(List<Facility> facilities, float deltaTime)
+        internal static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
         {
             foreach (var facility in facilities)
             {
                 facility.Tick(deltaTime);
+                if(facility is City c && c.GrowthPoints>=c.Population/10)
+                {
+                    c.GrowthPoints = 0;
+                    TryGrowCity(gameModel, c);
+                }
             }
         }
 
@@ -90,6 +95,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 else
                 {
                     newField.Type = FieldType.CITY;
+                    city.Population += city.Population / city.Fields.Count;
                 }
             }/*
             else
@@ -218,8 +224,14 @@ namespace MiniTransportTycoon.Game.GameModel
         {
             var facilities = model.Facilities;
 
-            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis"));
-            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville"));
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis")
+            {
+                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1} }
+            });
+            facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville")
+            {
+                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1 } }
+            });
 
             // TIER 0
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Wood) { ProductionRate = 1.0f });

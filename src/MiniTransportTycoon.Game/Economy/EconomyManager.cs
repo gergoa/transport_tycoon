@@ -16,7 +16,7 @@ namespace MiniTransportTycoon.Game.Economy
 
         public bool IsBankrupt()
         {
-            return money < 0;
+            return money == 0;
         }
 
         public void ResetBalance()
