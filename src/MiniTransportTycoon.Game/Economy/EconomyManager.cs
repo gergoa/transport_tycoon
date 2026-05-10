@@ -4,11 +4,19 @@ using MiniTransportTycoon.Core.Facilities;
 
 namespace MiniTransportTycoon.Game.Economy
 {
+    /// <summary>
+    /// Gazdasági rendszer kezelése (pénz, költségek, szállítási bevételek).
+    /// </summary>
     public class EconomyManager
     {
         private int money = 100;
         private const int PassengerValue = 5;
 
+
+        /// <summary>
+        /// egyenleg lekérdezése, a játékos pénzügyi helyzetének megjelenítéséhez.
+        /// </summary>
+        /// <returns></returns>
         public int GetBalance()
         {
             return money;
@@ -23,7 +31,12 @@ namespace MiniTransportTycoon.Game.Economy
         {
             money = 100;
         }
-
+        /// <summary>
+        /// rakomány szállításának feldolgozása, pénz hozzáadása a bevételekhez.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="amount"></param>
+        /// <param name="city"></param>
         public void ProcessDelivery(CargoType type, int amount, City city)
         {
             if (amount <= 0) return;
@@ -60,6 +73,10 @@ namespace MiniTransportTycoon.Game.Economy
         {
             money += amount;
         }
+        /// <summary>
+        /// Pénz levonása a költségek fedezésére (jármû fenntartás, útépítés, stb.).
+        /// </summary>
+        /// <param name="amount"></param>
         public void SubtractMoney(int amount)
         {
             money -= amount;

@@ -16,6 +16,10 @@ using System.Diagnostics;
 
 namespace MiniTransportTycoon.Game.GameModel
 {
+    /// <summary>
+    /// A játék teljes állapotát és logikáját kezelõ központi modell.
+    /// Tartalmazza a térképet, jármûveket, gazdaságot és idõkezelést.
+    /// </summary>
     public class GameModel
     {
         // multithreading
@@ -59,6 +63,11 @@ namespace MiniTransportTycoon.Game.GameModel
             StartNewGame(width, height);
         }
 
+        /// <summary>
+        /// a játék újraindítása egy új térképpel és alapállapotokkal. Ezt hívja a konstruktor is.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public void StartNewGame(int width, int height)
         {
             //tábla generálás segédosztállyokkal
@@ -140,6 +149,11 @@ namespace MiniTransportTycoon.Game.GameModel
                 }
             }
         }
+        /// <summary>
+        /// a játék egy tickjének logikája. Itt történik meg a térkép frissítése, erdõterjedés, jármûmozgás, gazdasági változások és egyéb idõalapú események kezelése.
+        /// </summary>
+        /// <param name="deltaTime"></param>
+        /// <param name="ignoreTimeScale"></param>
         public void GameTick(float deltaTime, bool ignoreTimeScale = false)
         {
             float scaledTime = ignoreTimeScale
@@ -170,6 +184,10 @@ namespace MiniTransportTycoon.Game.GameModel
 
         }
 
+        /// <summary>
+        /// az útépítés logikája egy adott mezõre. Csak üres vagy erdõs mezõre lehet utat építeni, és az erdõ eltávolításának költsége is figyelembe van véve. Sikeres építés után újraszámolja a jármûvek útvonalait.
+        /// </summary>
+        /// <param name="field"></param>
         public void BuildRoad(Field field)
         {
             int cost = 0;
@@ -190,6 +208,10 @@ namespace MiniTransportTycoon.Game.GameModel
             }
         }
 
+        /// <summary>
+        /// a buszmegálló építésének logikája egy adott útszakaszra. Csak út típusú mezõre lehet megállót építeni, és csak akkor, ha nincs már megálló rajta. A megálló költsége fix, és sikeres építés után újraszámolja a jármûvek útvonalait, hogy figyelembe vegyék az új megállót.
+        /// </summary>
+        /// <param name="field"></param>
         public void BuildStop(Field field)
         {
             int cost = 10;

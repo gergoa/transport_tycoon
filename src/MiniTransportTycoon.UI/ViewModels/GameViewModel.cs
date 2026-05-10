@@ -24,7 +24,9 @@ namespace MiniTransportTycoon.UI.ViewModels
         Stop,
         Nothing
     }
-
+    /// <summary>
+    /// a játék fő ViewModelje, a Model és a View között. Ez kezeli a játék logikáját, a játékállapot megjelenítését és a felhasználói interakciókat.
+    /// </summary>
     class GameViewModel : ViewModelBase
     {
         private GameModel _model;
@@ -130,11 +132,16 @@ namespace MiniTransportTycoon.UI.ViewModels
         public DelegateCommand SelectStopModeCommand { get; private set; }
         public DelegateCommand ClearBuildModeCommand { get; private set; }
 
+        /// <summary>
+        /// a játékos által birtokolt pénzösszeg, a játékmodellből származtatva. Ez a tulajdonság frissül, amikor a játékmodellben változás történik, és a View ezt használja a pénz megjelenítésére.
+        /// </summary>
         public int Money
         {
             get { return _model.EconomyManager.GetBalance(); }
         }
-
+        /// <summary>
+        /// a játékban eltelt idő, másodpercben, a játékmodellből származtatva. Ez a tulajdonság frissül, amikor a játékmodellben változás történik, és a View ezt használja az eltelt idő megjelenítésére. A formázás "0.0" azt jelenti, hogy egy tizedesjegy pontossággal jelenik meg az idő. Ez segít a játékosnak nyomon követni az idő múlását a játékban.
+        /// </summary>
         public string Time
         {
             get { return _model.ElapsedTime.ToString("0.0"); }
@@ -154,6 +161,9 @@ namespace MiniTransportTycoon.UI.ViewModels
         public string DebugText { get; private set; } = string.Empty;
 
         public ObservableCollection<ViewField> Fields { get; private set; }
+        /// <summary>
+        /// a játékban lévő járművek gyűjteménye, amely a játékmodell járműveiből származtatva. Ez a gyűjtemény frissül, amikor a játékmodellben változás történik, és a View ezt használja a járművek megjelenítésére. Minden jármű egy ViewVehicle objektumként jelenik meg, amely tartalmazza a jármű helyzetét és egyéb megjelenítési adatokat. Ez lehetővé teszi a játékos számára, hogy lássa a járművek mozgását és helyzetét a térképen.
+        /// </summary>
         public ObservableCollection<ViewVehicle> Vehicles { get; private set; } = new();
 
         public GameViewModel(GameModel model)
