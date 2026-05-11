@@ -15,6 +15,7 @@ using System.Windows.Input;
 using System.IO;
 using System.Runtime.InteropServices;
 using SharpGLTF.Schema2;
+using static MiniTransportTycoon.UI.Rendering.Misc.RoadRendering;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -26,6 +27,7 @@ namespace MiniTransportTycoon.UI.Rendering
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
         private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet;
+        private Dictionary<RoadShape, GLMeshObject> _roadMeshes;
         private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
@@ -33,6 +35,7 @@ namespace MiniTransportTycoon.UI.Rendering
         private int _quadInstanceVbo;
         private int _quadInstanceCount;
         private readonly Dictionary<int, (int VboID, int Count)> _buildingVbos = new();
+        private Dictionary<RoadShape, (int VboID, int Count)> _roadVbos = new();
 
         protected float _elapsedTime;
 
@@ -69,6 +72,12 @@ namespace MiniTransportTycoon.UI.Rendering
                 _testBuildingMesh = GLObjectBuilder.CreateGLObjectFromMesh(modelData);
                 MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
                 _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
+
+                //objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
+                //objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
+                //objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
+                _roadMeshes = loadRoadObjects();
+
             }
             catch (Exception e)
             {
@@ -198,6 +207,19 @@ namespace MiniTransportTycoon.UI.Rendering
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
 
+            // render roads with instancing
+            foreach (var kvp in _roadVbos)
+            {
+                RoadShape shape = kvp.Key;
+                int vbo = kvp.Value.VboID;
+                int count = kvp.Value.Count;
+
+                if (_roadMeshes.TryGetValue(shape, out GLMeshObject roadMesh))
+                {
+                    DrawInstancedMesh(roadMesh, vbo, count, _colormapTexID);
+                }
+            }
+
             GL.BindVertexArray(0);
             GL.UseProgram(0);
         }
@@ -225,6 +247,13 @@ namespace MiniTransportTycoon.UI.Rendering
                 }
             }
             _buildingVbos.Clear();
+
+            foreach (var kvp in _roadVbos)
+            {
+                if (kvp.Value.VboID != 0)
+                    GL.DeleteBuffer(kvp.Value.VboID);
+            }
+            _roadVbos.Clear();
         }
 
         // camera interaction
@@ -340,21 +369,91 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.VertexArrayAttribBinding(vao, 7, bindingIndex);
         }
 
+        private GLMeshObject loadObject(string path, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+        {
+            MeshData data = GlbMeshParser.LoadGlb(path);
+            GLMeshObject gLMeshObject = GLObjectBuilder.CreateGLObjectFromMesh(data, hint);
+            return gLMeshObject;
+        }
+
+        private List<GLMeshObject> loadIndustry_T1_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> industryModels = new();
+
+            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
+            industryModels.Add(building_a);
+
+            return industryModels;
+        }
+        private List<GLMeshObject> loadIndustry_T2_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> industryModels = new();
+
+            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
+            industryModels.Add(building_a);
+
+            return industryModels;
+        }
+        private List<GLMeshObject> loadIndustry_T3_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> industryModels = new();
+
+            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
+            industryModels.Add(building_a);
+
+            return industryModels;
+        }
+
+        private Dictionary<RoadShape,GLMeshObject> loadRoadObjects()
+        {
+            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Roads");
+            Dictionary<RoadShape, GLMeshObject> roadMeshes = new();
+
+            roadMeshes[RoadShape.End] = loadObject(Path.Combine(baseDir, "road-end-round.glb"));
+            roadMeshes[RoadShape.Straight] = loadObject(Path.Combine(baseDir, "road-straight.glb"));
+            roadMeshes[RoadShape.Corner] = loadObject(Path.Combine(baseDir, "road-bend.glb"));
+            roadMeshes[RoadShape.Cross] = loadObject(Path.Combine(baseDir, "road-crossroad-path.glb"));
+            roadMeshes[RoadShape.T] = loadObject(Path.Combine(baseDir, "road-intersection.glb"));
+
+            foreach (var mesh in roadMeshes.Values)
+            {
+                ConfigureInstancedVAO(mesh.VaoID);
+            }
+            return roadMeshes;
+        }
         private void BuildStaticInstanceBuffers(TickData data)
         {
             List<InstanceData> quadInstances = new();
             Dictionary<int, List<InstanceData>> buildingGroups = new();
+            Dictionary<RoadShape, List<InstanceData>> roadGroups = new();
 
             for (int i = 0; i < data.Width; ++i)
             {
                 for (int j = 0; j < data.Height; ++j)
                 {
-                    Field field = data.Fields[i, j];
+                    TickField field = data.Fields[i, j];
                     Vector3 color = GetColorForFieldType(field.Type);
 
                     // base quad
-                    Matrix4 quadModel = Matrix4.CreateTranslation(field.X + 0.5f, 0f, field.Y + 0.5f);
+                    Matrix4 quadModel = Matrix4.CreateTranslation(i + 0.5f, 0f, j + 0.5f);
                     quadInstances.Add(new InstanceData(quadModel, color));
+
+                    // road
+                    if (field.Type == FieldType.ROAD)
+                    {
+                        var roadData = RoadRendering.GetRoadModelData(field.RoadMask);
+
+                        if (!roadGroups.ContainsKey(roadData.shape))
+                            roadGroups[roadData.shape] = new List<InstanceData>();
+
+                        Matrix4 rotation = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(roadData.rotation + 90f));
+                        Matrix4 roadModel = rotation * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
+
+                        roadGroups[roadData.shape].Add(new InstanceData(roadModel, new Vector3(0.5f, 0.5f, 0.5f)));
+                    }
 
                     // buildings
                     if (field.Type == FieldType.CITY)
@@ -365,11 +464,12 @@ namespace MiniTransportTycoon.UI.Rendering
                         if (!buildingGroups.ContainsKey(variety))
                             buildingGroups[variety] = new List<InstanceData>();
 
-                        Matrix4 scale = Matrix4.CreateScale(0.5f);
-                        Matrix4 buildingModel = scale * Matrix4.CreateTranslation(field.X + 0.5f, 0.01f, field.Y + 0.5f);
+                        Matrix4 scale = Matrix4.CreateScale(1.0f);
+                        Matrix4 buildingModel = scale * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j  + 0.5f);
 
                         buildingGroups[variety].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
                     }
+
                 }
             }
 
@@ -384,6 +484,14 @@ namespace MiniTransportTycoon.UI.Rendering
                 GL.CreateBuffers(1, out int vbo);
                 UploadInstanceData(vbo, kvp.Value);
                 _buildingVbos[kvp.Key] = (vbo, kvp.Value.Count);
+            }
+
+            //upload roads
+            foreach (var kvp in roadGroups)
+            {
+                GL.CreateBuffers(1, out int vbo);
+                UploadInstanceData(vbo, kvp.Value);
+                _roadVbos[kvp.Key] = (vbo, kvp.Value.Count);
             }
         }
 

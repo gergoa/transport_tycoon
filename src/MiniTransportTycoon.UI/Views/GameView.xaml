@@ -15,401 +15,405 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
 
-        <Border Grid.Row="0"
-                Background="#0F1E1E"
-                Padding="8">
 
-            <Border.Resources>
-                <Style x:Key="ToolbarButton" TargetType="Control">
-                    <Setter Property="Foreground" Value="#2ECC71"/>
-                    <Setter Property="Background" Value="#0F1E1E"/>
-                    <Setter Property="BorderBrush" Value="#2ECC71"/>
-                    <Setter Property="FontFamily" Value="Verdana"/>
-                    <Setter Property="BorderThickness" Value="1"/>
-                    <Setter Property="Padding" Value="12,6"/>
-                    <Setter Property="FontWeight" Value="Bold"/>
-                    <Setter Property="FontSize" Value="15" />
-                </Style>
-            </Border.Resources>
+        <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
+                               Render="MapRenderControl_OnRender" 
+                               Ready="MapRenderControl_OnReady"
+                               Focusable="True"
+                               MouseDown="MapRenderControl_MouseDown" 
+                               MouseWheel="MapRenderControl_MouseWheel"
+                               SizeChanged="MapRenderControl_SizeChanged"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <Border Grid.Row="0"
+            Background="#0F1E1E"
+            Padding="8">
 
-                <StackPanel Orientation="Horizontal" Grid.Column="0">
+                <Border.Resources>
+                    <Style x:Key="ToolbarButton" TargetType="Control">
+                        <Setter Property="Foreground" Value="#2ECC71"/>
+                        <Setter Property="Background" Value="#0F1E1E"/>
+                        <Setter Property="BorderBrush" Value="#2ECC71"/>
+                        <Setter Property="FontFamily" Value="Verdana"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Padding" Value="12,6"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="FontSize" Value="15" />
+                    </Style>
+                </Border.Resources>
 
-                    <Button Content="New Game"
-                            Command="{Binding NewGameCommand}"
-                            Style="{StaticResource ToolbarButton}"
-                            Margin="6"
-                            BorderBrush="#1FA2FF"
-                            Foreground="#1FA2FF"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <Grid>
-                        <ToggleButton x:Name="BuildBtn"
-                                      Content="Build"
-                                      Style="{StaticResource ToolbarButton}"
-                                      Margin="6"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
 
-                        <Popup IsOpen="{Binding IsChecked, ElementName=BuildBtn}"
-                               PlacementTarget="{Binding ElementName=BuildBtn}"
-                               Placement="Bottom"
-                               StaysOpen="False">
+                        <Button Content="New Game"
+                        Command="{Binding NewGameCommand}"
+                        Style="{StaticResource ToolbarButton}"
+                        Margin="6"
+                        BorderBrush="#1FA2FF"
+                        Foreground="#1FA2FF"/>
 
-                            <StackPanel Background="#0F1E1E">
-                                <Button Content="Road" Command="{Binding SelectRoadModeCommand}" Style="{StaticResource ToolbarButton}"/>
-                                <Button Content="Bridge" Command="{Binding SelectBridgeModeCommand}" Style="{StaticResource ToolbarButton}"/>
-                                <Button Content="Stop" Command="{Binding SelectStopModeCommand}" Style="{StaticResource ToolbarButton}"/>
-                            </StackPanel>
-                        </Popup>
+                        <Grid>
+                            <ToggleButton x:Name="BuildBtn"
+                                  Content="Build"
+                                  Style="{StaticResource ToolbarButton}"
+                                  Margin="6"/>
+
+                            <Popup IsOpen="{Binding IsChecked, ElementName=BuildBtn}"
+                           PlacementTarget="{Binding ElementName=BuildBtn}"
+                           Placement="Bottom"
+                           StaysOpen="False">
+
+                                <StackPanel Background="#0F1E1E">
+                                    <Button Content="Road" Command="{Binding SelectRoadModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                                    <Button Content="Bridge" Command="{Binding SelectBridgeModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                                    <Button Content="Stop" Command="{Binding SelectStopModeCommand}" Style="{StaticResource ToolbarButton}"/>
+                                </StackPanel>
+                            </Popup>
+                        </Grid>
+
+                        <Grid>
+                            <ToggleButton x:Name="BuyBtn"
+                                  Content="Vehicle"
+                                  Style="{StaticResource ToolbarButton}"
+                                  IsChecked="{Binding IsVehicleMenuOpen}"
+                                  Margin="6"/>
+
+                            <Popup IsOpen="{Binding IsVehicleMenuOpen}"
+                           PlacementTarget="{Binding ElementName=BuyBtn}"
+                           Placement="Bottom"
+                           StaysOpen="True"
+                           DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+
+                                <StackPanel Background="#0F1E1E">
+
+                                    <!-- OWNED VEHICLES -->
+                                    <ItemsControl ItemsSource="{Binding Vehicles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource ToolbarButton}">
+                                                    <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                                     Background="Transparent"
+                                                     Foreground="White"
+                                                     BorderThickness="0"
+                                                     FontWeight="Bold"
+                                                     KeyDown="VehicleNameTextBox_KeyDown"/>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- BUY SUBMENU -->
+                                    <Grid>
+                                        <ToggleButton x:Name="BuyVehicleBtn"
+                                              Content="Buy..."
+                                              Style="{StaticResource ToolbarButton}"/>
+
+                                        <Popup IsOpen="{Binding IsChecked, ElementName=BuyVehicleBtn}"
+                                       PlacementTarget="{Binding ElementName=BuyVehicleBtn}"
+                                       Placement="Right"
+                                       StaysOpen="True"
+                                       DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+
+                                            <Grid Background="#0F1E1E">
+
+                                                <!-- VEHICLE TYPE LIST -->
+                                                <StackPanel>
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelectingVehicleRoute}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
+
+                                                    <Button Content="Small Bus" Command="{Binding BuySmallBusCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Content="Large Bus" Command="{Binding BuyLargeBusCommand}" Style="{StaticResource ToolbarButton}"/>
+
+                                                    <Button Content="Small Raw Material Truck" Command="{Binding BuyLightTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Content="Large Raw Material Truck" Command="{Binding BuyHeavyTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+
+                                                    <Button Content="Small Processing Truck" Command="{Binding BuyLightTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Content="Large Processing Truck" Command="{Binding BuyHeavyTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+
+                                                    <Button Content="Small Industrial Truck" Command="{Binding BuyLightTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Content="Large Industrial Truck" Command="{Binding BuyHeavyTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+
+                                                    <Button Content="Small High-Tech Truck" Command="{Binding BuyLightTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Content="Large High-Tech Truck" Command="{Binding BuyHeavyTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                </StackPanel>
+
+                                                <!-- ROUTE SELECTION -->
+                                                <StackPanel Visibility="{Binding IsSelectingVehicleRoute,
+                                                    Converter={StaticResource BoolToVis}}">
+
+                                                    <TextBlock Text="Select route stops"
+                                                       Foreground="White"
+                                                       FontWeight="Bold"
+                                                       Margin="8"/>
+
+                                                    <TextBlock Text="{Binding PendingRouteText}"
+                                                       Foreground="#B8FFF2"
+                                                       FontWeight="Bold"
+                                                       TextWrapping="Wrap"
+                                                       Width="220"
+                                                       Margin="8,0,8,8"/>
+
+                                                    <Button Content="Cancel"
+                                                    Command="{Binding CancelVehiclePurchaseCommand}"
+                                                    Style="{StaticResource ToolbarButton}"
+                                                    Margin="8,0,8,8"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Popup>
+                                    </Grid>
+                                </StackPanel>
+                            </Popup>
+                        </Grid>
+
+                        <Grid>
+                            <ToggleButton x:Name="TimeBtn"
+                                  Content="Speed"
+                                  Style="{StaticResource ToolbarButton}"
+                                  Margin="6"/>
+
+                            <Popup IsOpen="{Binding IsChecked, ElementName=TimeBtn}"
+                           PlacementTarget="{Binding ElementName=TimeBtn}"
+                           Placement="Bottom"
+                           StaysOpen="False">
+
+                                <StackPanel Background="#0F1E1E">
+                                    <Button Content="Normal" Command="{Binding NormalSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                                    <Button Content="Pause" Command="{Binding PauseCommand}" Style="{StaticResource ToolbarButton}"/>
+                                    <Button Content="2x" Command="{Binding FastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                                    <Button Content="4x" Command="{Binding VeryFastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                                </StackPanel>
+                            </Popup>
+                        </Grid>
+
+                        <Button Style="{StaticResource ToolbarButton}"
+                        Command="{Binding ClearBuildModeCommand}"
+                        Margin="6"
+                        BorderBrush="#1FA2FF"
+                        Foreground="#1FA2FF">
+                            <TextBlock>
+                        <Run Text="Active:"/>
+                        <Run Text="{Binding CurrentBuildMode}"/>
+                            </TextBlock>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!--StatusBar helyett-->
+                    <StackPanel Orientation="Horizontal"
+                        Grid.Column="1"
+                        VerticalAlignment="Center">
+
+                        <TextBlock Text="Time:"
+                           Foreground="White"
+                           Margin="6,0"
+                           FontFamily="Verdana"
+                           FontWeight="Bold"
+                           FontSize="15"/>
+                        <TextBlock Text="{Binding Time}"
+                           Foreground="#1FA2FF"
+                           FontWeight="Bold"
+                           FontSize="15"
+                           Margin="6,0"/>
+
+                        <TextBlock Text="Money:"
+                           Foreground="White"
+                           Margin="12,0,0,0"
+                           FontFamily="Verdana"
+                           FontWeight="Bold"
+                           FontSize="15"/>
+                        <TextBlock Text="{Binding Money}"
+                           Foreground="#2ECC71"
+                           FontWeight="Bold"
+                           FontSize="15"
+                           Margin="6,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Viewbox Grid.Row="1" Stretch="Uniform">
+                <Grid Width="500" Height="500">
+
+                    <!--<Border Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+            Margin="20" Width="150" Height="150"
+            BorderBrush="White" BorderThickness="2" Background="#CC000000" CornerRadius="5" ClipToBounds="True">
+
+                <Viewbox Stretch="Fill">
+                    <Grid Width="500" Height="500">
+
+                        <ItemsControl ItemsSource="{Binding Fields}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style>
+                                    <Setter Property="Control.Padding" Value="0"/>
+                                    <Setter Property="Control.Margin" Value="0"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Rectangle>
+                                        <Rectangle.Style>
+                                            <Style TargetType="Rectangle">
+                                                <Setter Property="Fill" Value="LightGreen"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Type}" Value="WATER">
+                                                        <Setter Property="Fill" Value="Blue"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}" Value="ROAD">
+                                                        <Setter Property="Fill" Value="#464646"/>
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding BridgeType}" Value="Wooden">
+                                                        <Setter Property="Fill" Value="White"/>
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding BridgeType}" Value="Steel">
+                                                        <Setter Property="Fill" Value="Yellow"/>
+                                                    </DataTrigger>
+
+                                                    <DataTrigger Binding="{Binding BridgeType}" Value="Highway">
+                                                        <Setter Property="Fill" Value="Black"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
+                                                        <Setter Property="Fill" Value="Orange"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}" Value="CITY">
+                                                        <Setter Property="Fill" Value="DarkViolet"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Type}" Value="FOREST">
+                                                        <Setter Property="Fill" Value="DarkGreen"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Rectangle.Style>
+                                    </Rectangle>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Polygon x:Name="MinimapFrustum" Stroke="Yellow" StrokeThickness="0.5" Fill="#44FFFF00" />
                     </Grid>
+                </Viewbox>
+            </Border>
+                        -->
 
-                    <Grid>
-                        <ToggleButton x:Name="BuyBtn"
-                                      Content="Vehicle"
-                                      Style="{StaticResource ToolbarButton}"
-                                      IsChecked="{Binding IsVehicleMenuOpen}"
-                                      Margin="6"/>
+                    <ItemsControl ItemsSource="{Binding Vehicles}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas IsHitTestVisible="False" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="8" Height="8" Fill="Yellow" Stroke="Black" StrokeThickness="1" Margin="-4,-4,0,0"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-                        <Popup IsOpen="{Binding IsVehicleMenuOpen}"
-                               PlacementTarget="{Binding ElementName=BuyBtn}"
-                               Placement="Bottom"
-                               StaysOpen="True"
-                               DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                    <Border Background="#E6000000" CornerRadius="10" 
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVis}}">
 
-                            <StackPanel Background="#0F1E1E">
+                        <Grid Margin="15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                                <!-- OWNED VEHICLES -->
-                                <ItemsControl ItemsSource="{Binding Vehicles}">
+                            <TextBlock Grid.Row="0" Text="{Binding OverlayTitle}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                            <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                                <TextBlock Text="Production / Passanger:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                    <TextBlock Text="{Binding FacilityRateText}" Foreground="#2ECC71" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Margin="0,0,0,10">
+                                <TextBlock Text="Requires / Accepts:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                                <ItemsControl ItemsSource="{Binding InventoryInList}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Style="{StaticResource ToolbarButton}">
-                                                <TextBox Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                                         Background="Transparent"
-                                                         Foreground="White"
-                                                         BorderThickness="0"
-                                                         FontWeight="Bold"
-                                                         KeyDown="VehicleNameTextBox_KeyDown"/>
-                                            </Button>
+                                            <Grid Margin="0,2">
+                                                <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                                <TextBlock Text="{Binding Amount}" Foreground="#1FA2FF" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-
-                                <!-- BUY SUBMENU -->
-                                <Grid>
-                                    <ToggleButton x:Name="BuyVehicleBtn"
-                                                  Content="Buy..."
-                                                  Style="{StaticResource ToolbarButton}"/>
-
-                                    <Popup IsOpen="{Binding IsChecked, ElementName=BuyVehicleBtn}"
-                                           PlacementTarget="{Binding ElementName=BuyVehicleBtn}"
-                                           Placement="Right"
-                                           StaysOpen="True"
-                                           DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-
-                                        <Grid Background="#0F1E1E">
-
-                                            <!-- VEHICLE TYPE LIST -->
-                                            <StackPanel>
-                                                <StackPanel.Style>
-                                                    <Style TargetType="StackPanel">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsSelectingVehicleRoute}" Value="True">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </StackPanel.Style>
-
-                                                <Button Content="Small Bus" Command="{Binding BuySmallBusCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                <Button Content="Large Bus" Command="{Binding BuyLargeBusCommand}" Style="{StaticResource ToolbarButton}"/>
-
-                                                <Button Content="Small Raw Material Truck" Command="{Binding BuyLightTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                <Button Content="Large Raw Material Truck" Command="{Binding BuyHeavyTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-
-                                                <Button Content="Small Processing Truck" Command="{Binding BuyLightTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                <Button Content="Large Processing Truck" Command="{Binding BuyHeavyTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-
-                                                <Button Content="Small Industrial Truck" Command="{Binding BuyLightTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                <Button Content="Large Industrial Truck" Command="{Binding BuyHeavyTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-
-                                                <Button Content="Small High-Tech Truck" Command="{Binding BuyLightTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                <Button Content="Large High-Tech Truck" Command="{Binding BuyHeavyTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                            </StackPanel>
-
-                                            <!-- ROUTE SELECTION -->
-                                            <StackPanel Visibility="{Binding IsSelectingVehicleRoute,
-                                                        Converter={StaticResource BoolToVis}}">
-
-                                                <TextBlock Text="Select route stops"
-                                                           Foreground="White"
-                                                           FontWeight="Bold"
-                                                           Margin="8"/>
-
-                                                <TextBlock Text="{Binding PendingRouteText}"
-                                                           Foreground="#B8FFF2"
-                                                           FontWeight="Bold"
-                                                           TextWrapping="Wrap"
-                                                           Width="220"
-                                                           Margin="8,0,8,8"/>
-
-                                                <Button Content="Cancel"
-                                                        Command="{Binding CancelVehiclePurchaseCommand}"
-                                                        Style="{StaticResource ToolbarButton}"
-                                                        Margin="8,0,8,8"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Popup>
-                                </Grid>
                             </StackPanel>
-                        </Popup>
-                    </Grid>
 
-                    <Grid>
-                        <ToggleButton x:Name="TimeBtn"
-                                      Content="Speed"
-                                      Style="{StaticResource ToolbarButton}"
-                                      Margin="6"/>
-
-                        <Popup IsOpen="{Binding IsChecked, ElementName=TimeBtn}"
-                               PlacementTarget="{Binding ElementName=TimeBtn}"
-                               Placement="Bottom"
-                               StaysOpen="False">
-
-                            <StackPanel Background="#0F1E1E">
-                                <Button Content="Normal" Command="{Binding NormalSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
-                                <Button Content="Pause" Command="{Binding PauseCommand}" Style="{StaticResource ToolbarButton}"/>
-                                <Button Content="2x" Command="{Binding FastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
-                                <Button Content="4x" Command="{Binding VeryFastSpeedCommand}" Style="{StaticResource ToolbarButton}"/>
+                            <StackPanel Grid.Row="3">
+                                <TextBlock Text="Produces / Holding:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
+                                <ItemsControl ItemsSource="{Binding InventoryOutList}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,2">
+                                                <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
+                                                <TextBlock Text="{Binding Amount}" Foreground="Yellow" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
-                        </Popup>
-                    </Grid>
 
-                    <Button Style="{StaticResource ToolbarButton}"
-                            Command="{Binding ClearBuildModeCommand}"
-                            Margin="6"
-                            BorderBrush="#1FA2FF"
-                            Foreground="#1FA2FF">
-                        <TextBlock>
-                            <Run Text="Active:"/>
-                            <Run Text="{Binding CurrentBuildMode}"/>
-                        </TextBlock>
-                    </Button>
-
-                </StackPanel>
-
-                <!--StatusBar helyett-->
-                <StackPanel Orientation="Horizontal"
-                            Grid.Column="1"
-                            VerticalAlignment="Center">
-
-                    <TextBlock Text="Time:"
-                               Foreground="White"
-                               Margin="6,0"
-                               FontFamily="Verdana"
-                               FontWeight="Bold"
-                               FontSize="15"/>
-                    <TextBlock Text="{Binding Time}"
-                               Foreground="#1FA2FF"
-                               FontWeight="Bold"
-                               FontSize="15"
-                               Margin="6,0"/>
-
-                    <TextBlock Text="Money:"
-                               Foreground="White"
-                               Margin="12,0,0,0"
-                               FontFamily="Verdana"
-                               FontWeight="Bold"
-                               FontSize="15"/>
-                    <TextBlock Text="{Binding Money}"
-                               Foreground="#2ECC71"
-                               FontWeight="Bold"
-                               FontSize="15"
-                               Margin="6,0"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <Viewbox Grid.Row="1" Stretch="Uniform">
-            <Grid Width="500" Height="500">
-
-                <glWpfControl:GLWpfControl x:Name="MapRenderControl" 
-                                           Render="MapRenderControl_OnRender" 
-                                           Ready="MapRenderControl_OnReady"
-                                           Focusable="True"
-                                           MouseDown="MapRenderControl_MouseDown" 
-                                           MouseWheel="MapRenderControl_MouseWheel"/>
-
-                <!--<Border Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                Margin="20" Width="150" Height="150"
-                BorderBrush="White" BorderThickness="2" Background="#CC000000" CornerRadius="5" ClipToBounds="True">
-
-                    <Viewbox Stretch="Fill">
-                        <Grid Width="500" Height="500">
-
-                            <ItemsControl ItemsSource="{Binding Fields}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Columns="{Binding Width}" Rows="{Binding Height}"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style>
-                                        <Setter Property="Control.Padding" Value="0"/>
-                                        <Setter Property="Control.Margin" Value="0"/>
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Rectangle>
-                                            <Rectangle.Style>
-                                                <Style TargetType="Rectangle">
-                                                    <Setter Property="Fill" Value="LightGreen"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Type}" Value="WATER">
-                                                            <Setter Property="Fill" Value="Blue"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="ROAD">
-                                                            <Setter Property="Fill" Value="#464646"/>
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Wooden">
-                                                            <Setter Property="Fill" Value="White"/>
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Steel">
-                                                            <Setter Property="Fill" Value="Yellow"/>
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding BridgeType}" Value="Highway">
-                                                            <Setter Property="Fill" Value="Black"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="INDUSTRY">
-                                                            <Setter Property="Fill" Value="Orange"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="CITY">
-                                                            <Setter Property="Fill" Value="DarkViolet"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Type}" Value="FOREST">
-                                                            <Setter Property="Fill" Value="DarkGreen"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Rectangle.Style>
-                                        </Rectangle>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <Polygon x:Name="MinimapFrustum" Stroke="Yellow" StrokeThickness="0.5" Fill="#44FFFF00" />
+                            <Button Grid.Row="4" Content="Close" Command="{Binding CloseOverlayCommand}" Padding="5" Margin="0,10,0,0" Background="#444" Foreground="White" BorderThickness="0"/>
                         </Grid>
-                    </Viewbox>
+                    </Border>
+                </Grid>
+            </Viewbox>
+            <Grid Grid.RowSpan="4" IsHitTestVisible="False">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGameOver}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <Border Background="#CC000000">
+                    <TextBlock Text="GAME OVER"
+           FontSize="48"
+           Foreground="Red"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"/>
                 </Border>
-                            -->
 
-                <ItemsControl ItemsSource="{Binding Vehicles}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas IsHitTestVisible="False" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding X}" />
-                            <Setter Property="Canvas.Top" Value="{Binding Y}" />
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Ellipse Width="8" Height="8" Fill="Yellow" Stroke="Black" StrokeThickness="1" Margin="-4,-4,0,0"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <Border Background="#E6000000" CornerRadius="10" 
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVis}}">
-
-                    <Grid Margin="15">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Text="{Binding OverlayTitle}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
-                        <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                            <TextBlock Text="Production / Passanger:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <Grid Margin="0,2">
-                                <TextBlock Text="Rate" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                <TextBlock Text="{Binding FacilityRateText}" Foreground="#2ECC71" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                            </Grid>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Margin="0,0,0,10">
-                            <TextBlock Text="Requires / Accepts:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <ItemsControl ItemsSource="{Binding InventoryInList}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                            <TextBlock Text="{Binding Amount}" Foreground="#1FA2FF" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3">
-                            <TextBlock Text="Produces / Holding:" Foreground="LightGray" FontWeight="Bold" Margin="0,0,0,5" FontSize="11"/>
-                            <ItemsControl ItemsSource="{Binding InventoryOutList}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{Binding Cargo}" Foreground="White" HorizontalAlignment="Left" FontSize="12"/>
-                                            <TextBlock Text="{Binding Amount}" Foreground="Yellow" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <Button Grid.Row="4" Content="Close" Command="{Binding CloseOverlayCommand}" Padding="5" Margin="0,10,0,0" Background="#444" Foreground="White" BorderThickness="0"/>
-                    </Grid>
-                </Border>
             </Grid>
-        </Viewbox>
-        <Grid Grid.RowSpan="4" IsHitTestVisible="False">
-            <Grid.Style>
-                <Style TargetType="Grid">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsGameOver}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Grid.Style>
-
-            <Border Background="#CC000000">
-                <TextBlock Text="GAME OVER"
-               FontSize="48"
-               Foreground="Red"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"/>
-            </Border>
-
         </Grid>
     </Grid>
 </UserControl>

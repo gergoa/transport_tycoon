@@ -163,7 +163,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             _timer.Interval = TimeSpan.FromMilliseconds(33);
             _timer.Tick += OnTimerTick;
             _timer.Start();
-            tickMapData = new TickData(new Field[Width,Height], model.Vehicles, Width, Height);
+            tickMapData = new TickData(new TickField[Width,Height], model.Vehicles, Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
@@ -255,7 +255,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                       X = i, 
                       Y = j
                     });
-                    tickMapData.Fields[i, j] = _model.Board[i, j];
+
+                    UpdateTickField(i, j);
                 }
             }
             
@@ -399,7 +400,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                         for (int i = 0; i < Width; i++)
                         {
                             Fields[j * Width + i].Type = _model.Board[i, j].Type;
-                            tickMapData.Fields[i, j] = _model.Board[i, j];
+                            UpdateTickField(i, j);
                         }
                     }
                     tickMapData.Height = Height;
@@ -428,7 +429,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                 for (int i = 0; i < Width; i++)
                 {
                     Fields[j * Width + i].Type = _model.Board[i, j].Type;
-                    tickMapData.Fields[i, j] = _model.Board[i, j];
+                    UpdateTickField(i, j);
                 }
             }
         }
@@ -660,6 +661,39 @@ namespace MiniTransportTycoon.UI.ViewModels
 
                 return $"Buying: {_pendingVehicleType}\nSelected stops: {_pendingRouteStops.Count}\nClick the first stop again to complete the loop.";
             }
+        }
+
+        private void UpdateTickField(int x, int y)
+        {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) return;
+
+            var coreField = _model.Board[x, y];
+            RoadOrientation mask = RoadOrientation.None;
+
+            if (IsRoadConnection(x, y))
+            {
+                if (IsRoadConnection(x, y - 1)) mask |= RoadOrientation.Top;
+                if (IsRoadConnection(x + 1, y)) mask |= RoadOrientation.Right;
+                if (IsRoadConnection(x, y + 1)) mask |= RoadOrientation.Bottom;
+                if (IsRoadConnection(x - 1, y)) mask |= RoadOrientation.Left;
+            }
+
+            tickMapData.Fields[x, y] = new TickField
+            {
+                Type = coreField.Type,
+                HasStop = coreField.HasStop,
+                BridgeType = coreField.Bridge?.Type,
+                RoadMask = mask
+            };
+        }
+
+        private bool IsRoadConnection(int x, int y)
+        {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) return false;
+
+            var f = _model.Board[x, y];
+
+            return f.Type == FieldType.ROAD || f.Type == FieldType.BRIDGE || f.HasStop;
         }
     }
 }
