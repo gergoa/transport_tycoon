@@ -79,7 +79,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
                     if (field.Type == FieldType.FOREST)
                     {
-                        field.SetForest(new Forest());
+                        field.SetForest(new Forest(_random));
                         forestFields.Add(field);
                     }
                 }
@@ -414,7 +414,7 @@ namespace MiniTransportTycoon.Game.GameModel
             var target = candidates[_random.Next(candidates.Count)];
 
             target.Type = FieldType.FOREST;
-            target.SetForest(new Forest());
+            target.SetForest(new Forest(_random));
 
             forestFields.Add(target);
         }
@@ -452,7 +452,7 @@ namespace MiniTransportTycoon.Game.GameModel
             var target = emptyFields[_random.Next(emptyFields.Count)];
 
             target.Type = FieldType.FOREST;
-            target.SetForest(new Forest());
+            target.SetForest(new Forest(_random));
 
             forestFields.Add(target);
         }
