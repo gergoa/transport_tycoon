@@ -137,7 +137,7 @@ namespace MiniTransportTycoon.UI.Rendering
             _camera.SetAspect((float)w / h);
         }
 
-        public void Render(TickData data, TimeSpan delta)
+        public void Render(TickData data, TimeSpan delta, bool minimap=false)
         {
             _elapsedTime += (float)delta.TotalSeconds;
 
@@ -149,6 +149,15 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.UseProgram(_shaderProgram);
 
             Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
+            if (minimap)
+            {
+                float mapCenterX = data.Width / 2f;
+                float mapCenterZ = data.Height / 2f;
+                Vector3 eye = new Vector3(mapCenterX, 50, mapCenterZ);
+                Vector3 target = new Vector3(mapCenterX, 0, mapCenterZ);
+                Vector3 up = new Vector3(0, 0, -1);
+                viewProj = Matrix4.LookAt(eye,target,up) * Matrix4.CreateOrthographic(data.Width, data.Height, 0.1f, 100f);
+            }
             GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "m_viewProj"),
                 false, 
                 ref viewProj);
@@ -351,6 +360,25 @@ namespace MiniTransportTycoon.UI.Rendering
                 {
                     Field field = data.Fields[i, j];
                     Vector3 color = GetColorForFieldType(field.Type);
+
+                    if(field.Type==FieldType.FOREST)
+                    {
+                        switch(field.Forest?.TreeCount)
+                        {
+                            case 1:
+                                color.X = 0;
+                                break;
+                            case 2:
+                                color.X = 0.25f;
+                                break;
+                            case 3:
+                                color.X = 0.5f;
+                                break;
+                            case 4:
+                                color.X = 0.75f;
+                                break;
+                        }
+                    }
 
                     // base quad
                     Matrix4 quadModel = Matrix4.CreateTranslation(field.X + 0.5f, 0f, field.Y + 0.5f);

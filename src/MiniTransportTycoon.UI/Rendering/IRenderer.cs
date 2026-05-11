@@ -11,7 +11,7 @@ namespace MiniTransportTycoon.UI.Rendering
     {
         void Initialize(TickData data, int w, int h);
         void Resize(int w, int h);
-        void Render(TickData data, TimeSpan delta);
+        void Render(TickData data, TimeSpan delta, bool minimap=false);
         void Refresh(TickData data);
 
         void UpdateMovementState(bool forward, bool backward, bool left, bool right);
