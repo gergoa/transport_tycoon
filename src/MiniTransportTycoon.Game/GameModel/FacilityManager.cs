@@ -219,11 +219,31 @@ namespace MiniTransportTycoon.Game.GameModel
 
             facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis")
             {
-                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1} }
+                Demand = new Dictionary<CargoType, int> { 
+                    { CargoType.Passengers, 1},
+                    //TIER 2
+                    { CargoType.Microchips, 1 },
+                    { CargoType.Tools, 1 },
+                    { CargoType.Furniture, 1 },
+                    { CargoType.ProcessedFood, 1 },
+                    //TIER 3
+                    { CargoType.Electronics, 1 },
+                    { CargoType.Automobiles, 1 }
+                }
             });
             facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville")
             {
-                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1 } }
+                Demand = new Dictionary<CargoType, int> {
+                    { CargoType.Passengers, 1},
+                    //TIER 2
+                    { CargoType.Microchips, 1 },
+                    { CargoType.Tools, 1 },
+                    { CargoType.Furniture, 1 },
+                    { CargoType.ProcessedFood, 1 },
+                    //TIER 3
+                    { CargoType.Electronics, 1 },
+                    { CargoType.Automobiles, 1 }
+                }
             });
 
             // TIER 0 - raw producers, no input needed
