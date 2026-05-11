@@ -148,14 +148,14 @@ namespace MiniTransportTycoon.Game.GameModel
 
             ElapsedTime += scaledTime;
 
-            foreach (var field in forestFields.ToList())
+            /*foreach (var field in forestFields.ToList())
             {
                 field.Forest.Tick(scaledTime);
 
                 if (field.Forest.UpdateSpread(scaledTime))
                     TrySpread(field);
             }
-            UpdateSpawn(scaledTime);
+            UpdateSpawn(scaledTime);*/
 
             FacilityManager.TickFacilities(facilities, scaledTime, this);
 

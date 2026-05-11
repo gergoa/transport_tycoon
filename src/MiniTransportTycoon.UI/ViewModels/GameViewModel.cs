@@ -253,9 +253,10 @@ namespace MiniTransportTycoon.UI.ViewModels
                     Fields.Add(new ViewField
                     { Type = _model.Board[i, j].Type,
                       X = i, 
-                      Y = j
+                      Y = j,
                     });
 
+                    tickMapData.Fields[i,j].CityLevel = 0;
                     UpdateTickField(i, j);
                 }
             }
@@ -670,6 +671,21 @@ namespace MiniTransportTycoon.UI.ViewModels
             var coreField = _model.Board[x, y];
             RoadOrientation mask = RoadOrientation.None;
 
+            // if city was just placed, increase level of other tiles
+            if (coreField.Type == FieldType.CITY && tickMapData.Fields[x,y].Type != FieldType.CITY)
+            {
+                var fields = coreField.Facility?.Fields;
+                if (fields == null) { return; }
+                foreach (var f in fields)
+                {
+                    int currentLevel = tickMapData.Fields[f.X, f.Y].CityLevel;
+                    if (currentLevel < 15)
+                    {
+                        tickMapData.Fields[f.X, f.Y].CityLevel = currentLevel + 1;
+                    }
+                }
+            }
+
             if (IsRoadConnection(x, y))
             {
                 if (IsRoadConnection(x, y - 1)) mask |= RoadOrientation.Top;
@@ -678,12 +694,14 @@ namespace MiniTransportTycoon.UI.ViewModels
                 if (IsRoadConnection(x - 1, y)) mask |= RoadOrientation.Left;
             }
 
+            int level = tickMapData.Fields[x, y].CityLevel;
             tickMapData.Fields[x, y] = new TickField
             {
                 Type = coreField.Type,
                 HasStop = coreField.HasStop,
                 BridgeType = coreField.Bridge?.Type,
-                RoadMask = mask
+                RoadMask = mask,
+                CityLevel = level
             };
         }
 

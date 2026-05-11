@@ -25,6 +25,12 @@
     <None Update="Assets\Buildings\building-a.glb">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Assets\Buildings\building-c.glb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Buildings\building-d.glb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\Buildings\Textures\colormap.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

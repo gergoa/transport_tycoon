@@ -26,15 +26,15 @@ namespace MiniTransportTycoon.UI.Rendering
         private WireframeRenderer _wireframeRenderer;
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
-        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet;
-        private Dictionary<RoadShape, GLMeshObject> _roadMeshes;
+        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet = new();
+        private Dictionary<RoadShape, GLMeshObject> _roadMeshes = new();
         private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
 
         private int _quadInstanceVbo;
         private int _quadInstanceCount;
-        private readonly Dictionary<int, (int VboID, int Count)> _buildingVbos = new();
+        private readonly Dictionary<GLMeshObject, (int VboID, int Count)> _buildingVbos = new();
         private Dictionary<RoadShape, (int VboID, int Count)> _roadVbos = new();
 
         protected float _elapsedTime;
@@ -73,9 +73,20 @@ namespace MiniTransportTycoon.UI.Rendering
                 MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
                 _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
 
-                //objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
-                //objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
-                //objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
+                // buildings
+                objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
+                objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
+                objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
+
+                foreach (var tier in objectSet.Values)
+                {
+                    foreach (var mesh in tier)
+                    {
+                        ConfigureInstancedVAO(mesh.VaoID);
+                    }
+                }
+
+                // road
                 _roadMeshes = loadRoadObjects();
 
             }
@@ -170,15 +181,11 @@ namespace MiniTransportTycoon.UI.Rendering
             // draw buildings
             foreach (var kvp in _buildingVbos)
             {
-                int variety = kvp.Key;
+                GLMeshObject mesh = kvp.Key;
                 int vbo = kvp.Value.VboID;
                 int count = kvp.Value.Count;
 
-                // GLMeshObject varietyMesh = _buildingMeshes[variety];
-                // DrawInstancedMesh(varietyMesh, vbo, count);
-
-                // For testing
-                DrawInstancedMesh(_testBuildingMesh, vbo, count, _colormapTexID);
+                DrawInstancedMesh(mesh, vbo, count, _colormapTexID);
             }
 
             // just render vehicles iteratively
@@ -391,7 +398,7 @@ namespace MiniTransportTycoon.UI.Rendering
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
 
-            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
+            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-d.glb"));
             industryModels.Add(building_a);
 
             return industryModels;
@@ -401,7 +408,7 @@ namespace MiniTransportTycoon.UI.Rendering
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
 
-            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
+            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-c.glb"));
             industryModels.Add(building_a);
 
             return industryModels;
@@ -427,7 +434,8 @@ namespace MiniTransportTycoon.UI.Rendering
         private void BuildStaticInstanceBuffers(TickData data)
         {
             List<InstanceData> quadInstances = new();
-            Dictionary<int, List<InstanceData>> buildingGroups = new();
+
+            Dictionary<GLMeshObject, List<InstanceData>> buildingGroups = new();
             Dictionary<RoadShape, List<InstanceData>> roadGroups = new();
 
             for (int i = 0; i < data.Width; ++i)
@@ -458,18 +466,29 @@ namespace MiniTransportTycoon.UI.Rendering
                     // buildings
                     if (field.Type == FieldType.CITY)
                     {
-                        // Default to 1 for now
-                        int variety = 1; // variety = field.Variety; 
+                        OBJECT_TYPE tier = OBJECT_TYPE.CITY_1;
+                        if (field.CityLevel >= 10) tier = OBJECT_TYPE.CITY_3;
+                        else if (field.CityLevel >= 5) tier = OBJECT_TYPE.CITY_2;
 
-                        if (!buildingGroups.ContainsKey(variety))
-                            buildingGroups[variety] = new List<InstanceData>();
+                        if (objectSet.TryGetValue(tier, out var meshTiers) && meshTiers.Count > 0)
+                        {
+                            // deterministic "Random" pick based on tile coordinates
+                            // use prime numbers to avoid visual patterns
+                            int hash = (i * 73856093) ^ (j * 19349663);
+                            int meshIndex = Math.Abs(hash) % meshTiers.Count;
 
-                        Matrix4 scale = Matrix4.CreateScale(1.0f);
-                        Matrix4 buildingModel = scale * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j  + 0.5f);
+                            GLMeshObject pickedMesh = meshTiers[meshIndex];
 
-                        buildingGroups[variety].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
+                            if (!buildingGroups.ContainsKey(pickedMesh))
+                                buildingGroups[pickedMesh] = new List<InstanceData>();
+
+                            Matrix4 scale = Matrix4.CreateScale(1.0f);
+                            Matrix4 buildingModel = scale * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
+
+                            buildingGroups[pickedMesh].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
+                        }
+
                     }
-
                 }
             }
 
