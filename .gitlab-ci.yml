@@ -54,11 +54,13 @@ test_model:
   stage: test
   variables:
     TEST_PROJECT: "MiniTransportTycoon.Test/MiniTransportTycoon.Test.csproj"
+    TEST_DIR: "MiniTransportTycoon.Test"
   before_script:
     - dotnet restore "$TEST_PROJECT" --packages .nuget
   script:
     - >
       dotnet test "$TEST_PROJECT" --no-restore
+      --results-directory "$TEST_DIR/TestResults"
       --logger:"junit;LogFilePath=TestResults.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
       --collect:"XPlat Code Coverage"
 
@@ -66,8 +68,8 @@ test_model:
     - apt-get install -yqq bc
     - dotnet tool install --tool-path . dotnet-reportgenerator-globaltool
 
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_PROJECT/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_PROJECT/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
 
     - line_rate="$(grep -o 'line-rate=\"[^\"]*\"' ./report/Cobertura.xml | head -n 1 | cut -d '\"' -f2)"
     - coverage=$(echo "$line_rate * 100" | bc -l)
@@ -76,12 +78,12 @@ test_model:
   artifacts:
     when: always
     paths:
-      - MiniTransportTycoon.Test/TestResults.xml
+      - MiniTransportTycoon.Test/TestResults/TestResults.xml
       - MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
       - report/html/
     reports:
       junit:
-        - MiniTransportTycoon.Test/TestResults.xml
+        - MiniTransportTycoon.Test/TestResults/TestResults.xml
       coverage_report:
         coverage_format: cobertura
         path: MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
