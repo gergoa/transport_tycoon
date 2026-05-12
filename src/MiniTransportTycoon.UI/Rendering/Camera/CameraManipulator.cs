@@ -9,7 +9,7 @@ namespace MiniTransportTycoon.UI.Rendering.Camera
 {
     internal class CameraManipulator
     {
-        private Camera _camera;
+        private Camera _camera = null!;
 
         private Vector3 _center;
         private float _distance;

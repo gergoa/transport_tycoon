@@ -40,7 +40,7 @@ namespace MiniTransportTycoon.Game.GameModel
         private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private VehicleManager vehicleManager = new VehicleManager();
-        private Pathfinder pathfinder;
+        private Pathfinder pathfinder = null!;
         private float _maintenanceTimer = 0f;
         private const float MaintenanceInterval = 10f;
         public bool IsGameOver { get; private set; } = false;
@@ -166,10 +166,13 @@ namespace MiniTransportTycoon.Game.GameModel
 
             foreach (var field in forestFields.ToList())
             {
+                if(field.Forest != null)
+                {
                 field.Forest.Tick(scaledTime);
 
                 if (field.Forest.UpdateSpread(scaledTime))
                     TrySpread(field);
+            }
             }
             UpdateSpawn(scaledTime);
 
