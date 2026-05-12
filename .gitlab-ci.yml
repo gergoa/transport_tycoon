@@ -53,8 +53,8 @@ build_view:
 test_model:
   stage: test
   variables:
-    TEST_PROJECT: "MiniTransportTycoon.Test/MiniTransportTycoon.Test.csproj"
-    TEST_DIR: "MiniTransportTycoon.Test"
+    TEST_PROJECT: "MiniTransportTycoon/MiniTransportTycoon.Test/MiniTransportTycoon.Test.csproj"
+    TEST_DIR: "MiniTransportTycoon/MiniTransportTycoon.Test"
   before_script:
     - dotnet restore "$TEST_PROJECT" --packages .nuget
   script:
@@ -78,15 +78,15 @@ test_model:
   artifacts:
     when: always
     paths:
-      - MiniTransportTycoon.Test/TestResults/TestResults.xml
-      - MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
+      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.xml
+      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
       - report/html/
     reports:
       junit:
-        - MiniTransportTycoon.Test/TestResults/TestResults.xml
+        - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.xml
       coverage_report:
         coverage_format: cobertura
-        path: MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
+        path: MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
 
   coverage: '/TOTAL_COVERAGE=(\d+.\d+)/'
   cache:
