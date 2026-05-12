@@ -11,11 +11,11 @@ using MiniTransportTycoon.Game.Economy;
 // TODO: Implement merging adjacent cities
 namespace MiniTransportTycoon.Game.GameModel
 {
-    internal static class FacilityManager
+    public static class FacilityManager
     {
         private static readonly Random _random = new Random();
 
-        internal static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
+        public static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
         {
             foreach (var facility in facilities)
             {
@@ -28,7 +28,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
         }
 
-        internal static bool TryGrowCity(GameModel gameModel, City city)
+        public static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
             int width = gameModel.Width;
@@ -208,12 +208,12 @@ namespace MiniTransportTycoon.Game.GameModel
             return true;
         }
 
-        internal static void CleanFacilities(GameModel model)
+        public static void CleanFacilities(GameModel model)
         {
             model.Facilities.Clear();
         }
 
-        internal static void InitializeFacilities(GameModel model)
+        public static void InitializeFacilities(GameModel model)
         {
             var facilities = model.Facilities;
 

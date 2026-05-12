@@ -13,7 +13,7 @@ namespace MiniTransportTycoon.Game.Pathfinding
     /// <summary>
     /// a járművek kezeléséért felelős osztály, amely a járművek útvonalait, állapotát és viselkedését kezeli a játék során. Ez magában foglalja a járművek mozgását, rakodási és kirakodási folyamatát, valamint a karbantartási költségek kezelését.
     /// </summary>
-    internal class VehicleManager
+    public class VehicleManager
     {
         private Dictionary<Route, List<Vehicle>> assignedRoutes = new();
         private Dictionary<Vehicle, Route> _vehicleRoutes = new();

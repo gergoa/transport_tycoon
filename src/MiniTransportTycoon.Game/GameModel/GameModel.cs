@@ -111,7 +111,7 @@ namespace MiniTransportTycoon.Game.GameModel
             _simulationTask = Task.Run(() => SimulationLoop(targetTicksPerSecond, token), token);
         }
 
-        public void StopSimulation()
+        private void StopSimulation()
         {
             if (_cancellationTokenSource != null)
             {
@@ -323,7 +323,7 @@ namespace MiniTransportTycoon.Game.GameModel
             return list;
         }
 
-        public void BuyVehicle(VehicleType type, Route route)
+        private void BuyVehicle(VehicleType type, Route route)
         {
             if (route == null || route.stops.Count == 0)
                 return;
@@ -409,7 +409,7 @@ namespace MiniTransportTycoon.Game.GameModel
         }
 
         #region Forest management
-        public void RemoveForest(Field field)
+        private void RemoveForest(Field field)
         {
             if (field.Forest == null)
                 return;
@@ -493,17 +493,17 @@ namespace MiniTransportTycoon.Game.GameModel
         }
         #endregion
 
-        public void GameOver()
+        private void GameOver()
         {
             IsGameOver = true;
         }
 
-        public void OnGameStarted()
+        private void OnGameStarted()
         {
             GameStarted?.Invoke(this, EventArgs.Empty);
         }
 
-        public bool ExpandCity(City city)
+        private bool ExpandCity(City city)
         {
             if (city == null || !facilities.Contains(city)) return false;
 
