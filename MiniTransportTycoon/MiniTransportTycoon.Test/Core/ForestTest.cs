@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MiniTransportTycoon.Core.Map;
 
-namespace MiniTransportTycoon.Tests.Core
+namespace MiniTransportTycoon.Test.Core
 {
     [TestClass]
     public class ForestTest

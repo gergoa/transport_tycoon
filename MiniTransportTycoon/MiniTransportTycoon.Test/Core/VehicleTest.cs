@@ -5,7 +5,7 @@ using MiniTransportTycoon.Core.Vehicles;
 using System;
 using System.Linq;
 
-namespace MiniTransportTycoon.Tests.Core
+namespace MiniTransportTycoon.Test.Core
 {
     [TestClass]
     public class VehicleTest

@@ -2,7 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MiniTransportTycoon.Core.Cargo;
 using System.Linq;
 
-namespace MiniTransportTycoon.Tests.Core
+namespace MiniTransportTycoon.Test.Core
 {
     [TestClass]
     public class CargoPropertiesTest

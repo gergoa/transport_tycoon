@@ -9,7 +9,7 @@ using MiniTransportTycoon.Game.Pathfinding;
 using MiniTransportTycoon.Game.Routes;
 using System.Collections.Generic;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class VehicleManagerTest

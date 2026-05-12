@@ -6,7 +6,7 @@ using MiniTransportTycoon.Game.GameModel;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class FacilityManagerTest

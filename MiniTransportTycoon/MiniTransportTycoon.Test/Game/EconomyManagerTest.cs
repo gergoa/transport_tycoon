@@ -4,7 +4,7 @@ using MiniTransportTycoon.Core.Facilities;
 using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Game.Economy;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class EconomyManagerTest

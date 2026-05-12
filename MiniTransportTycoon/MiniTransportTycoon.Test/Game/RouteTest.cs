@@ -4,7 +4,7 @@ using MiniTransportTycoon.Core.Map;
 using MiniTransportTycoon.Game.Pathfinding;
 using MiniTransportTycoon.Game.Routes;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class RouteTest

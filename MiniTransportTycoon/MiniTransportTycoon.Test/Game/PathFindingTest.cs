@@ -5,7 +5,7 @@ using MiniTransportTycoon.Game.Pathfinding;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class PathfinderTest

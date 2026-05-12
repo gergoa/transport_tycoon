@@ -6,7 +6,7 @@ using MiniTransportTycoon.Core.Vehicles;
 using MiniTransportTycoon.Game.GameModel;
 using System.Collections.Generic;
 
-namespace MiniTransportTycoon.Tests.Game
+namespace MiniTransportTycoon.Test.Game
 {
     [TestClass]
     public class GameModelTest

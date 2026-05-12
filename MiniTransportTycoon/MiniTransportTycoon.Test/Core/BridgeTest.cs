@@ -3,7 +3,7 @@ using MiniTransportTycoon.Core.Map;
 using System;
 using System.Collections.Generic;
 
-namespace MiniTransportTycoon.Tests.Core
+namespace MiniTransportTycoon.Test.Core
 {
     [TestClass]
     public class BridgeTest
