@@ -11,8 +11,9 @@ using MiniTransportTycoon.UI.Rendering.Camera;
 
 namespace MiniTransportTycoon.UI.Rendering.Misc
 {
-    public enum OBJECT_TYPE
+    public enum OBJECT_TYPE : byte
     {
+        NONE = 0,
         CITY_1, CITY_2, CITY_3,
         FOREST,
         FARM, LIVESTOCK, WOOD, MINE,

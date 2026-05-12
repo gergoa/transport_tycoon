@@ -148,14 +148,14 @@ namespace MiniTransportTycoon.Game.GameModel
 
             ElapsedTime += scaledTime;
 
-            /*foreach (var field in forestFields.ToList())
+            foreach (var field in forestFields.ToList())
             {
                 field.Forest.Tick(scaledTime);
 
                 if (field.Forest.UpdateSpread(scaledTime))
                     TrySpread(field);
             }
-            UpdateSpawn(scaledTime);*/
+            UpdateSpawn(scaledTime);
 
             FacilityManager.TickFacilities(facilities, scaledTime, this);
 
@@ -417,6 +417,7 @@ namespace MiniTransportTycoon.Game.GameModel
             target.SetForest(new Forest());
 
             forestFields.Add(target);
+            FieldChanged?.Invoke(target.X, target.Y, FieldType.FOREST);
         }
         private void UpdateSpawn(float deltaTime)
         {
@@ -472,7 +473,16 @@ namespace MiniTransportTycoon.Game.GameModel
         {
             if (city == null || !facilities.Contains(city)) return false;
 
-            return FacilityManager.TryGrowCity(this, city);
+            if (FacilityManager.TryGrowCity(this, city))
+            {
+                foreach (var f in city.Fields)
+                {
+                    FieldChanged?.Invoke(f.X, f.Y, FieldType.CITY);
+                }
+                return true;
+            }
+            return false;
+
         }
 
         // for debug

@@ -15,6 +15,17 @@ namespace MiniTransportTycoon.UI.Rendering
         Left = 8
     }
 
+    public enum OBJECT_TYPE : byte
+    {
+        NONE = 0,
+        CITY_1, CITY_2, CITY_3,
+        FOREST,
+        FARM, LIVESTOCK, WOOD, MINE,
+        PROCESSING,
+        FOODPROCESSING, ASSEMBLY,
+        HIGH_END_FACTORY
+    }
+
     public struct TickField
     {
         public FieldType Type;
@@ -22,6 +33,9 @@ namespace MiniTransportTycoon.UI.Rendering
         public bool HasStop;
         public BridgeType? BridgeType;
         public RoadOrientation RoadMask;
+
+        public OBJECT_TYPE FactoryType;
+        public int TreeCount;
     }
 
     internal class TickData

@@ -31,7 +31,10 @@ namespace MiniTransportTycoon.UI.Rendering
         private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
+        // uniform locations
+        private int _viewProjLoc, _isInstancedLoc, _textureLoc, _modelLoc;
 
+        // instancing data
         private int _quadInstanceVbo;
         private int _quadInstanceCount;
         private readonly Dictionary<GLMeshObject, (int VboID, int Count)> _buildingVbos = new();
@@ -59,6 +62,12 @@ namespace MiniTransportTycoon.UI.Rendering
             string _fragmentShaderSource = LoadShaderSource(fragPath);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
+            // Setup uniform variables
+            _viewProjLoc = GL.GetUniformLocation(_shaderProgram, "m_viewProj");
+            _isInstancedLoc = GL.GetUniformLocation(_shaderProgram, "m_isInstanced");
+            _textureLoc = GL.GetUniformLocation(_shaderProgram, "u_texture");
+            _modelLoc = GL.GetUniformLocation(_shaderProgram, "m_model");
+
             // Mesh parsing and object creation
             MeshData quad = Misc.Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
@@ -73,10 +82,26 @@ namespace MiniTransportTycoon.UI.Rendering
                 MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
                 _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
 
-                // buildings
+                // Forest
+                objectSet[OBJECT_TYPE.FOREST] = loadTreeModels();
+
+                // City buildings
                 objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
                 objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
                 objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
+
+
+                // Factories
+                objectSet[OBJECT_TYPE.FARM] = loadIndustry_T1_Models();
+                objectSet[OBJECT_TYPE.LIVESTOCK] = loadIndustry_T1_Models();
+                objectSet[OBJECT_TYPE.WOOD] = loadIndustry_T1_Models();
+                objectSet[OBJECT_TYPE.MINE] = loadIndustry_T1_Models();
+
+                objectSet[OBJECT_TYPE.PROCESSING] = loadIndustry_T2_Models();
+                objectSet[OBJECT_TYPE.FOODPROCESSING] = loadIndustry_T2_Models();
+                objectSet[OBJECT_TYPE.ASSEMBLY] = loadIndustry_T2_Models();
+
+                objectSet[OBJECT_TYPE.HIGH_END_FACTORY] = loadIndustry_T3_Models();
 
                 foreach (var tier in objectSet.Values)
                 {
@@ -169,7 +194,7 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.UseProgram(_shaderProgram);
 
             Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
-            GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "m_viewProj"),
+            GL.UniformMatrix4(_viewProjLoc,
                 false, 
                 ref viewProj);
 
@@ -177,6 +202,8 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.FrontFace(FrontFaceDirection.Cw);
             DrawInstancedMesh(_quadMesh, _quadInstanceVbo, _quadInstanceCount, 0);
             GL.FrontFace(FrontFaceDirection.Ccw);
+
+
 
             // draw buildings
             foreach (var kvp in _buildingVbos)
@@ -191,21 +218,19 @@ namespace MiniTransportTycoon.UI.Rendering
             // just render vehicles iteratively
             if (data.Vehicles != null)
             {
-                GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
+                GL.Uniform1(_isInstancedLoc, 0);
                 GL.BindVertexArray(_testVehicleMesh.VaoID);
-                int modelLocation = GL.GetUniformLocation(_shaderProgram, "m_model");
 
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
-                int texLocation = GL.GetUniformLocation(_shaderProgram, "u_texture");
-                GL.Uniform1(texLocation, 0);
+                GL.Uniform1(_textureLoc, 0);
 
                 for (int i = 0; i < data.Vehicles.Count; i++)
                 {
                     var vehicle = data.Vehicles[i];
                     Matrix4 model = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(vehicle.CurrentField.X + 0.5f, 0.2f, vehicle.CurrentField.Y + 0.5f);
 
-                    GL.UniformMatrix4(modelLocation, false, ref model);
+                    GL.UniformMatrix4(_modelLoc, false, ref model);
 
                     // draw the mesh
                     GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
@@ -233,8 +258,8 @@ namespace MiniTransportTycoon.UI.Rendering
 
         public void Refresh(TickData data)
         {
-            CleanupInstanceBuffers();
-            BuildStaticInstanceBuffers(data);
+        //    CleanupInstanceBuffers();
+        //    BuildStaticInstanceBuffers(data);
         }
 
         private void CleanupInstanceBuffers()
@@ -383,33 +408,58 @@ namespace MiniTransportTycoon.UI.Rendering
             return gLMeshObject;
         }
 
+        private List<GLMeshObject> loadTreeModels()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> treeModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Trees");
+
+            // trees
+            treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_plateau_fixed.glb")));
+            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_simple.glb")));
+            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_tall.glb")));
+            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_thin.glb")));
+
+
+            return treeModels;
+        }
         private List<GLMeshObject> loadIndustry_T1_Models()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb"));
-            industryModels.Add(building_a);
+            // T1: building-type-g, building-type-j, building-type-m
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-g.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-j.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-m.glb")));
 
             return industryModels;
         }
+
         private List<GLMeshObject> loadIndustry_T2_Models()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-d.glb"));
-            industryModels.Add(building_a);
+            // T2: building-c, building-j, building-l
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-c.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-j.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-l.glb")));
 
             return industryModels;
         }
+
         private List<GLMeshObject> loadIndustry_T3_Models()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            GLMeshObject building_a = loadObject(Path.Combine(baseDirectory, "Assets", "Buildings", "building-c.glb"));
-            industryModels.Add(building_a);
+            // T3: building-skyscraper-a, building-skyscraper-d
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-a.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-d.glb")));
 
             return industryModels;
         }
@@ -472,45 +522,98 @@ namespace MiniTransportTycoon.UI.Rendering
 
                         if (objectSet.TryGetValue(tier, out var meshTiers) && meshTiers.Count > 0)
                         {
-                            // deterministic "Random" pick based on tile coordinates
-                            // use prime numbers to avoid visual patterns
-                            int hash = (i * 73856093) ^ (j * 19349663);
-                            int meshIndex = Math.Abs(hash) % meshTiers.Count;
+                            int meshIndex = (i + j) % meshTiers.Count;
 
                             GLMeshObject pickedMesh = meshTiers[meshIndex];
 
                             if (!buildingGroups.ContainsKey(pickedMesh))
                                 buildingGroups[pickedMesh] = new List<InstanceData>();
 
-                            Matrix4 scale = Matrix4.CreateScale(1.0f);
-                            Matrix4 buildingModel = scale * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
+                            Matrix4 scale = Matrix4.CreateScale(0.5f);
+                            Matrix4 buildingModel = /*scale **/ Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
 
                             buildingGroups[pickedMesh].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
                         }
 
                     }
+
+                    // industry
+                    if (field.Type == FieldType.INDUSTRY)
+                    {
+                        OBJECT_TYPE factoryType = field.FactoryType;
+
+                        if (factoryType == OBJECT_TYPE.NONE) factoryType = OBJECT_TYPE.HIGH_END_FACTORY;
+
+                        if (objectSet.TryGetValue(factoryType, out var meshTiers) && meshTiers.Count > 0)
+                        {
+                            int meshIndex = (i + j) % meshTiers.Count;
+
+                            GLMeshObject pickedMesh = meshTiers[meshIndex];
+
+                            if (!buildingGroups.ContainsKey(pickedMesh))
+                                buildingGroups[pickedMesh] = new List<InstanceData>();
+
+                            Matrix4 scale = Matrix4.CreateScale(0.5f);
+                            Matrix4 buildingModel = /*scale * */Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
+
+                            buildingGroups[pickedMesh].Add(new InstanceData(buildingModel, new Vector3(0.9f, 0.9f, 0.6f)));
+                        }
+                    }
+
+                    // forest
+                    if (field.Type == FieldType.FOREST)
+                    {
+                        if (objectSet.TryGetValue(OBJECT_TYPE.FOREST, out var meshTiers) && meshTiers.Count > 0)
+                        {
+                            Random rnd = new Random((i * 73856) + (j * 1920));
+
+                            int numTrees = field.TreeCount;
+
+                            for (int k = 0; k < numTrees; k++)
+                            {
+                                int meshIndex = rnd.Next(meshTiers.Count);
+                                GLMeshObject pickedMesh = meshTiers[meshIndex];
+
+                                if (!buildingGroups.ContainsKey(pickedMesh))
+                                    buildingGroups[pickedMesh] = new List<InstanceData>();
+
+                                // random placement
+                                float offsetX = (float)rnd.NextDouble() * 0.8f + 0.1f;
+                                float offsetZ = (float)rnd.NextDouble() * 0.8f + 0.1f;
+                                // random rotation
+                                float rotY = (float)rnd.NextDouble() * MathHelper.TwoPi;
+
+                                Matrix4 scale = Matrix4.CreateScale(1.0f);
+                                Matrix4 rotation = Matrix4.CreateRotationY(rotY);
+                                Matrix4 treeModel = /*scale * rotation **/ Matrix4.CreateTranslation(i + offsetX, 0.01f, j + offsetZ);
+
+                                // Use a green tint overlay
+                                buildingGroups[pickedMesh].Add(new InstanceData(treeModel, new Vector3(0.1f, 0.5f, 0.15f)));
+                            }
+                        }
+                    }
                 }
-            }
 
-            // Upload quads
-            _quadInstanceCount = quadInstances.Count;
-            GL.CreateBuffers(1, out _quadInstanceVbo);
-            UploadInstanceData(_quadInstanceVbo, quadInstances);
+                // Upload quads
+                _quadInstanceCount = quadInstances.Count;
+                GL.CreateBuffers(1, out _quadInstanceVbo);
+                UploadInstanceData(_quadInstanceVbo, quadInstances);
 
-            // Upload buildings
-            foreach (var kvp in buildingGroups)
-            {
-                GL.CreateBuffers(1, out int vbo);
-                UploadInstanceData(vbo, kvp.Value);
-                _buildingVbos[kvp.Key] = (vbo, kvp.Value.Count);
-            }
+                // Upload buildings
+                foreach (var kvp in buildingGroups)
+                {
+                    GL.CreateBuffers(1, out int vbo);
+                    UploadInstanceData(vbo, kvp.Value);
+                    _buildingVbos[kvp.Key] = (vbo, kvp.Value.Count);
+                }
 
-            //upload roads
-            foreach (var kvp in roadGroups)
-            {
-                GL.CreateBuffers(1, out int vbo);
-                UploadInstanceData(vbo, kvp.Value);
-                _roadVbos[kvp.Key] = (vbo, kvp.Value.Count);
+                //upload roads
+                foreach (var kvp in roadGroups)
+                {
+                    GL.CreateBuffers(1, out int vbo);
+                    UploadInstanceData(vbo, kvp.Value);
+                    _roadVbos[kvp.Key] = (vbo, kvp.Value.Count);
+                }
             }
         }
 
@@ -523,15 +626,14 @@ namespace MiniTransportTycoon.UI.Rendering
 
         private void DrawInstancedMesh(GLMeshObject mesh, int instanceVbo, int instanceCount, int textureId = 0)
         {
-            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 1);
+            GL.Uniform1(_isInstancedLoc, 1);
             if (instanceCount == 0 || mesh.VaoID == 0) return;
 
             if (textureId != 0)
             {
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, textureId);
-                int texLocation = GL.GetUniformLocation(_shaderProgram, "u_texture");
-                GL.Uniform1(texLocation, 0);
+                GL.Uniform1(_textureLoc, 0);
             }
 
             int stride = Marshal.SizeOf<InstanceData>();
@@ -548,7 +650,7 @@ namespace MiniTransportTycoon.UI.Rendering
                 // Unbind the texture
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
-            GL.Uniform1(GL.GetUniformLocation(_shaderProgram, "m_isInstanced"), 0);
+            GL.Uniform1(_isInstancedLoc, 0);
 
         }
 

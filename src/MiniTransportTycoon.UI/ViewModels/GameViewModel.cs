@@ -364,6 +364,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             return;
                     }
                     OnPropertyChanged(nameof(Money));
+                    tickMapData.Vehicles = _model.Vehicles;
                     MapUpdateNeeded = true;
                 }
 
@@ -385,9 +386,11 @@ namespace MiniTransportTycoon.UI.ViewModels
                         Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
                     }
 
-                    tickMapData.Fields[x, y].Type = newType;
+                    UpdateTickField(x, y);
+                    MapUpdateNeeded = true;
                 }
             });
+
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)
@@ -429,8 +432,13 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 for (int i = 0; i < Width; i++)
                 {
-                    Fields[j * Width + i].Type = _model.Board[i, j].Type;
-                    UpdateTickField(i, j);
+                    var coreType = _model.Board[i, j].Type;
+
+                    if (Fields[j * Width + i].Type != coreType)
+                    {
+                        Fields[j * Width + i].Type = coreType;
+                        UpdateTickField(i, j);
+                    }
                 }
             }
         }
@@ -672,6 +680,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             RoadOrientation mask = RoadOrientation.None;
 
             // if city was just placed, increase level of other tiles
+            
             if (coreField.Type == FieldType.CITY && tickMapData.Fields[x,y].Type != FieldType.CITY)
             {
                 var fields = coreField.Facility?.Fields;
@@ -685,13 +694,63 @@ namespace MiniTransportTycoon.UI.ViewModels
                     }
                 }
             }
-
             if (IsRoadConnection(x, y))
             {
-                if (IsRoadConnection(x, y - 1)) mask |= RoadOrientation.Top;
-                if (IsRoadConnection(x + 1, y)) mask |= RoadOrientation.Right;
-                if (IsRoadConnection(x, y + 1)) mask |= RoadOrientation.Bottom;
-                if (IsRoadConnection(x - 1, y)) mask |= RoadOrientation.Left;
+                if (IsRoadConnection(x, y - 1))
+                {
+                    mask |= RoadOrientation.Top;
+                    tickMapData.Fields[x, y - 1].RoadMask |= RoadOrientation.Bottom;
+                }
+
+                if (IsRoadConnection(x + 1, y))
+                {
+                    mask |= RoadOrientation.Right;
+                    tickMapData.Fields[x + 1, y].RoadMask |= RoadOrientation.Left;
+                }
+                // 
+                if (IsRoadConnection(x, y + 1))
+                {
+                    mask |= RoadOrientation.Bottom;
+                    tickMapData.Fields[x, y + 1].RoadMask |= RoadOrientation.Top;
+                }
+                //
+                if (IsRoadConnection(x - 1, y))
+                {
+                    mask |= RoadOrientation.Left;
+                    tickMapData.Fields[x - 1, y].RoadMask |= RoadOrientation.Right;
+                }
+                //
+            }
+
+            OBJECT_TYPE factoryType = OBJECT_TYPE.NONE;
+            if (coreField.Type == FieldType.INDUSTRY && coreField.Facility is Industry industry)
+            {
+                factoryType = industry.OutputType switch
+                {
+                    // ingredient
+                    CargoType.Grain => OBJECT_TYPE.FARM,
+                    CargoType.Livestock => OBJECT_TYPE.LIVESTOCK,
+                    CargoType.Wood => OBJECT_TYPE.WOOD,
+                    CargoType.IronOre or CargoType.Coal or CargoType.CrudeOil or CargoType.CopperOre => OBJECT_TYPE.MINE,
+
+                    // Tier 1
+                    CargoType.Lumber or CargoType.Steel or CargoType.Plastic or CargoType.CopperWire => OBJECT_TYPE.PROCESSING,
+
+                    // Tier 2
+                    CargoType.ProcessedFood => OBJECT_TYPE.FOODPROCESSING,
+                    CargoType.Furniture or CargoType.Tools => OBJECT_TYPE.ASSEMBLY,
+
+                    // Tier 3
+                    CargoType.Microchips or CargoType.Automobiles or CargoType.Electronics => OBJECT_TYPE.HIGH_END_FACTORY,
+
+                    _ => OBJECT_TYPE.PROCESSING
+                };
+            }
+
+            int treeCount = 0;
+            if (coreField.Type == FieldType.FOREST && coreField.Forest != null)
+            {
+                treeCount = coreField.Forest.TreeCount;
             }
 
             int level = tickMapData.Fields[x, y].CityLevel;
@@ -701,8 +760,11 @@ namespace MiniTransportTycoon.UI.ViewModels
                 HasStop = coreField.HasStop,
                 BridgeType = coreField.Bridge?.Type,
                 RoadMask = mask,
-                CityLevel = level
+                CityLevel = level,
+                FactoryType = factoryType,
+                TreeCount = treeCount
             };
+            MapUpdateNeeded = true;
         }
 
         private bool IsRoadConnection(int x, int y)
