@@ -221,6 +221,11 @@ namespace MiniTransportTycoon.Game.GameModel
             {
                 Demand = new Dictionary<CargoType, int> { 
                     { CargoType.Passengers, 1},
+                    //TIER 1
+                    { CargoType.Lumber, 1 },
+                    { CargoType.Steel, 1 },
+                    { CargoType.CopperWire, 1 },
+                    { CargoType.Plastic, 1 },
                     //TIER 2
                     { CargoType.Microchips, 1 },
                     { CargoType.Tools, 1 },
@@ -235,6 +240,11 @@ namespace MiniTransportTycoon.Game.GameModel
             {
                 Demand = new Dictionary<CargoType, int> {
                     { CargoType.Passengers, 1},
+                    //TIER 1
+                    { CargoType.Lumber, 1 },
+                    { CargoType.Steel, 1 },
+                    { CargoType.CopperWire, 1 },
+                    { CargoType.Plastic, 1 },
                     //TIER 2
                     { CargoType.Microchips, 1 },
                     { CargoType.Tools, 1 },
