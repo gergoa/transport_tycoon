@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using MiniTransportTycoon.Core.Cargo;
 using MiniTransportTycoon.Core.Map;
@@ -15,6 +16,14 @@ namespace MiniTransportTycoon.Core.Vehicles
         public float CurrentSpeed { get; set; }
         public float Progress { get; set; } // [0,1] range
         public string DisplayName { get; set; } = "Vehicle";
+
+        public bool InLeftSlot
+        {
+            get
+            {
+                return CurrentField.SlotL == this;
+            }
+        }
 
         public VehicleState State { get; set; }
         public float elapsedInState { get; set; }

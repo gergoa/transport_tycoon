@@ -16,6 +16,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using SharpGLTF.Schema2;
 using static MiniTransportTycoon.UI.Rendering.Misc.RoadRendering;
+using MiniTransportTycoon.Core.Vehicles;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
@@ -115,6 +116,12 @@ namespace MiniTransportTycoon.UI.Rendering
         private Dictionary<RoadShape, GLMeshObject> _roadMeshes = new();
         private GLMeshObject _testVehicleMesh;
 
+
+        // water shading
+        private int _waterShaderProgram;
+        private int _waterViewProjLoc, _waterTimeLoc, _waterIsInstancedLoc;
+        private DynamicInstanceBuffer _waterBuffer;
+
         private int _colormapTexID;
         // uniform locations
         private int _viewProjLoc, _isInstancedLoc, _textureLoc, _modelLoc;
@@ -125,6 +132,8 @@ namespace MiniTransportTycoon.UI.Rendering
         private TileState[,] _tileStates;
         private TickField[,] _cachedFields;
         private ulong _nextInstanceId = 1;
+
+
 
         protected float _elapsedTime;
 
@@ -148,15 +157,26 @@ namespace MiniTransportTycoon.UI.Rendering
             string _fragmentShaderSource = LoadShaderSource(fragPath);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
+            string _waterVSSource = Path.Combine(baseDirectory, "Rendering", "shaders", "water.vert");
+            string _waterFSSource = Path.Combine(baseDirectory, "Rendering", "shaders", "water.frag");
+            _waterShaderProgram = CompileShaders(LoadShaderSource(_waterVSSource), LoadShaderSource(_waterFSSource));
+
             // setup uniform variables
             _viewProjLoc = GL.GetUniformLocation(_shaderProgram, "m_viewProj");
             _isInstancedLoc = GL.GetUniformLocation(_shaderProgram, "m_isInstanced");
             _textureLoc = GL.GetUniformLocation(_shaderProgram, "u_texture");
             _modelLoc = GL.GetUniformLocation(_shaderProgram, "m_model");
 
+            _waterViewProjLoc = GL.GetUniformLocation(_waterShaderProgram, "m_viewProj");
+            _waterTimeLoc = GL.GetUniformLocation(_waterShaderProgram, "m_elapsedTime");
+            _waterIsInstancedLoc = GL.GetUniformLocation(_waterShaderProgram, "m_isInstanced");
+
             // mesh parsing and object creation
             MeshData quad = Misc.Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
+
+            // seperate buffer for water
+            _waterBuffer = new DynamicInstanceBuffer(_quadMesh);
 
             string modelPath = Path.Combine(baseDirectory, "Assets", "Buildings", "building-a.glb");
             string vehiclePath = Path.Combine(baseDirectory, "Assets", "Vehicles", "van.glb");
@@ -273,8 +293,8 @@ namespace MiniTransportTycoon.UI.Rendering
 
             GL.ClearColor(0.06f, 0.12f, 0.12f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.UseProgram(_shaderProgram);
 
+            GL.UseProgram(_shaderProgram);
             Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
             GL.UniformMatrix4(_viewProjLoc, false, ref viewProj);
 
@@ -302,13 +322,82 @@ namespace MiniTransportTycoon.UI.Rendering
                 for (int i = 0; i < data.Vehicles.Count; i++)
                 {
                     var vehicle = data.Vehicles[i];
-                    Matrix4 model = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(vehicle.CurrentField.X + 0.5f, 0.2f, vehicle.CurrentField.Y + 0.5f);
+                    var prev = vehicle.PreviousField;
+                    var current = vehicle.CurrentField;
+                    var next = vehicle.NextField;
 
+                    int prevX = prev != null ? prev.X : current.X;
+                    int prevY = prev != null ? prev.Y : current.Y;
+                    int nextX = next != null ? next.X : current.X;
+                    int nextY = next != null ? next.Y : current.Y;
+
+                    RoadOrientation entryEdge = VehicleVisualPaths.GetEdgeFromDelta(prevX - current.X, prevY - current.Y);
+                    RoadOrientation exitEdge = VehicleVisualPaths.GetEdgeFromDelta(nextX - current.X, nextY - current.Y);
+
+                    Vector3 localCurvePos; float rotationY;
+                    if (vehicle.State == VehicleState.LOADING || vehicle.State == VehicleState.UNLOADING)
+                    {
+                        VehicleVisualPaths.GetStoppedPositionAndRotation(
+                            entryEdge,
+                            exitEdge,
+                            out localCurvePos,
+                            out rotationY
+                        );
+                    }
+                    else
+                    {
+                        VehicleVisualPaths.GetRoutePositionAndRotation(
+                            entryEdge,
+                            exitEdge,
+                            vehicle.Progress,
+                            vehicle.InLeftSlot,
+                            out localCurvePos,
+                            out rotationY
+                        );
+                    }
+                        Matrix4 model = Matrix4.CreateScale(0.25f)
+                          * Matrix4.CreateRotationY(rotationY)
+                          * Matrix4.CreateTranslation(
+                              current.X + 0.5f + localCurvePos.X,
+                              0.2f,
+                              current.Y + 0.5f + localCurvePos.Z
+                          );
                     GL.UniformMatrix4(_modelLoc, false, ref model);
                     GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
+
+
+            // transparent water
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.DepthMask(false);
+
+            GL.UseProgram(_waterShaderProgram);
+            GL.UniformMatrix4(_waterViewProjLoc, false, ref viewProj);
+
+            GL.Uniform1(_waterTimeLoc, _elapsedTime);
+
+            // because DrawDynamicBuffer uses uniform locations from the default shader, 
+            // we must manually set m_isInstanced for the water shader.
+            GL.Uniform1(_waterIsInstancedLoc, 1);
+
+            if (_waterBuffer.Instances.Count > 0)
+            {
+                int stride = Marshal.SizeOf<InstanceData>();
+                GL.VertexArrayVertexBuffer(_waterBuffer.Mesh.VaoID, 1, _waterBuffer.VboID, IntPtr.Zero, stride);
+                GL.BindVertexArray(_waterBuffer.Mesh.VaoID);
+                GL.FrontFace(FrontFaceDirection.Cw);
+                GL.DrawElementsInstanced(_waterBuffer.Mesh.DrawMode, _waterBuffer.Mesh.Count, DrawElementsType.UnsignedInt, IntPtr.Zero, _waterBuffer.Instances.Count);
+                GL.FrontFace(FrontFaceDirection.Ccw);
+            }
+            GL.Uniform1(_waterIsInstancedLoc, 0);
+
+            // reset depth masking
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
 
             GL.BindVertexArray(0);
             GL.UseProgram(0);
@@ -358,6 +447,7 @@ namespace MiniTransportTycoon.UI.Rendering
             if (_quadBuffer != null) _quadBuffer.Clear();
             else _quadBuffer = new DynamicInstanceBuffer(_quadMesh);
 
+            _waterBuffer.Clear();
             _cachedFields = new TickField[data.Width, data.Height];
             _tileStates = new TileState[data.Width, data.Height];
 
@@ -372,6 +462,7 @@ namespace MiniTransportTycoon.UI.Rendering
             }
 
             _quadBuffer.SyncVBO();
+            _waterBuffer.SyncVBO();
             foreach (var buf in _meshBuffers.Values) buf.SyncVBO();
         }
 
@@ -389,19 +480,61 @@ namespace MiniTransportTycoon.UI.Rendering
         {
             TileState state = _tileStates[i, j];
 
-            // Purge any existing geometry spawned by this tile specifically
             foreach (var inst in state.Instances)
             {
                 inst.Buffer.RemoveInstance(inst.InstanceId);
             }
             state.Instances.Clear();
 
-            // Generate Base Quad
-            Vector3 color = GetColorForFieldType(field.Type);
-            Vector3 quadPos = new Vector3(i + 0.5f, 0f, j + 0.5f);
-            ulong quadId = _nextInstanceId++;
-            _quadBuffer.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, color));
-            state.Instances.Add((_quadBuffer, quadId));
+            // water tiles
+            if (field.Type == FieldType.WATER)
+            {
+                Vector3 bedColor = new Vector3(0.55f, 0.45f, 0.3f);
+                Vector3 bedPos = new Vector3(i + 0.5f, -0.15f, j + 0.5f);
+                ulong bedId = _nextInstanceId++;
+                _quadBuffer.AddInstance(bedId, new InstanceData(bedPos, 1.0f, 0f, 0f, bedColor));
+                state.Instances.Add((_quadBuffer, bedId));
+
+                Vector3 waterColor = new Vector3(0.1f, 0.5f, 0.7f);
+                Vector3 waterPos = new Vector3(i + 0.5f, 0.0f, j + 0.5f);
+                ulong waterId = _nextInstanceId++;
+                _waterBuffer.AddInstance(waterId, new InstanceData(waterPos, 1.0f, 0f, 0f, waterColor));
+                state.Instances.Add((_waterBuffer, waterId));
+
+                // coastline walls to main quad buffer
+                int width = _cachedFields.GetLength(0);
+                int height = _cachedFields.GetLength(1);
+
+                void CheckAndAddWall(int ni, int nj, float wallX, float wallZ, float rotY)
+                {
+                    if (ni >= 0 && ni < width && nj >= 0 && nj < height)
+                    {
+                        FieldType neighborType = _cachedFields[ni, nj].Type;
+                        if (neighborType != FieldType.WATER && neighborType != FieldType.EMPTY)
+                        {
+                            Vector3 wallPos = new Vector3(wallX, -0.5f, wallZ);
+                            ulong wallId = _nextInstanceId++;
+
+                            // add rotated instance
+                            _quadBuffer.AddInstance(wallId, new InstanceData(wallPos, 1.0f, MathHelper.PiOver2, rotY, bedColor));
+                            state.Instances.Add((_quadBuffer, wallId));
+                        }
+                    }
+                }
+
+                CheckAndAddWall(i - 1, j, i, j + 0.5f, MathHelper.PiOver2);
+                CheckAndAddWall(i + 1, j, i + 1.0f, j + 0.5f, -MathHelper.PiOver2);
+                CheckAndAddWall(i, j - 1, i + 0.5f, j, 0f);
+                CheckAndAddWall(i, j + 1, i + 0.5f, j + 1.0f, MathHelper.Pi);
+            }
+            else
+            {
+                Vector3 color = GetColorForFieldType(field.Type);
+                Vector3 quadPos = new Vector3(i + 0.5f, 0f, j + 0.5f);
+                ulong quadId = _nextInstanceId++;
+                _quadBuffer.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, 0f, color));
+                state.Instances.Add((_quadBuffer, quadId));
+            }
 
             // Generate Roads
             if (field.Type == FieldType.ROAD)
@@ -410,11 +543,11 @@ namespace MiniTransportTycoon.UI.Rendering
                 if (_roadMeshes.TryGetValue(roadData.shape, out GLMeshObject roadMesh))
                 {
                     var buf = GetOrMakeBuffer(roadMesh);
-                    float rotY = MathHelper.DegreesToRadians(roadData.rotation + 90f);
+                    float rotY = MathHelper.DegreesToRadians(roadData.rotation);
                     Vector3 roadPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
 
                     ulong id = _nextInstanceId++;
-                    buf.AddInstance(id, new InstanceData(roadPos, 1.0f, rotY, new Vector3(0.5f, 0.5f, 0.5f)));
+                    buf.AddInstance(id, new InstanceData(roadPos, 1.0f, 0.0f, rotY, new Vector3(0.5f, 0.5f, 0.5f)));
                     state.Instances.Add((buf, id));
                 }
             }
@@ -433,7 +566,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
                     Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
                     ulong id = _nextInstanceId++;
-                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0f, new Vector3(0.8f, 0.8f, 0.8f)));
+                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0.0f, 0f, new Vector3(0.8f, 0.8f, 0.8f)));
                     state.Instances.Add((buf, id));
                 }
             }
@@ -451,7 +584,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
                     Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
                     ulong id = _nextInstanceId++;
-                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0f, new Vector3(0.9f, 0.9f, 0.6f)));
+                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0.0f, 0f, new Vector3(0.9f, 0.9f, 0.6f)));
                     state.Instances.Add((buf, id));
                 }
             }
@@ -475,7 +608,7 @@ namespace MiniTransportTycoon.UI.Rendering
                         Vector3 treePos = new Vector3(i + offsetX, 0.01f, j + offsetZ);
 
                         ulong id = _nextInstanceId++;
-                        buf.AddInstance(id, new InstanceData(treePos, 1.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
+                        buf.AddInstance(id, new InstanceData(treePos, 1.0f, 0.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
                         state.Instances.Add((buf, id));
                     }
                 }
@@ -496,10 +629,10 @@ namespace MiniTransportTycoon.UI.Rendering
 
             int stride = Marshal.SizeOf<InstanceData>();
 
-            // Assign Dynamic VBO into VAO stream mapping
+            // assign Dynamic VBO into VAO stream mapping
             GL.VertexArrayVertexBuffer(buf.Mesh.VaoID, 1, buf.VboID, IntPtr.Zero, stride);
 
-            // Execute draw command block
+            // execute draw command block
             GL.BindVertexArray(buf.Mesh.VaoID);
             GL.DrawElementsInstanced(buf.Mesh.DrawMode, buf.Mesh.Count, DrawElementsType.UnsignedInt, IntPtr.Zero, buf.Instances.Count);
 
@@ -613,7 +746,6 @@ namespace MiniTransportTycoon.UI.Rendering
         private void ConfigureInstancedVAO(int vao)
         {
             int bindingIndex = 1;
-
             GL.VertexArrayBindingDivisor(vao, bindingIndex, 1);
 
             // Location 3
@@ -628,7 +760,8 @@ namespace MiniTransportTycoon.UI.Rendering
 
             // Location 5
             GL.EnableVertexArrayAttrib(vao, 5);
-            GL.VertexArrayAttribFormat(vao, 5, 1, VertexAttribType.Float, false, 16);
+            // 2 components, VertexAttribType.Short
+            GL.VertexArrayAttribFormat(vao, 5, 2, VertexAttribType.Short, true, 16);
             GL.VertexArrayAttribBinding(vao, 5, bindingIndex);
 
             // Location 6
