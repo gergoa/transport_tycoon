@@ -71,7 +71,7 @@ test_model:
     - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
     - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
 
-    - line_rate="$(grep -o 'line-rate=\"[^\"]*\"' ./report/Cobertura.xml | head -n 1 | cut -d '\"' -f2)"
+    - line_rate="$(grep -o 'line-rate="[^"]*"' ./report/Cobertura.xml | head -n 1 | cut -d '"' -f2)"
     - coverage=$(echo "$line_rate * 100" | bc -l)
     - 'printf "TOTAL_COVERAGE=%2.2f\n" "$coverage"'
 
