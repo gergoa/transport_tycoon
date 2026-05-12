@@ -41,6 +41,8 @@ namespace MiniTransportTycoon.Game.GameModel
         private EconomyManager economyManager = new EconomyManager();
         private VehicleManager vehicleManager = new VehicleManager();
         private Pathfinder pathfinder;
+        private float _maintenanceTimer = 0f;
+        private const float MaintenanceInterval = 10f;
         public bool IsGameOver { get; private set; } = false;
         public float ElapsedTime { get; private set; } = 0f;
         public Field[,] Board => board;
@@ -174,6 +176,14 @@ namespace MiniTransportTycoon.Game.GameModel
             FacilityManager.TickFacilities(facilities, scaledTime, this);
 
             vehicleManager.UpdateVehicles(scaledTime, board, pathfinder, economyManager, vehicles);
+
+            _maintenanceTimer += scaledTime;
+
+            if (_maintenanceTimer >= MaintenanceInterval)
+            {
+                _maintenanceTimer = 0f;
+                vehicleManager.ChargeMaintenance(economyManager, vehicles);
+            }
 
             if (economyManager.IsBankrupt())
             {
