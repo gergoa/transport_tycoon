@@ -168,11 +168,11 @@ namespace MiniTransportTycoon.Game.GameModel
             {
                 if(field.Forest != null)
                 {
-                field.Forest.Tick(scaledTime);
+                    field.Forest.Tick(scaledTime);
 
-                if (field.Forest.UpdateSpread(scaledTime))
-                    TrySpread(field);
-            }
+                    if (field.Forest.UpdateSpread(scaledTime))
+                        TrySpread(field);
+                } 
             }
             UpdateSpawn(scaledTime);
 
@@ -325,7 +325,7 @@ namespace MiniTransportTycoon.Game.GameModel
 
         private void BuyVehicle(VehicleType type, Route route)
         {
-            if (route == null || route.stops.Count == 0)
+            if (route == null || route.Stops.Count == 0)
                 return;
 
             int cost = VehicleFactory.GetPurchaseCost(type);
@@ -333,7 +333,7 @@ namespace MiniTransportTycoon.Game.GameModel
             if (economyManager.GetBalance() < cost)
                 return;
 
-            Field startField = route.stops[0].assignedField;
+            Field startField = route.Stops[0].AssignedField;
 
             if (startField.Type != FieldType.ROAD && startField.Type != FieldType.BRIDGE)
                 return;
@@ -382,7 +382,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 return;
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             foreach (var stop in stops)
                 route.AddStop(stop);
@@ -396,7 +396,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 return;
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             foreach (var stop in stops)
             {
@@ -560,7 +560,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             route.AddStop(new Stop(roadFields[0], null!));
             route.AddStop(new Stop(roadFields[4], null!));
