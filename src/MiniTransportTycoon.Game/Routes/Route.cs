@@ -13,11 +13,18 @@ namespace MiniTransportTycoon.Game.Routes
 {
     public class Route
     {
-        public List<Stop> stops = new List<Stop>();
-        public bool loop = true;
+        private List<Stop> stops = new List<Stop>();
+        private bool loop = true;
 
         private int currentStop = 0;
         private List<Field> currentPath = new();
+
+        public List<Stop> Stops => stops;
+        public bool Loop
+        {
+            get => loop;
+            set => loop = value;
+        }
 
         public void AddStop(Stop stop)
         {
@@ -46,7 +53,7 @@ namespace MiniTransportTycoon.Game.Routes
 
             Stop targetStop = stops[currentStop];
 
-            var newPath = pathfinder.FindPath(currentPos, targetStop.assignedField);
+            var newPath = pathfinder.FindPath(currentPos, targetStop.AssignedField);
 
             if (newPath.Count > 0)
             {
@@ -86,7 +93,7 @@ namespace MiniTransportTycoon.Game.Routes
             }
 
             Stop targetStop = stops[targetIndex];
-            var newPath = pathfinder.FindPath(currentPos, targetStop.assignedField);
+            var newPath = pathfinder.FindPath(currentPos, targetStop.AssignedField);
 
             if (newPath.Count > 0)
             {
