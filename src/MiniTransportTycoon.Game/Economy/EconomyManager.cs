@@ -9,7 +9,7 @@ namespace MiniTransportTycoon.Game.Economy
     /// </summary>
     public class EconomyManager
     {
-        private int money = 100;
+        private int money = 300;
         private const int PassengerValue = 5;
 
 
@@ -29,7 +29,7 @@ namespace MiniTransportTycoon.Game.Economy
 
         public void ResetBalance()
         {
-            money = 100;
+            money = 300;
         }
         /// <summary>
         /// rakomány szállításának feldolgozása, pénz hozzáadása a bevételekhez.
