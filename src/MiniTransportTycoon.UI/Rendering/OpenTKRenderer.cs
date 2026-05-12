@@ -19,6 +19,91 @@ using static MiniTransportTycoon.UI.Rendering.Misc.RoadRendering;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
+    internal class DynamicInstanceBuffer
+    {
+        public GLMeshObject Mesh;
+        public int VboID;
+        public int Capacity;
+
+        public List<InstanceData> Instances = new();
+        public List<ulong> InstanceIds = new();
+        public Dictionary<ulong, int> InstanceIdToIndex = new();
+        public bool IsDirty = false;
+
+        public DynamicInstanceBuffer(GLMeshObject mesh)
+        {
+            Mesh = mesh;
+            Capacity = 256;
+            GL.CreateBuffers(1, out VboID);
+            // pre allocate buffer
+            GL.NamedBufferData(VboID, Capacity * Marshal.SizeOf<InstanceData>(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+        }
+
+        public void AddInstance(ulong id, InstanceData data)
+        {
+            int index = Instances.Count;
+            Instances.Add(data);
+            InstanceIds.Add(id);
+            InstanceIdToIndex[id] = index;
+            IsDirty = true;
+        }
+
+        // swap and pop
+        public void RemoveInstance(ulong id)
+        {
+            if (InstanceIdToIndex.TryGetValue(id, out int index))
+            {
+                int lastIndex = Instances.Count - 1;
+                if (index != lastIndex)
+                {
+                    Instances[index] = Instances[lastIndex];
+                    ulong lastId = InstanceIds[lastIndex];
+                    InstanceIds[index] = lastId;
+                    InstanceIdToIndex[lastId] = index;
+                }
+                Instances.RemoveAt(lastIndex);
+                InstanceIds.RemoveAt(lastIndex);
+                InstanceIdToIndex.Remove(id);
+                IsDirty = true;
+            }
+        }
+
+        public void Clear()
+        {
+            Instances.Clear();
+            InstanceIds.Clear();
+            InstanceIdToIndex.Clear();
+            IsDirty = true;
+        }
+
+        public void SyncVBO()
+        {
+            if (!IsDirty) return;
+
+            int requiredBytes = Instances.Count * Marshal.SizeOf<InstanceData>();
+            if (Instances.Count > Capacity)
+            {
+                Capacity = Math.Max(Capacity * 2, Instances.Count);
+                // only reallocate if needed
+                GL.NamedBufferData(VboID, Capacity * Marshal.SizeOf<InstanceData>(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+            }
+
+            if (Instances.Count > 0)
+            {
+                Span<InstanceData> span = CollectionsMarshal.AsSpan(Instances);
+                // upload compacted range back to vbo
+                GL.NamedBufferSubData(VboID, IntPtr.Zero, requiredBytes, ref MemoryMarshal.GetReference(span));
+            }
+
+            IsDirty = false;
+        }
+    }
+
+    internal class TileState
+    {
+        public List<(DynamicInstanceBuffer Buffer, ulong InstanceId)> Instances = new();
+    }
+
     internal class OpenTKRenderer : IRenderer
     {
         protected Vector2i _windowSize;
@@ -34,11 +119,12 @@ namespace MiniTransportTycoon.UI.Rendering
         // uniform locations
         private int _viewProjLoc, _isInstancedLoc, _textureLoc, _modelLoc;
 
-        // instancing data
-        private int _quadInstanceVbo;
-        private int _quadInstanceCount;
-        private readonly Dictionary<GLMeshObject, (int VboID, int Count)> _buildingVbos = new();
-        private Dictionary<RoadShape, (int VboID, int Count)> _roadVbos = new();
+        // Dynamic instancing
+        private DynamicInstanceBuffer _quadBuffer;
+        private Dictionary<GLMeshObject, DynamicInstanceBuffer> _meshBuffers = new();
+        private TileState[,] _tileStates;
+        private TickField[,] _cachedFields;
+        private ulong _nextInstanceId = 1;
 
         protected float _elapsedTime;
 
@@ -62,13 +148,13 @@ namespace MiniTransportTycoon.UI.Rendering
             string _fragmentShaderSource = LoadShaderSource(fragPath);
             _shaderProgram = CompileShaders(_vertexShaderSource, _fragmentShaderSource);
 
-            // Setup uniform variables
+            // setup uniform variables
             _viewProjLoc = GL.GetUniformLocation(_shaderProgram, "m_viewProj");
             _isInstancedLoc = GL.GetUniformLocation(_shaderProgram, "m_isInstanced");
             _textureLoc = GL.GetUniformLocation(_shaderProgram, "u_texture");
             _modelLoc = GL.GetUniformLocation(_shaderProgram, "m_model");
 
-            // Mesh parsing and object creation
+            // mesh parsing and object creation
             MeshData quad = Misc.Utils.CreateQuad();
             _quadMesh = GLObjectBuilder.CreateGLObjectFromMesh(quad);
 
@@ -89,7 +175,6 @@ namespace MiniTransportTycoon.UI.Rendering
                 objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
                 objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
                 objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
-
 
                 // Factories
                 objectSet[OBJECT_TYPE.FARM] = loadIndustry_T1_Models();
@@ -125,10 +210,12 @@ namespace MiniTransportTycoon.UI.Rendering
             string texturePath = Path.Combine(baseDirectory, "Assets", "Buildings", "Textures", "colormap.png");
             _colormapTexID = TextureLoader.LoadTexture(texturePath);
 
-            // Instancing setup
+            // instancing setup
             ConfigureInstancedVAO(_quadMesh.VaoID);
             ConfigureInstancedVAO(_testBuildingMesh.VaoID);
-            BuildStaticInstanceBuffers(data);
+
+            // build our dynamic buffers
+            Refresh(data);
 
             // enable depth testing
             GL.Enable(EnableCap.DepthTest);
@@ -171,14 +258,12 @@ namespace MiniTransportTycoon.UI.Rendering
 
             _isInitialized = true;
         }
+
         public void Resize(int w, int h)
         {
             if (!_isInitialized) return;
             _windowSize = new Vector2i(w, h);
-
             GL.Viewport(0, 0, w, h);
-
-            // update camera 
             _camera.SetAspect((float)w / h);
         }
 
@@ -186,36 +271,25 @@ namespace MiniTransportTycoon.UI.Rendering
         {
             _elapsedTime += (float)delta.TotalSeconds;
 
-            // clear screen
             GL.ClearColor(0.06f, 0.12f, 0.12f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            // attach shader program
             GL.UseProgram(_shaderProgram);
 
             Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
-            GL.UniformMatrix4(_viewProjLoc,
-                false, 
-                ref viewProj);
+            GL.UniformMatrix4(_viewProjLoc, false, ref viewProj);
 
-            // instances grouping
+            // Base Terrain 
             GL.FrontFace(FrontFaceDirection.Cw);
-            DrawInstancedMesh(_quadMesh, _quadInstanceVbo, _quadInstanceCount, 0);
+            if (_quadBuffer != null) DrawDynamicBuffer(_quadBuffer, 0);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-
-
-            // draw buildings
-            foreach (var kvp in _buildingVbos)
+            // Map elements
+            foreach (var buf in _meshBuffers.Values)
             {
-                GLMeshObject mesh = kvp.Key;
-                int vbo = kvp.Value.VboID;
-                int count = kvp.Value.Count;
-
-                DrawInstancedMesh(mesh, vbo, count, _colormapTexID);
+                DrawDynamicBuffer(buf, _colormapTexID);
             }
 
-            // just render vehicles iteratively
+            // Vehicles (non-instanced iterative logic)
             if (data.Vehicles != null)
             {
                 GL.Uniform1(_isInstancedLoc, 0);
@@ -231,25 +305,9 @@ namespace MiniTransportTycoon.UI.Rendering
                     Matrix4 model = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(vehicle.CurrentField.X + 0.5f, 0.2f, vehicle.CurrentField.Y + 0.5f);
 
                     GL.UniformMatrix4(_modelLoc, false, ref model);
-
-                    // draw the mesh
                     GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
-
                 GL.BindTexture(TextureTarget.Texture2D, 0);
-            }
-
-            // render roads with instancing
-            foreach (var kvp in _roadVbos)
-            {
-                RoadShape shape = kvp.Key;
-                int vbo = kvp.Value.VboID;
-                int count = kvp.Value.Count;
-
-                if (_roadMeshes.TryGetValue(shape, out GLMeshObject roadMesh))
-                {
-                    DrawInstancedMesh(roadMesh, vbo, count, _colormapTexID);
-                }
             }
 
             GL.BindVertexArray(0);
@@ -258,34 +316,209 @@ namespace MiniTransportTycoon.UI.Rendering
 
         public void Refresh(TickData data)
         {
-        //    CleanupInstanceBuffers();
-        //    BuildStaticInstanceBuffers(data);
+            // if dimensions changed or not yet built, rebuild fully
+            if (_cachedFields == null || _cachedFields.GetLength(0) != data.Width || _cachedFields.GetLength(1) != data.Height)
+            {
+                FullRebuild(data);
+                return;
+            }
+
+            // scan deltas, only rebuild buffers where a tile has been modified
+            for (int i = 0; i < data.Width; ++i)
+            {
+                for (int j = 0; j < data.Height; ++j)
+                {
+                    if (!FieldsAreEqual(ref _cachedFields[i, j], ref data.Fields[i, j]))
+                    {
+                        UpdateTile(i, j, data.Fields[i, j]);
+                        _cachedFields[i, j] = data.Fields[i, j];
+                    }
+                }
+            }
+
+            // sync to GPU if data is dirty
+            if (_quadBuffer != null) _quadBuffer.SyncVBO();
+            foreach (var buf in _meshBuffers.Values) buf.SyncVBO();
+        }
+
+        private bool FieldsAreEqual(ref TickField a, ref TickField b)
+        {
+            return a.Type == b.Type &&
+                   a.CityLevel == b.CityLevel &&
+                   a.HasStop == b.HasStop &&
+                   a.BridgeType == b.BridgeType &&
+                   a.RoadMask == b.RoadMask &&
+                   a.FactoryType == b.FactoryType &&
+                   a.TreeCount == b.TreeCount;
+        }
+
+        private void FullRebuild(TickData data)
+        {
+            foreach (var buf in _meshBuffers.Values) buf.Clear();
+            if (_quadBuffer != null) _quadBuffer.Clear();
+            else _quadBuffer = new DynamicInstanceBuffer(_quadMesh);
+
+            _cachedFields = new TickField[data.Width, data.Height];
+            _tileStates = new TileState[data.Width, data.Height];
+
+            for (int i = 0; i < data.Width; ++i)
+            {
+                for (int j = 0; j < data.Height; ++j)
+                {
+                    _tileStates[i, j] = new TileState();
+                    _cachedFields[i, j] = data.Fields[i, j];
+                    UpdateTile(i, j, data.Fields[i, j]);
+                }
+            }
+
+            _quadBuffer.SyncVBO();
+            foreach (var buf in _meshBuffers.Values) buf.SyncVBO();
+        }
+
+        private DynamicInstanceBuffer GetOrMakeBuffer(GLMeshObject mesh)
+        {
+            if (!_meshBuffers.TryGetValue(mesh, out var buf))
+            {
+                buf = new DynamicInstanceBuffer(mesh);
+                _meshBuffers[mesh] = buf;
+            }
+            return buf;
+        }
+
+        private void UpdateTile(int i, int j, TickField field)
+        {
+            TileState state = _tileStates[i, j];
+
+            // Purge any existing geometry spawned by this tile specifically
+            foreach (var inst in state.Instances)
+            {
+                inst.Buffer.RemoveInstance(inst.InstanceId);
+            }
+            state.Instances.Clear();
+
+            // Generate Base Quad
+            Vector3 color = GetColorForFieldType(field.Type);
+            Vector3 quadPos = new Vector3(i + 0.5f, 0f, j + 0.5f);
+            ulong quadId = _nextInstanceId++;
+            _quadBuffer.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, color));
+            state.Instances.Add((_quadBuffer, quadId));
+
+            // Generate Roads
+            if (field.Type == FieldType.ROAD)
+            {
+                var roadData = RoadRendering.GetRoadModelData(field.RoadMask);
+                if (_roadMeshes.TryGetValue(roadData.shape, out GLMeshObject roadMesh))
+                {
+                    var buf = GetOrMakeBuffer(roadMesh);
+                    float rotY = MathHelper.DegreesToRadians(roadData.rotation + 90f);
+                    Vector3 roadPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
+
+                    ulong id = _nextInstanceId++;
+                    buf.AddInstance(id, new InstanceData(roadPos, 1.0f, rotY, new Vector3(0.5f, 0.5f, 0.5f)));
+                    state.Instances.Add((buf, id));
+                }
+            }
+
+            // Generate Buildings
+            if (field.Type == FieldType.CITY)
+            {
+                OBJECT_TYPE tier = OBJECT_TYPE.CITY_1;
+                if (field.CityLevel >= 10) tier = OBJECT_TYPE.CITY_3;
+                else if (field.CityLevel >= 5) tier = OBJECT_TYPE.CITY_2;
+
+                if (objectSet.TryGetValue(tier, out var meshTiers) && meshTiers.Count > 0)
+                {
+                    int meshIndex = (i + j) % meshTiers.Count;
+                    var buf = GetOrMakeBuffer(meshTiers[meshIndex]);
+
+                    Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
+                    ulong id = _nextInstanceId++;
+                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0f, new Vector3(0.8f, 0.8f, 0.8f)));
+                    state.Instances.Add((buf, id));
+                }
+            }
+
+            // Generate Industry
+            if (field.Type == FieldType.INDUSTRY)
+            {
+                OBJECT_TYPE factoryType = field.FactoryType;
+                if (factoryType == OBJECT_TYPE.NONE) factoryType = OBJECT_TYPE.HIGH_END_FACTORY;
+
+                if (objectSet.TryGetValue(factoryType, out var meshTiers) && meshTiers.Count > 0)
+                {
+                    int meshIndex = (i + j) % meshTiers.Count;
+                    var buf = GetOrMakeBuffer(meshTiers[meshIndex]);
+
+                    Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
+                    ulong id = _nextInstanceId++;
+                    buf.AddInstance(id, new InstanceData(buildingPos, 0.5f, 0f, new Vector3(0.9f, 0.9f, 0.6f)));
+                    state.Instances.Add((buf, id));
+                }
+            }
+
+            // Generate Forests
+            if (field.Type == FieldType.FOREST)
+            {
+                if (objectSet.TryGetValue(OBJECT_TYPE.FOREST, out var meshTiers) && meshTiers.Count > 0)
+                {
+                    Random rnd = new Random((i * 73856) + (j * 1920));
+                    int numTrees = field.TreeCount;
+
+                    for (int k = 0; k < numTrees; k++)
+                    {
+                        int meshIndex = rnd.Next(meshTiers.Count);
+                        var buf = GetOrMakeBuffer(meshTiers[meshIndex]);
+
+                        float offsetX = (float)rnd.NextDouble() * 0.8f + 0.1f;
+                        float offsetZ = (float)rnd.NextDouble() * 0.8f + 0.1f;
+                        float rotY = (float)rnd.NextDouble() * MathHelper.TwoPi;
+                        Vector3 treePos = new Vector3(i + offsetX, 0.01f, j + offsetZ);
+
+                        ulong id = _nextInstanceId++;
+                        buf.AddInstance(id, new InstanceData(treePos, 1.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
+                        state.Instances.Add((buf, id));
+                    }
+                }
+            }
+        }
+
+        private void DrawDynamicBuffer(DynamicInstanceBuffer buf, int textureId = 0)
+        {
+            GL.Uniform1(_isInstancedLoc, 1);
+            if (buf.Instances.Count == 0 || buf.Mesh.VaoID == 0) return;
+
+            if (textureId != 0)
+            {
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, textureId);
+                GL.Uniform1(_textureLoc, 0);
+            }
+
+            int stride = Marshal.SizeOf<InstanceData>();
+
+            // Assign Dynamic VBO into VAO stream mapping
+            GL.VertexArrayVertexBuffer(buf.Mesh.VaoID, 1, buf.VboID, IntPtr.Zero, stride);
+
+            // Execute draw command block
+            GL.BindVertexArray(buf.Mesh.VaoID);
+            GL.DrawElementsInstanced(buf.Mesh.DrawMode, buf.Mesh.Count, DrawElementsType.UnsignedInt, IntPtr.Zero, buf.Instances.Count);
+
+            if (textureId != 0)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+            }
+            GL.Uniform1(_isInstancedLoc, 0);
         }
 
         private void CleanupInstanceBuffers()
         {
             if (!_isInitialized) return;
-            if (_quadInstanceVbo != 0)
+            if (_quadBuffer != null) GL.DeleteBuffer(_quadBuffer.VboID);
+            foreach (var buf in _meshBuffers.Values)
             {
-                GL.DeleteBuffer(_quadInstanceVbo);
-                _quadInstanceVbo = 0;
+                GL.DeleteBuffer(buf.VboID);
             }
-
-            foreach (var kvp in _buildingVbos)
-            {
-                if (kvp.Value.VboID != 0)
-                {
-                    GL.DeleteBuffer(kvp.Value.VboID);
-                }
-            }
-            _buildingVbos.Clear();
-
-            foreach (var kvp in _roadVbos)
-            {
-                if (kvp.Value.VboID != 0)
-                    GL.DeleteBuffer(kvp.Value.VboID);
-            }
-            _roadVbos.Clear();
+            _meshBuffers.Clear();
         }
 
         // camera interaction
@@ -311,10 +544,8 @@ namespace MiniTransportTycoon.UI.Rendering
 
         public void MoveCamera(TimeSpan delta)
         {
-
             float panSpeed = 15f * (float)delta.TotalSeconds;
 
-            // net movement calculation
             float forwardAmount = (_moveForward ? 1.0f : 0.0f) - (_moveBackward ? 1.0f : 0.0f);
             float rightAmount = (_moveRight ? 1.0f : 0.0f) - (_moveLeft ? 1.0f : 0.0f);
 
@@ -347,7 +578,6 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.AttachShader(program, fragmentShader);
             GL.LinkProgram(program);
 
-            // clean up shaders as they are linked already
             GL.DetachShader(program, vertexShader);
             GL.DetachShader(program, fragmentShader);
             GL.DeleteShader(vertexShader);
@@ -386,19 +616,25 @@ namespace MiniTransportTycoon.UI.Rendering
 
             GL.VertexArrayBindingDivisor(vao, bindingIndex, 1);
 
-            // model matrix (Locations 3, 4, 5, 6)
-            for (int i = 0; i < 4; i++)
-            {
-                int location = 3 + i;
-                GL.EnableVertexArrayAttrib(vao, location);
-                GL.VertexArrayAttribFormat(vao, location, 4, VertexAttribType.Float, false, i * 16);
-                GL.VertexArrayAttribBinding(vao, location, bindingIndex);
-            }
+            // Location 3
+            GL.EnableVertexArrayAttrib(vao, 3);
+            GL.VertexArrayAttribFormat(vao, 3, 3, VertexAttribType.Float, false, 0);
+            GL.VertexArrayAttribBinding(vao, 3, bindingIndex);
 
-            // col (Location 7)
-            GL.EnableVertexArrayAttrib(vao, 7);
-            GL.VertexArrayAttribFormat(vao, 7, 3, VertexAttribType.Float, false, 64);
-            GL.VertexArrayAttribBinding(vao, 7, bindingIndex);
+            // Location 4
+            GL.EnableVertexArrayAttrib(vao, 4);
+            GL.VertexArrayAttribFormat(vao, 4, 1, VertexAttribType.Float, false, 12);
+            GL.VertexArrayAttribBinding(vao, 4, bindingIndex);
+
+            // Location 5
+            GL.EnableVertexArrayAttrib(vao, 5);
+            GL.VertexArrayAttribFormat(vao, 5, 1, VertexAttribType.Float, false, 16);
+            GL.VertexArrayAttribBinding(vao, 5, bindingIndex);
+
+            // Location 6
+            GL.EnableVertexArrayAttrib(vao, 6);
+            GL.VertexArrayAttribFormat(vao, 6, 3, VertexAttribType.Float, false, 20);
+            GL.VertexArrayAttribBinding(vao, 6, bindingIndex);
         }
 
         private GLMeshObject loadObject(string path, BufferUsageHint hint = BufferUsageHint.StaticDraw)
@@ -414,22 +650,16 @@ namespace MiniTransportTycoon.UI.Rendering
             List<GLMeshObject> treeModels = new();
             string assetsPath = Path.Combine(baseDirectory, "Assets", "Trees");
 
-            // trees
             treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_plateau_fixed.glb")));
-            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_simple.glb")));
-            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_tall.glb")));
-            //treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_thin.glb")));
-
-
             return treeModels;
         }
+
         private List<GLMeshObject> loadIndustry_T1_Models()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
             string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            // T1: building-type-g, building-type-j, building-type-m
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-g.glb")));
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-j.glb")));
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-m.glb")));
@@ -443,7 +673,6 @@ namespace MiniTransportTycoon.UI.Rendering
             List<GLMeshObject> industryModels = new();
             string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            // T2: building-c, building-j, building-l
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-c.glb")));
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-j.glb")));
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-l.glb")));
@@ -457,14 +686,13 @@ namespace MiniTransportTycoon.UI.Rendering
             List<GLMeshObject> industryModels = new();
             string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
 
-            // T3: building-skyscraper-a, building-skyscraper-d
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-a.glb")));
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-d.glb")));
 
             return industryModels;
         }
 
-        private Dictionary<RoadShape,GLMeshObject> loadRoadObjects()
+        private Dictionary<RoadShape, GLMeshObject> loadRoadObjects()
         {
             string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Roads");
             Dictionary<RoadShape, GLMeshObject> roadMeshes = new();
@@ -481,178 +709,6 @@ namespace MiniTransportTycoon.UI.Rendering
             }
             return roadMeshes;
         }
-        private void BuildStaticInstanceBuffers(TickData data)
-        {
-            List<InstanceData> quadInstances = new();
-
-            Dictionary<GLMeshObject, List<InstanceData>> buildingGroups = new();
-            Dictionary<RoadShape, List<InstanceData>> roadGroups = new();
-
-            for (int i = 0; i < data.Width; ++i)
-            {
-                for (int j = 0; j < data.Height; ++j)
-                {
-                    TickField field = data.Fields[i, j];
-                    Vector3 color = GetColorForFieldType(field.Type);
-
-                    // base quad
-                    Matrix4 quadModel = Matrix4.CreateTranslation(i + 0.5f, 0f, j + 0.5f);
-                    quadInstances.Add(new InstanceData(quadModel, color));
-
-                    // road
-                    if (field.Type == FieldType.ROAD)
-                    {
-                        var roadData = RoadRendering.GetRoadModelData(field.RoadMask);
-
-                        if (!roadGroups.ContainsKey(roadData.shape))
-                            roadGroups[roadData.shape] = new List<InstanceData>();
-
-                        Matrix4 rotation = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(roadData.rotation + 90f));
-                        Matrix4 roadModel = rotation * Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
-
-                        roadGroups[roadData.shape].Add(new InstanceData(roadModel, new Vector3(0.5f, 0.5f, 0.5f)));
-                    }
-
-                    // buildings
-                    if (field.Type == FieldType.CITY)
-                    {
-                        OBJECT_TYPE tier = OBJECT_TYPE.CITY_1;
-                        if (field.CityLevel >= 10) tier = OBJECT_TYPE.CITY_3;
-                        else if (field.CityLevel >= 5) tier = OBJECT_TYPE.CITY_2;
-
-                        if (objectSet.TryGetValue(tier, out var meshTiers) && meshTiers.Count > 0)
-                        {
-                            int meshIndex = (i + j) % meshTiers.Count;
-
-                            GLMeshObject pickedMesh = meshTiers[meshIndex];
-
-                            if (!buildingGroups.ContainsKey(pickedMesh))
-                                buildingGroups[pickedMesh] = new List<InstanceData>();
-
-                            Matrix4 scale = Matrix4.CreateScale(0.5f);
-                            Matrix4 buildingModel = /*scale **/ Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
-
-                            buildingGroups[pickedMesh].Add(new InstanceData(buildingModel, new Vector3(0.8f, 0.8f, 0.8f)));
-                        }
-
-                    }
-
-                    // industry
-                    if (field.Type == FieldType.INDUSTRY)
-                    {
-                        OBJECT_TYPE factoryType = field.FactoryType;
-
-                        if (factoryType == OBJECT_TYPE.NONE) factoryType = OBJECT_TYPE.HIGH_END_FACTORY;
-
-                        if (objectSet.TryGetValue(factoryType, out var meshTiers) && meshTiers.Count > 0)
-                        {
-                            int meshIndex = (i + j) % meshTiers.Count;
-
-                            GLMeshObject pickedMesh = meshTiers[meshIndex];
-
-                            if (!buildingGroups.ContainsKey(pickedMesh))
-                                buildingGroups[pickedMesh] = new List<InstanceData>();
-
-                            Matrix4 scale = Matrix4.CreateScale(0.5f);
-                            Matrix4 buildingModel = /*scale * */Matrix4.CreateTranslation(i + 0.5f, 0.01f, j + 0.5f);
-
-                            buildingGroups[pickedMesh].Add(new InstanceData(buildingModel, new Vector3(0.9f, 0.9f, 0.6f)));
-                        }
-                    }
-
-                    // forest
-                    if (field.Type == FieldType.FOREST)
-                    {
-                        if (objectSet.TryGetValue(OBJECT_TYPE.FOREST, out var meshTiers) && meshTiers.Count > 0)
-                        {
-                            Random rnd = new Random((i * 73856) + (j * 1920));
-
-                            int numTrees = field.TreeCount;
-
-                            for (int k = 0; k < numTrees; k++)
-                            {
-                                int meshIndex = rnd.Next(meshTiers.Count);
-                                GLMeshObject pickedMesh = meshTiers[meshIndex];
-
-                                if (!buildingGroups.ContainsKey(pickedMesh))
-                                    buildingGroups[pickedMesh] = new List<InstanceData>();
-
-                                // random placement
-                                float offsetX = (float)rnd.NextDouble() * 0.8f + 0.1f;
-                                float offsetZ = (float)rnd.NextDouble() * 0.8f + 0.1f;
-                                // random rotation
-                                float rotY = (float)rnd.NextDouble() * MathHelper.TwoPi;
-
-                                Matrix4 scale = Matrix4.CreateScale(1.0f);
-                                Matrix4 rotation = Matrix4.CreateRotationY(rotY);
-                                Matrix4 treeModel = /*scale * rotation **/ Matrix4.CreateTranslation(i + offsetX, 0.01f, j + offsetZ);
-
-                                // Use a green tint overlay
-                                buildingGroups[pickedMesh].Add(new InstanceData(treeModel, new Vector3(0.1f, 0.5f, 0.15f)));
-                            }
-                        }
-                    }
-                }
-
-                // Upload quads
-                _quadInstanceCount = quadInstances.Count;
-                GL.CreateBuffers(1, out _quadInstanceVbo);
-                UploadInstanceData(_quadInstanceVbo, quadInstances);
-
-                // Upload buildings
-                foreach (var kvp in buildingGroups)
-                {
-                    GL.CreateBuffers(1, out int vbo);
-                    UploadInstanceData(vbo, kvp.Value);
-                    _buildingVbos[kvp.Key] = (vbo, kvp.Value.Count);
-                }
-
-                //upload roads
-                foreach (var kvp in roadGroups)
-                {
-                    GL.CreateBuffers(1, out int vbo);
-                    UploadInstanceData(vbo, kvp.Value);
-                    _roadVbos[kvp.Key] = (vbo, kvp.Value.Count);
-                }
-            }
-        }
-
-        private void UploadInstanceData(int vbo, List<InstanceData> data)
-        {
-            Span<InstanceData> span = CollectionsMarshal.AsSpan(data);
-            // use staticdraw
-            GL.NamedBufferData(vbo, span.Length * Marshal.SizeOf<InstanceData>(), ref MemoryMarshal.GetReference(span), BufferUsageHint.StaticDraw);
-        }
-
-        private void DrawInstancedMesh(GLMeshObject mesh, int instanceVbo, int instanceCount, int textureId = 0)
-        {
-            GL.Uniform1(_isInstancedLoc, 1);
-            if (instanceCount == 0 || mesh.VaoID == 0) return;
-
-            if (textureId != 0)
-            {
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, textureId);
-                GL.Uniform1(_textureLoc, 0);
-            }
-
-            int stride = Marshal.SizeOf<InstanceData>();
-
-            // plug the instance vbo into given mesh's vao
-            GL.VertexArrayVertexBuffer(mesh.VaoID, 1, instanceVbo, IntPtr.Zero, stride);
-
-            // issue draw call
-            GL.BindVertexArray(mesh.VaoID);
-            GL.DrawElementsInstanced(mesh.DrawMode, mesh.Count, DrawElementsType.UnsignedInt, IntPtr.Zero, instanceCount);
-
-            if (textureId != 0)
-            {
-                // Unbind the texture
-                GL.BindTexture(TextureTarget.Texture2D, 0);
-            }
-            GL.Uniform1(_isInstancedLoc, 0);
-
-        }
 
         // for debugging
         private Vector3 GetColorForFieldType(FieldType type)
@@ -660,16 +716,14 @@ namespace MiniTransportTycoon.UI.Rendering
             return type switch
             {
                 FieldType.EMPTY => new Vector3(0.1f, 0.75f, 0.1f),
-                FieldType.FOREST => new Vector3(0.1f, 0.45f, 0.2f),  // Green
-                FieldType.WATER => new Vector3(0.2f, 0.4f, 0.8f),  // Blue
-                FieldType.ROAD => new Vector3(0.4f, 0.4f, 0.4f),  // Light Gray
-                FieldType.BRIDGE => new Vector3(0.6f, 0.4f, 0.2f),  // Brown
-                FieldType.INDUSTRY => new Vector3(0.8f, 0.8f, 0.2f),  // Yellow
-                FieldType.CITY => new Vector3(0.8f, 0.3f, 0.3f),  // Red
-                _ => new Vector3(1.0f, 0.0f, 1.0f)   // Magenta (Error color)
+                FieldType.FOREST => new Vector3(0.1f, 0.45f, 0.2f),
+                FieldType.WATER => new Vector3(0.2f, 0.4f, 0.8f),
+                FieldType.ROAD => new Vector3(0.4f, 0.4f, 0.4f),
+                FieldType.BRIDGE => new Vector3(0.6f, 0.4f, 0.2f),
+                FieldType.INDUSTRY => new Vector3(0.8f, 0.8f, 0.2f),
+                FieldType.CITY => new Vector3(0.8f, 0.3f, 0.3f),
+                _ => new Vector3(1.0f, 0.0f, 1.0f)
             };
         }
-
-
     }
 }

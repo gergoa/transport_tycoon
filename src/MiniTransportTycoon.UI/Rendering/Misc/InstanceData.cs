@@ -1,15 +1,20 @@
 ﻿using System.Runtime.InteropServices;
 using OpenTK.Mathematics;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct InstanceData
 {
-    public Matrix4 ModelMatrix;
-    public Vector3 Color;
+    public Vector3 Position;   // 12 
+    public float Scale;        // 4
+    public float RotationY;    // 4
+    public Vector3 Color;      // 12
+                               // 32 bytes
 
-    public InstanceData(Matrix4 model, Vector3 color)
+    public InstanceData(Vector3 position, float scale, float rotationY, Vector3 color)
     {
-        ModelMatrix = model;
+        Position = position;
+        Scale = scale;
+        RotationY = rotationY;
         Color = color;
     }
 }
