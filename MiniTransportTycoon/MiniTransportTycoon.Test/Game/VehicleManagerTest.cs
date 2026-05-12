@@ -134,7 +134,7 @@ namespace MiniTransportTycoon.Test.Game
 
             Assert.AreEqual(2, vehicle.currentCargoInventory[CargoType.Wood]);
             Assert.AreEqual(1, city.InventoryIn[CargoType.Wood]);
-            Assert.AreEqual(100 + CargoProperties.GetGrowthValue(CargoType.Wood), economy.GetBalance());
+            Assert.AreEqual(300 + CargoProperties.GetGrowthValue(CargoType.Wood), economy.GetBalance());
         }
 
         [TestMethod]
@@ -182,7 +182,7 @@ namespace MiniTransportTycoon.Test.Game
 
             manager.ChargeMaintenance(economy, vehicles);
 
-            Assert.AreEqual(90, economy.GetBalance());
+            Assert.AreEqual(290, economy.GetBalance());
         }
 
         [TestMethod]

@@ -14,7 +14,7 @@ namespace MiniTransportTycoon.Test.Game
         {
             var economy = new EconomyManager();
 
-            Assert.AreEqual(100, economy.GetBalance());
+            Assert.AreEqual(300, economy.GetBalance());
             Assert.IsFalse(economy.IsBankrupt());
         }
 
@@ -26,7 +26,7 @@ namespace MiniTransportTycoon.Test.Game
 
             economy.ResetBalance();
 
-            Assert.AreEqual(100, economy.GetBalance());
+            Assert.AreEqual(300, economy.GetBalance());
         }
 
         [TestMethod]
@@ -36,7 +36,7 @@ namespace MiniTransportTycoon.Test.Game
 
             economy.AddMoney(50);
 
-            Assert.AreEqual(150, economy.GetBalance());
+            Assert.AreEqual(350, economy.GetBalance());
         }
 
         [TestMethod]
@@ -46,7 +46,7 @@ namespace MiniTransportTycoon.Test.Game
 
             economy.SubtractMoney(40);
 
-            Assert.AreEqual(60, economy.GetBalance());
+            Assert.AreEqual(260, economy.GetBalance());
         }
 
         [TestMethod]
@@ -57,7 +57,7 @@ namespace MiniTransportTycoon.Test.Game
             var result = economy.DeductCost(30);
 
             Assert.IsTrue(result);
-            Assert.AreEqual(70, economy.GetBalance());
+            Assert.AreEqual(270, economy.GetBalance());
         }
 
         [TestMethod]
@@ -65,10 +65,10 @@ namespace MiniTransportTycoon.Test.Game
         {
             var economy = new EconomyManager();
 
-            var result = economy.DeductCost(150);
+            var result = economy.DeductCost(350);
 
             Assert.IsFalse(result);
-            Assert.AreEqual(100, economy.GetBalance());
+            Assert.AreEqual(300, economy.GetBalance());
         }
 
         private static City CreateCity()
@@ -90,7 +90,7 @@ namespace MiniTransportTycoon.Test.Game
 
             economy.ProcessDelivery(CargoType.Passengers, 3, city);
 
-            Assert.AreEqual(115, economy.GetBalance());
+            Assert.AreEqual(315, economy.GetBalance());
         }
 
         [TestMethod]
@@ -102,7 +102,7 @@ namespace MiniTransportTycoon.Test.Game
 
             economy.ProcessDelivery(CargoType.Wood, 2, city);
 
-            var expected = 100 + CargoProperties.GetGrowthValue(CargoType.Wood) * 2;
+            var expected = 300 + CargoProperties.GetGrowthValue(CargoType.Wood) * 2;
             Assert.AreEqual(expected, economy.GetBalance());
         }
 
@@ -115,7 +115,7 @@ namespace MiniTransportTycoon.Test.Game
             economy.ProcessDelivery(CargoType.Passengers, 0, city);
             economy.ProcessDelivery(CargoType.Wood, 2, city);
 
-            Assert.AreEqual(100, economy.GetBalance());
+            Assert.AreEqual(300, economy.GetBalance());
         }
     }
 }

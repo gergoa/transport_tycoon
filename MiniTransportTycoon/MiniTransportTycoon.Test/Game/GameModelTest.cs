@@ -30,7 +30,7 @@ namespace MiniTransportTycoon.Test.Game
             Assert.IsNotNull(model.Board);
             Assert.AreEqual(130, model.Width);
             Assert.AreEqual(130, model.Height);
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
             Assert.IsFalse(model.IsGameOver);
             Assert.IsTrue(model.Facilities.Count > 0);
         }
@@ -43,7 +43,7 @@ namespace MiniTransportTycoon.Test.Game
 
             model.StartNewGame(130, 130);
 
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
             Assert.AreEqual(0f, model.ElapsedTime);
             Assert.IsFalse(model.IsGameOver);
             Assert.AreEqual(0, model.Vehicles.Count);
@@ -64,7 +64,7 @@ namespace MiniTransportTycoon.Test.Game
         public void GameTick_WhenEconomyIsBankrupt_SetsGameOver()
         {
             var model = new GameModel();
-            model.EconomyManager.SubtractMoney(101);
+            model.EconomyManager.SubtractMoney(301);
 
             model.GameTick(0f, ignoreTimeScale: true);
 
@@ -81,7 +81,7 @@ namespace MiniTransportTycoon.Test.Game
             model.BuildRoad(field);
 
             Assert.AreEqual(FieldType.ROAD, field.Type);
-            Assert.AreEqual(99, model.EconomyManager.GetBalance());
+            Assert.AreEqual(299, model.EconomyManager.GetBalance());
         }
 
         [TestMethod]
@@ -94,7 +94,7 @@ namespace MiniTransportTycoon.Test.Game
             model.BuildRoad(field);
 
             Assert.AreEqual(FieldType.CITY, field.Type);
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace MiniTransportTycoon.Test.Game
             Assert.IsNotNull(roadField.Stop);
             Assert.AreSame(roadField, roadField.Stop!.AssignedField);
             Assert.AreSame(city, roadField.Stop.AssignedFacility);
-            Assert.AreEqual(90, model.EconomyManager.GetBalance());
+            Assert.AreEqual(290, model.EconomyManager.GetBalance());
         }
 
         [TestMethod]
@@ -128,7 +128,7 @@ namespace MiniTransportTycoon.Test.Game
             model.BuildStop(field);
 
             Assert.IsNull(field.Stop);
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
         }
 
         [TestMethod]
@@ -147,7 +147,7 @@ namespace MiniTransportTycoon.Test.Game
 
             model.BuildBridge(path, BridgeType.Wooden);
 
-            Assert.AreEqual(80, model.EconomyManager.GetBalance());
+            Assert.AreEqual(280, model.EconomyManager.GetBalance());
 
             foreach (var field in path)
             {
@@ -173,7 +173,7 @@ namespace MiniTransportTycoon.Test.Game
 
             model.BuildBridge(path, BridgeType.Wooden);
 
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
             Assert.AreEqual(FieldType.WATER, path[0].Type);
             Assert.AreEqual(FieldType.EMPTY, path[1].Type);
             Assert.IsNull(path[0].Bridge);
@@ -212,7 +212,7 @@ namespace MiniTransportTycoon.Test.Game
 
             Assert.AreEqual(0, model.Routes.Count);
             Assert.AreEqual(0, model.Vehicles.Count);
-            Assert.AreEqual(100, model.EconomyManager.GetBalance());
+            Assert.AreEqual(300, model.EconomyManager.GetBalance());
         }
 
         [TestMethod]
@@ -237,7 +237,7 @@ namespace MiniTransportTycoon.Test.Game
 
             Assert.AreEqual(1, model.Routes.Count);
             Assert.AreEqual(1, model.Vehicles.Count);
-            Assert.AreEqual(95, model.EconomyManager.GetBalance());
+            Assert.AreEqual(295, model.EconomyManager.GetBalance());
 
             Assert.AreEqual(VehicleType.SmallBus, model.Vehicles[0].Type);
             Assert.AreSame(firstRoad, model.Vehicles[0].CurrentField);
