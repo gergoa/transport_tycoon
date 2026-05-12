@@ -248,13 +248,18 @@
                                            MouseDown="MapRenderControl_MouseDown" 
                                            MouseWheel="MapRenderControl_MouseWheel"/>
 
-                <!--<Border Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                <Border Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom"
                 Margin="20" Width="150" Height="150"
                 BorderBrush="White" BorderThickness="2" Background="#CC000000" CornerRadius="5" ClipToBounds="True">
 
                     <Viewbox Stretch="Fill">
                         <Grid Width="500" Height="500">
+                            
+                            <glWpfControl:GLWpfControl x:Name="MiniMapRenderControl" 
+                                                       Render="MiniMapRenderControl_OnRender"/>
+                           
 
+                            <!--
                             <ItemsControl ItemsSource="{Binding Fields}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -308,12 +313,13 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-
+                            -->
                             <Polygon x:Name="MinimapFrustum" Stroke="Yellow" StrokeThickness="0.5" Fill="#44FFFF00" />
+
+                            
                         </Grid>
                     </Viewbox>
                 </Border>
-                            -->
 
                 <ItemsControl ItemsSource="{Binding Vehicles}">
                     <ItemsControl.ItemsPanel>
