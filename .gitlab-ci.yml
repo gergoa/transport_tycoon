@@ -61,7 +61,7 @@ test_model:
     - >
       dotnet test "$TEST_PROJECT" --no-restore
       --results-directory "$TEST_DIR/TestResults"
-      --logger:"junit;LogFilePath=TestResults.xml;MethodFormat=Class;FailureBodyFormat=Verbose"
+      --logger:"trx;LogFileName=TestResults.trx"
       --collect:"XPlat Code Coverage"
 
     - apt-get update -yqq
@@ -78,12 +78,10 @@ test_model:
   artifacts:
     when: always
     paths:
-      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.xml
+      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.trx
       - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
       - report/html/
     reports:
-      junit:
-        - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.xml
       coverage_report:
         coverage_format: cobertura
         path: MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
