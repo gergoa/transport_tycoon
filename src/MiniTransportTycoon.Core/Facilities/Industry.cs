@@ -26,7 +26,7 @@ namespace MiniTransportTycoon.Core.Facilities
             }
         }
 
-        public void Produce(float deltaTime)
+        private void Produce(float deltaTime)
         {
             status += ProductionRate * deltaTime;
 

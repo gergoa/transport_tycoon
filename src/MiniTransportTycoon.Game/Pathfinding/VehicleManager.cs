@@ -13,9 +13,9 @@ namespace MiniTransportTycoon.Game.Pathfinding
     /// <summary>
     /// a járművek kezeléséért felelős osztály, amely a járművek útvonalait, állapotát és viselkedését kezeli a játék során. Ez magában foglalja a járművek mozgását, rakodási és kirakodási folyamatát, valamint a karbantartási költségek kezelését.
     /// </summary>
-    internal class VehicleManager
+    public class VehicleManager
     {
-        public Dictionary<Route, List<Vehicle>> assignedRoutes = new();
+        private Dictionary<Route, List<Vehicle>> assignedRoutes = new();
         private Dictionary<Vehicle, Route> _vehicleRoutes = new();
 
         private const float transferRate = 5.0f;
@@ -53,15 +53,15 @@ namespace MiniTransportTycoon.Game.Pathfinding
                         break;
 
                     case VehicleState.UNLOADING:
-                        Stop? unloadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        if (unloadStop?.assignedFacility != null)
-                            UpdateUnloadingState(vehicle, unloadStop.assignedFacility, economy, deltaTime);
+                        Stop? unloadStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
+                        if (unloadStop?.AssignedFacility != null)
+                            UpdateUnloadingState(vehicle, unloadStop.AssignedFacility, economy, deltaTime);
                         break;
 
                     case VehicleState.LOADING:
-                        Stop? loadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        if (loadStop?.assignedFacility != null)
-                            UpdateLoadingState(vehicle, route, loadStop.assignedFacility, board, pathfinder, deltaTime);
+                        Stop? loadStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
+                        if (loadStop?.AssignedFacility != null)
+                            UpdateLoadingState(vehicle, route, loadStop.AssignedFacility, board, pathfinder, deltaTime);
                         break;
                 }
             }
@@ -69,7 +69,12 @@ namespace MiniTransportTycoon.Game.Pathfinding
 
         private void UpdateDrivingState(Vehicle vehicle, Route route, Field[,] board, Pathfinder pathfinder, float deltaTime)
         {
-            if (vehicle.NextField == null) vehicle.NextField = route.Next(vehicle.CurrentField, board, pathfinder);
+            Field? nextField = route.Next(vehicle.CurrentField, board, pathfinder);
+
+            if (nextField == null)
+                return;
+
+            vehicle.NextField = nextField;
 
             vehicle.CurrentSpeed = vehicle.MaxSpeed;
             if (vehicle.NextField != null)
@@ -86,9 +91,9 @@ namespace MiniTransportTycoon.Game.Pathfinding
 
             if (vehicle.Progress >= 1.0f)
             {
-                Stop? currentStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
+                Stop? currentStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
 
-                if (currentStop != null && currentStop.assignedFacility != null)
+                if (currentStop != null && currentStop.AssignedFacility != null)
                 {
                     // MOVING -> UNLOADING
                     vehicle.Progress = 1.0f;
@@ -237,7 +242,12 @@ namespace MiniTransportTycoon.Game.Pathfinding
                     {
                         vehicle.PreviousField = vehicle.CurrentField;
                         vehicle.CurrentField = vehicle.NextField;
-                        vehicle.NextField = route.Next(vehicle.CurrentField, board, pathfinder);
+                        Field? nextField = route.Next(vehicle.CurrentField, board, pathfinder);
+
+                        if (nextField == null)
+                            return;
+
+                        vehicle.NextField = nextField;
                         vehicle.Progress = 0.0f;
                         vehicle.CurrentSpeed = vehicle.MaxSpeed;
                     }

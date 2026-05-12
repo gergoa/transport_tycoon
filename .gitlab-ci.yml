@@ -52,42 +52,40 @@ build_view:
 # (Uses Linux-based runner, because windows tag is NOT specified.)
 test_model:
   stage: test
-  before_script:    
-    - dotnet restore tests/MiniTransportTycoon.Tests --packages .nuget
+  variables:
+    TEST_PROJECT: "MiniTransportTycoon/MiniTransportTycoon.Test/MiniTransportTycoon.Test.csproj"
+    TEST_DIR: "MiniTransportTycoon/MiniTransportTycoon.Test"
+  before_script:
+    - dotnet restore "$TEST_PROJECT" --packages .nuget
   script:
-    - > 
-      dotnet test tests/MiniTransportTycoon.Tests --no-restore
-      --logger:"junit;MethodFormat=Class;FailureBodyFormat=Verbose"
+    - >
+      dotnet test "$TEST_PROJECT" --no-restore
+      --results-directory "$TEST_DIR/TestResults"
+      --logger:"trx;LogFileName=TestResults.trx"
       --collect:"XPlat Code Coverage"
-    
+
     - apt-get update -yqq
     - apt-get install -yqq bc
     - dotnet tool install --tool-path . dotnet-reportgenerator-globaltool
-    
-    # Compute code coverage (Updated exact paths)
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
-    - ./reportgenerator "-reports:$CI_PROJECT_DIR/tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
-    
-    # Extract total coverage percentage for GitLab UI
-    - line_rate="$(head -n 3 ./report/Cobertura.xml | sed 'N;N;s/.*line-rate="\([^" ]*\).*/\1/g')"
-    - coverage=$(echo "${line_rate} * 100" | bc)
+
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report" "-reporttypes:Cobertura"
+    - ./reportgenerator "-reports:$CI_PROJECT_DIR/$TEST_DIR/TestResults/*/coverage.cobertura.xml" "-targetdir:report/html" "-reporttypes:Html"
+
+    - line_rate="$(grep -o 'line-rate="[^"]*"' ./report/Cobertura.xml | head -n 1 | cut -d '"' -f2)"
+    - coverage=$(echo "$line_rate * 100" | bc -l)
     - 'printf "TOTAL_COVERAGE=%2.2f\n" "$coverage"'
+
   artifacts:
-    # Adding when: always ensures artifacts are saved even if a test fails
     when: always
     paths:
-      # Updated exact paths
-      - tests/MiniTransportTycoon.Tests/TestResults/TestResults.xml
-      - tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml
+      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/TestResults.trx
+      - MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
       - report/html/
     reports:
-      junit:
-        # Updated exact paths
-        - tests/MiniTransportTycoon.Tests/TestResults/TestResults.xml
       coverage_report:
         coverage_format: cobertura
-        # Updated exact paths
-        path: tests/MiniTransportTycoon.Tests/TestResults/*/coverage.cobertura.xml
+        path: MiniTransportTycoon/MiniTransportTycoon.Test/TestResults/*/coverage.cobertura.xml
+
   coverage: '/TOTAL_COVERAGE=(\d+.\d+)/'
   cache:
     key: "unittest-$CI_COMMIT_REF_SLUG"

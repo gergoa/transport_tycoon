@@ -25,8 +25,6 @@ namespace MiniTransportTycoon.Core.Map
 
             GenerateTerrain(board);
 
-            //+ide írnám a városok és gyárak lehelyezését is
-
             return board;
         }
 

@@ -8,9 +8,9 @@ namespace MiniTransportTycoon.Core.Map
 {
     public class BridgeProperties
     {
-        public int Cost { get; set; }
-        public int MaxLength { get; set; }
-        public float SpeedLimit { get; set; }
+        public int Cost { get; private set; }
+        public int MaxLength { get; private set; }
+        public float SpeedLimit { get; private set; }
 
         public static BridgeProperties Get(BridgeType type)
         {

@@ -8,7 +8,6 @@ namespace MiniTransportTycoon.Core.Map
 {
     public static class Perlin
     {
-        //ez a Perlin algoritmus - GitHubról vettem át, de értem, hogyan működik 
         private static readonly int[] _perm;
 
         static Perlin()

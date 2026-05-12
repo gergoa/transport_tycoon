@@ -40,7 +40,9 @@ namespace MiniTransportTycoon.Game.GameModel
         private TimeManager timeManager = new TimeManager();
         private EconomyManager economyManager = new EconomyManager();
         private VehicleManager vehicleManager = new VehicleManager();
-        private Pathfinder pathfinder;
+        private Pathfinder pathfinder = null!;
+        private float _maintenanceTimer = 0f;
+        private const float MaintenanceInterval = 10f;
         public bool IsGameOver { get; private set; } = false;
         public float ElapsedTime { get; private set; } = 0f;
         public Field[,] Board => board;
@@ -109,7 +111,7 @@ namespace MiniTransportTycoon.Game.GameModel
             _simulationTask = Task.Run(() => SimulationLoop(targetTicksPerSecond, token), token);
         }
 
-        public void StopSimulation()
+        private void StopSimulation()
         {
             if (_cancellationTokenSource != null)
             {
@@ -164,16 +166,27 @@ namespace MiniTransportTycoon.Game.GameModel
 
             foreach (var field in forestFields.ToList())
             {
-                field.Forest.Tick(scaledTime);
+                if(field.Forest != null)
+                {
+                    field.Forest.Tick(scaledTime);
 
-                if (field.Forest.UpdateSpread(scaledTime))
-                    TrySpread(field);
+                    if (field.Forest.UpdateSpread(scaledTime))
+                        TrySpread(field);
+                } 
             }
             UpdateSpawn(scaledTime);
 
             FacilityManager.TickFacilities(facilities, scaledTime, this);
 
             vehicleManager.UpdateVehicles(scaledTime, board, pathfinder, economyManager, vehicles);
+
+            _maintenanceTimer += scaledTime;
+
+            if (_maintenanceTimer >= MaintenanceInterval)
+            {
+                _maintenanceTimer = 0f;
+                vehicleManager.ChargeMaintenance(economyManager, vehicles);
+            }
 
             if (economyManager.IsBankrupt())
             {
@@ -310,9 +323,9 @@ namespace MiniTransportTycoon.Game.GameModel
             return list;
         }
 
-        public void BuyVehicle(VehicleType type, Route route)
+        private void BuyVehicle(VehicleType type, Route route)
         {
-            if (route == null || route.stops.Count == 0)
+            if (route == null || route.Stops.Count == 0)
                 return;
 
             int cost = VehicleFactory.GetPurchaseCost(type);
@@ -320,7 +333,7 @@ namespace MiniTransportTycoon.Game.GameModel
             if (economyManager.GetBalance() < cost)
                 return;
 
-            Field startField = route.stops[0].assignedField;
+            Field startField = route.Stops[0].AssignedField;
 
             if (startField.Type != FieldType.ROAD && startField.Type != FieldType.BRIDGE)
                 return;
@@ -369,7 +382,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 return;
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             foreach (var stop in stops)
                 route.AddStop(stop);
@@ -383,7 +396,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 return;
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             foreach (var stop in stops)
             {
@@ -396,7 +409,7 @@ namespace MiniTransportTycoon.Game.GameModel
         }
 
         #region Forest management
-        public void RemoveForest(Field field)
+        private void RemoveForest(Field field)
         {
             if (field.Forest == null)
                 return;
@@ -480,17 +493,17 @@ namespace MiniTransportTycoon.Game.GameModel
         }
         #endregion
 
-        public void GameOver()
+        private void GameOver()
         {
             IsGameOver = true;
         }
 
-        public void OnGameStarted()
+        private void OnGameStarted()
         {
             GameStarted?.Invoke(this, EventArgs.Empty);
         }
 
-        public bool ExpandCity(City city)
+        private bool ExpandCity(City city)
         {
             if (city == null || !facilities.Contains(city)) return false;
 
@@ -547,7 +560,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
 
             var route = new Route();
-            route.loop = true;
+            route.Loop = true;
 
             route.AddStop(new Stop(roadFields[0], null!));
             route.AddStop(new Stop(roadFields[4], null!));

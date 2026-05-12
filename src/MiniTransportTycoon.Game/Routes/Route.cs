@@ -13,25 +13,32 @@ namespace MiniTransportTycoon.Game.Routes
 {
     public class Route
     {
-        public List<Stop> stops = new List<Stop>();
-        public bool loop = true;
+        private List<Stop> stops = new List<Stop>();
+        private bool loop = true;
 
         private int currentStop = 0;
         private List<Field> currentPath = new();
+
+        public List<Stop> Stops => stops;
+        public bool Loop
+        {
+            get => loop;
+            set => loop = value;
+        }
 
         public void AddStop(Stop stop)
         {
             stops.Add(stop);
         }
 
-        public void RemoveStop(Stop stop)
+        /*public void RemoveStop(Stop stop)
         {
             stops.Reverse();
             stops.Remove(stop);
             stops.Reverse();
-        }
+        }*/
 
-    public Field? Next(Field currentPos, Field[,] board, Pathfinder pathfinder)
+        public Field? Next(Field currentPos, Field[,] board, Pathfinder pathfinder)
         {
             // if there's a path already, just return next step
             if (currentPath.Count > 0)
@@ -46,7 +53,7 @@ namespace MiniTransportTycoon.Game.Routes
 
             Stop targetStop = stops[currentStop];
 
-            var newPath = pathfinder.FindPath(currentPos, targetStop.assignedField);
+            var newPath = pathfinder.FindPath(currentPos, targetStop.AssignedField);
 
             if (newPath.Count > 0)
             {
@@ -74,7 +81,7 @@ namespace MiniTransportTycoon.Game.Routes
             return null;
         }
 
-    public void RecalculatePath(Field currentPos, Pathfinder pathfinder)
+        public void RecalculatePath(Field currentPos, Pathfinder pathfinder)
         {
             if (stops.Count == 0 || currentPath.Count == 0) return;
 
@@ -86,7 +93,7 @@ namespace MiniTransportTycoon.Game.Routes
             }
 
             Stop targetStop = stops[targetIndex];
-            var newPath = pathfinder.FindPath(currentPos, targetStop.assignedField);
+            var newPath = pathfinder.FindPath(currentPos, targetStop.AssignedField);
 
             if (newPath.Count > 0)
             {

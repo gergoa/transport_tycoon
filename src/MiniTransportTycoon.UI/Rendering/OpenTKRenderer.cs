@@ -22,10 +22,10 @@ namespace MiniTransportTycoon.UI.Rendering
     {
         protected Vector2i _windowSize;
         private int _shaderProgram;
-        private WireframeRenderer _wireframeRenderer;
+        private WireframeRenderer _wireframeRenderer = null!;
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
-        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet;
+        private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet = null!;
         private GLMeshObject _testVehicleMesh;
 
         private int _colormapTexID;
@@ -36,8 +36,8 @@ namespace MiniTransportTycoon.UI.Rendering
 
         protected float _elapsedTime;
 
-        protected Camera.Camera _camera;
-        protected Camera.CameraManipulator _cameraManipulator;
+        protected Camera.Camera _camera = null!;
+        protected Camera.CameraManipulator _cameraManipulator = null!;
 
         private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
         private bool _isInitialized = false;
