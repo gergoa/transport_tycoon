@@ -31,14 +31,14 @@ namespace MiniTransportTycoon.Game.Routes
             stops.Add(stop);
         }
 
-        public void RemoveStop(Stop stop)
+        /*public void RemoveStop(Stop stop)
         {
             stops.Reverse();
             stops.Remove(stop);
             stops.Reverse();
-        }
+        }*/
 
-    public Field? Next(Field currentPos, Field[,] board, Pathfinder pathfinder)
+        public Field? Next(Field currentPos, Field[,] board, Pathfinder pathfinder)
         {
             // if there's a path already, just return next step
             if (currentPath.Count > 0)
@@ -81,7 +81,7 @@ namespace MiniTransportTycoon.Game.Routes
             return null;
         }
 
-    public void RecalculatePath(Field currentPos, Pathfinder pathfinder)
+        public void RecalculatePath(Field currentPos, Pathfinder pathfinder)
         {
             if (stops.Count == 0 || currentPath.Count == 0) return;
 

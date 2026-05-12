@@ -73,10 +73,10 @@ namespace MiniTransportTycoon.Core.Map
             if (slotL == v) slotL = null;
             if (slotR == v) slotR = null;
         }
-        public bool IsPassable()
+        /*public bool IsPassable()
         {
             return type != FieldType.WATER;
-        }
+        }*/
 
         public bool IsFree()
         {

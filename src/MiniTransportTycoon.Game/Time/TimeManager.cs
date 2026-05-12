@@ -4,7 +4,7 @@ namespace MiniTransportTycoon.Game.Time
     {
         private TimeSpeed _currentSpeed = TimeSpeed.Normal;
 
-        public TimeSpeed CurrentSpeed => _currentSpeed;
+        //public TimeSpeed CurrentSpeed => _currentSpeed;
 
         public void SetSpeed(TimeSpeed speed)
         {

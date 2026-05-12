@@ -99,7 +99,7 @@ namespace MiniTransportTycoon.Game.GameModel
         }
 
         /*
-        internal static bool TryGrowCity(GameModel gameModel, City city)
+        public static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
             int width = gameModel.Width;
@@ -192,7 +192,7 @@ namespace MiniTransportTycoon.Game.GameModel
             return true;
         }
         */
-        private static bool Is3x3Empty(Field[,] board, int cx, int cy)
+        /*private static bool Is3x3Empty(Field[,] board, int cx, int cy)
         {
             for (int dx = -1; dx <= 1; dx++)
             {
@@ -206,7 +206,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 }
             }
             return true;
-        }
+        }*/
 
         public static void CleanFacilities(GameModel model)
         {
@@ -252,7 +252,7 @@ namespace MiniTransportTycoon.Game.GameModel
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Electronics, new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }) { ProductionRate = 1.0f });
         }
 
-        public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
+        /*public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
         {
             if (facility is City c && c.Demand.ContainsKey(type)) return true;
             if (facility is Industry ind && ind.InputRequirements.ContainsKey(type)) return true;
@@ -272,7 +272,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 if (!industry.InventoryIn.ContainsKey(type)) industry.InventoryIn[type] = 0;
                 industry.InventoryIn[type] += amount;
             }
-        }
+        }*/
         // helper method
         private static List<Field> CreateCityBlock(List<Field> fields)
         {
