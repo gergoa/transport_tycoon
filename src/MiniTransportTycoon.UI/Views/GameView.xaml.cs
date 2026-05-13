@@ -76,6 +76,11 @@ namespace MiniTransportTycoon.UI.Views
                     vm.NewGameStarted = false;
                 }
 
+                if (_minimaprenderer is OpenTKRenderer r2)
+                {
+                    r2.CachedFields = null;
+                }
+
             }
 
             if (!_isRendererInitialized)

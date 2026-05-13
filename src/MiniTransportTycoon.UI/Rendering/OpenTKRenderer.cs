@@ -248,76 +248,79 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             // Map elements
-            foreach (var buf in _meshBuffers.Values)
+            if (!minimap)
             {
-                DrawDynamicBuffer(buf, _colormapTexID);
-            }
-
-            // Vehicles (non-instanced iterative logic)
-            if (data.Vehicles != null)
-            {
-                GL.Uniform1(_isInstancedLoc, 0);
-
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
-                GL.Uniform1(_textureLoc, 0);
-
-                for (int i = 0; i < data.Vehicles.Count; i++)
+                foreach (var buf in _meshBuffers.Values)
                 {
-                    var vehicle = data.Vehicles[i];
-                    
+                    DrawDynamicBuffer(buf, _colormapTexID);
+                }
 
-                    var prev = vehicle.PreviousField;
-                    var current = vehicle.CurrentField;
-                    var next = vehicle.NextField;
+                // Vehicles (non-instanced iterative logic)
+                if (data.Vehicles != null)
+                {
+                    GL.Uniform1(_isInstancedLoc, 0);
 
-                    int prevX = prev != null ? prev.X : current.X;
-                    int prevY = prev != null ? prev.Y : current.Y;
-                    int nextX = next != null ? next.X : current.X;
-                    int nextY = next != null ? next.Y : current.Y;
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
+                    GL.Uniform1(_textureLoc, 0);
 
-
-                    RoadOrientation entryEdge = VehicleVisualPaths.GetEdgeFromDelta(prevX - current.X, prevY - current.Y);
-                    RoadOrientation exitEdge = VehicleVisualPaths.GetEdgeFromDelta(nextX - current.X, nextY - current.Y);
-
-                    Vector3 localCurvePos; float rotationY;
-                    if (vehicle.State == VehicleState.LOADING || vehicle.State == VehicleState.UNLOADING)
+                    for (int i = 0; i < data.Vehicles.Count; i++)
                     {
-                        VehicleVisualPaths.GetStoppedPositionAndRotation(
-                            entryEdge,
-                            exitEdge,
-                            out localCurvePos,
-                            out rotationY
+                        var vehicle = data.Vehicles[i];
+
+
+                        var prev = vehicle.PreviousField;
+                        var current = vehicle.CurrentField;
+                        var next = vehicle.NextField;
+
+                        int prevX = prev != null ? prev.X : current.X;
+                        int prevY = prev != null ? prev.Y : current.Y;
+                        int nextX = next != null ? next.X : current.X;
+                        int nextY = next != null ? next.Y : current.Y;
+
+
+                        RoadOrientation entryEdge = VehicleVisualPaths.GetEdgeFromDelta(prevX - current.X, prevY - current.Y);
+                        RoadOrientation exitEdge = VehicleVisualPaths.GetEdgeFromDelta(nextX - current.X, nextY - current.Y);
+
+                        Vector3 localCurvePos; float rotationY;
+                        if (vehicle.State == VehicleState.LOADING || vehicle.State == VehicleState.UNLOADING)
+                        {
+                            VehicleVisualPaths.GetStoppedPositionAndRotation(
+                                entryEdge,
+                                exitEdge,
+                                out localCurvePos,
+                                out rotationY
+                            );
+                        }
+                        else
+                        {
+                            VehicleVisualPaths.GetRoutePositionAndRotation(
+                                entryEdge,
+                                exitEdge,
+                                vehicle.Progress,
+                                vehicle.InLeftSlot,
+                                out localCurvePos,
+                                out rotationY
+                            );
+                        }
+
+                        VehicleAsset asset = GetVehicleAsset(vehicle);
+
+                        Matrix4 model = Matrix4.CreateScale(0.25f)
+                            * Matrix4.CreateRotationY(rotationY)
+                            * Matrix4.CreateTranslation(
+                                current.X + 0.5f + localCurvePos.X,
+                                0.2f,
+                                current.Y + 0.5f + localCurvePos.Z
                         );
+                        Vector3 globalFrontWheel = (new Vector4(asset.FrontWheelOffset, 1.0f) * model).Xyz;
+                        Vector3 globalBackWheel = (new Vector4(asset.BackWheelOffset, 1.0f) * model).Xyz;
+
+
+                        GL.BindVertexArray(asset.Mesh.VaoID);
+                        GL.UniformMatrix4(_modelLoc, false, ref model);
+                        GL.DrawElements(asset.Mesh.DrawMode, asset.Mesh.Count, DrawElementsType.UnsignedInt, 0);
                     }
-                    else
-                    {
-                        VehicleVisualPaths.GetRoutePositionAndRotation(
-                            entryEdge,
-                            exitEdge,
-                            vehicle.Progress,
-                            vehicle.InLeftSlot,
-                            out localCurvePos,
-                            out rotationY
-                        );
-                    }
-
-                    VehicleAsset asset = GetVehicleAsset(vehicle);
-
-                    Matrix4 model = Matrix4.CreateScale(0.25f)
-                        * Matrix4.CreateRotationY(rotationY)
-                        * Matrix4.CreateTranslation(
-                            current.X + 0.5f + localCurvePos.X,
-                            0.2f,
-                            current.Y + 0.5f + localCurvePos.Z
-                    );
-                    Vector3 globalFrontWheel = (new Vector4(asset.FrontWheelOffset, 1.0f) * model).Xyz;
-                    Vector3 globalBackWheel = (new Vector4(asset.BackWheelOffset, 1.0f) * model).Xyz;
-
-
-                    GL.BindVertexArray(asset.Mesh.VaoID);
-                    GL.UniformMatrix4(_modelLoc, false, ref model);
-                    GL.DrawElements(asset.Mesh.DrawMode, asset.Mesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
