@@ -2,8 +2,8 @@
 
 A **Mini Transport Tycoon** a Szoftvertechnológia gyakorlat keretein belül készült közlekedési-gazdasági szimulátor a 2025/2026-os tavaszi félévben. A projekt célja egy olyan rendszer megalkotása, ahol a játékos városok és ipari létesítmények között szervez áruszállítást és személyforgalmat a profit maximalizálása érdekében.
 
-## Fejlesztői dokumentáció
-A program legfrissebb API dokumentációja [ezen a linken](link) érhetőek el.
+## Demo videó
+A program legfrissebb videója [ezen a linken](https://streamable.com/zm6fnq) érhetőek el.
 
 ## Alapjáték leírása
 A játék egy rácsalapú térképen zajlik, ahol városok és ipari létesítmények találhatóak. A játékos feladata az infrastruktúra kiépítése és a logisztika menedzselése:
