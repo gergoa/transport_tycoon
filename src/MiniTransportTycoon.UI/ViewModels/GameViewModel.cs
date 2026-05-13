@@ -37,6 +37,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         private List<Stop> _pendingRouteStops = new();
         public TickData TickData => tickMapData;
         public bool MapUpdateNeeded = false;
+        public bool NewGameStarted = true;
 
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
@@ -173,7 +174,7 @@ namespace MiniTransportTycoon.UI.ViewModels
             _timer.Interval = TimeSpan.FromMilliseconds(33);
             _timer.Tick += OnTimerTick;
             _timer.Start();
-            tickMapData = new TickData(new Field[Width,Height], model.Vehicles, Width, Height);
+            tickMapData = new TickData(new TickField[Width,Height], model.Vehicles, Width, Height);
 
             _model.GameStarted += _model_GameStarted;
             _model.MapUpdated += _model_MapUpdated;
@@ -186,6 +187,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             NewGameCommand = new DelegateCommand(param => {
                 lock (_model.StateLock) _model.StartNewGame(Width, Height);
+                tickMapData = new(new TickField[Width, Height], model.Vehicles, Width, Height);
                 OnPropertyChanged(nameof(Money));
                 OnPropertyChanged(nameof(Time));
                 _timer.Start();
@@ -266,7 +268,9 @@ namespace MiniTransportTycoon.UI.ViewModels
                       Y = j,
                       BridgeType = null
                     });
-                    tickMapData.Fields[i, j] = _model.Board[i, j];
+
+                    tickMapData.Fields[i,j].CityLevel = 0;
+                    UpdateTickField(i, j);
                 }
             }
             
@@ -373,6 +377,7 @@ namespace MiniTransportTycoon.UI.ViewModels
                             return;
                     }
                     OnPropertyChanged(nameof(Money));
+                    tickMapData.Vehicles = _model.Vehicles;
                     MapUpdateNeeded = true;
                 }
 
@@ -394,9 +399,11 @@ namespace MiniTransportTycoon.UI.ViewModels
                         Fields[y * Width + x].BridgeType = _model.Board[x, y].Bridge?.Type;
                     }
 
-                    tickMapData.Fields[x, y].Type = newType;
+                    UpdateTickField(x, y);
+                    MapUpdateNeeded = true;
                 }
             });
+
         }
 
         private void _model_GameStarted(object? sender, EventArgs e)
@@ -411,11 +418,13 @@ namespace MiniTransportTycoon.UI.ViewModels
                         {
                             Fields[j * Width + i].Type = _model.Board[i, j].Type;
                             Fields[j * Width + i].BridgeType = _model.Board[i, j].Bridge?.Type;
-                            tickMapData.Fields[i, j] = _model.Board[i, j];
+                            UpdateTickField(i, j);
                         }
                     }
                     tickMapData.Height = Height;
                     tickMapData.Width = Width;
+                    MapUpdateNeeded = true;
+                    NewGameStarted = true;
                 }
             });
         }
@@ -439,9 +448,14 @@ namespace MiniTransportTycoon.UI.ViewModels
             {
                 for (int i = 0; i < Width; i++)
                 {
-                    Fields[j * Width + i].Type = _model.Board[i, j].Type;
-                    Fields[j * Width + i].BridgeType = _model.Board[i, j].Bridge?.Type;
-                    tickMapData.Fields[i, j] = _model.Board[i, j];
+                    var coreType = _model.Board[i, j].Type;
+
+                    if (Fields[j * Width + i].Type != coreType)
+                    {
+                        Fields[j * Width + i].Type = coreType;
+                        Fields[j * Width + i].BridgeType = _model.Board[i, j].Bridge?.Type;
+                        UpdateTickField(i, j);
+                    }
                 }
             }
         }
@@ -673,6 +687,110 @@ namespace MiniTransportTycoon.UI.ViewModels
 
                 return $"Buying: {_pendingVehicleType}\nSelected stops: {_pendingRouteStops.Count}\nClick the first stop again to complete the loop.";
             }
+        }
+
+        private void UpdateTickField(int x, int y)
+        {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) return;
+
+            var coreField = _model.Board[x, y];
+            RoadOrientation mask = RoadOrientation.None;
+
+            // if city was just placed, increase level of other tiles
+            
+            if (coreField.Type == FieldType.CITY && tickMapData.Fields[x,y].Type != FieldType.CITY)
+            {
+                var fields = coreField.Facility?.Fields;
+                if (fields == null) { return; }
+                foreach (var f in fields)
+                {
+                    int currentLevel = tickMapData.Fields[f.X, f.Y].CityLevel;
+                    if (currentLevel < 15)
+                    {
+                        tickMapData.Fields[f.X, f.Y].CityLevel = currentLevel + 1;
+                    }
+                }
+            }
+            if (IsRoadConnection(x, y))
+            {
+                if (IsRoadConnection(x, y - 1))
+                {
+                    mask |= RoadOrientation.Top;
+                    tickMapData.Fields[x, y - 1].RoadMask |= RoadOrientation.Bottom;
+                }
+
+                if (IsRoadConnection(x + 1, y))
+                {
+                    mask |= RoadOrientation.Right;
+                    tickMapData.Fields[x + 1, y].RoadMask |= RoadOrientation.Left;
+                }
+                // 
+                if (IsRoadConnection(x, y + 1))
+                {
+                    mask |= RoadOrientation.Bottom;
+                    tickMapData.Fields[x, y + 1].RoadMask |= RoadOrientation.Top;
+                }
+                //
+                if (IsRoadConnection(x - 1, y))
+                {
+                    mask |= RoadOrientation.Left;
+                    tickMapData.Fields[x - 1, y].RoadMask |= RoadOrientation.Right;
+                }
+                //
+            }
+
+            OBJECT_TYPE factoryType = OBJECT_TYPE.NONE;
+            if (coreField.Type == FieldType.INDUSTRY && coreField.Facility is Industry industry)
+            {
+                factoryType = industry.OutputType switch
+                {
+                    // ingredient
+                    CargoType.Grain => OBJECT_TYPE.FARM,
+                    CargoType.Livestock => OBJECT_TYPE.LIVESTOCK,
+                    CargoType.Wood => OBJECT_TYPE.WOOD,
+                    CargoType.IronOre or CargoType.Coal or CargoType.CrudeOil or CargoType.CopperOre => OBJECT_TYPE.MINE,
+
+                    // Tier 1
+                    CargoType.Lumber or CargoType.Steel or CargoType.Plastic or CargoType.CopperWire => OBJECT_TYPE.PROCESSING,
+
+                    // Tier 2
+                    CargoType.ProcessedFood => OBJECT_TYPE.FOODPROCESSING,
+                    CargoType.Furniture or CargoType.Tools => OBJECT_TYPE.ASSEMBLY,
+
+                    // Tier 3
+                    CargoType.Microchips or CargoType.Automobiles or CargoType.Electronics => OBJECT_TYPE.HIGH_END_FACTORY,
+
+                    _ => OBJECT_TYPE.PROCESSING
+                };
+            }
+
+            int treeCount = 0;
+            if (coreField.Type == FieldType.FOREST && coreField.Forest != null)
+            {
+                treeCount = coreField.Forest.TreeCount;
+            }
+
+            int level = tickMapData.Fields[x, y].CityLevel;
+            tickMapData.Fields[x, y] = new TickField
+            {
+                Type = coreField.Type,
+                HasStop = coreField.HasStop,
+                BridgeType = coreField.Bridge?.Type,
+                RoadMask = mask,
+                CityLevel = level,
+                FactoryType = factoryType,
+                TreeCount = treeCount
+            };
+            MapUpdateNeeded = true;
+        }
+
+        private bool IsRoadConnection(int x, int y)
+        {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) return false;
+
+            var f = _model.Board[x, y];
+
+            return f.Type == FieldType.ROAD || f.Type == FieldType.BRIDGE || f.HasStop;
         }
     }
 }

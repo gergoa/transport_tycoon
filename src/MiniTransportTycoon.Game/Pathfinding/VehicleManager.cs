@@ -69,12 +69,8 @@ namespace MiniTransportTycoon.Game.Pathfinding
 
         private void UpdateDrivingState(Vehicle vehicle, Route route, Field[,] board, Pathfinder pathfinder, float deltaTime)
         {
-            Field? nextField = route.Next(vehicle.CurrentField, board, pathfinder);
 
-            if (nextField == null)
-                return;
-
-            vehicle.NextField = nextField;
+            if (vehicle.NextField == null) vehicle.NextField = route.Next(vehicle.CurrentField, board, pathfinder);
 
             vehicle.CurrentSpeed = vehicle.MaxSpeed;
             if (vehicle.NextField != null)
@@ -242,12 +238,7 @@ namespace MiniTransportTycoon.Game.Pathfinding
                     {
                         vehicle.PreviousField = vehicle.CurrentField;
                         vehicle.CurrentField = vehicle.NextField;
-                        Field? nextField = route.Next(vehicle.CurrentField, board, pathfinder);
-
-                        if (nextField == null)
-                            return;
-
-                        vehicle.NextField = nextField;
+                        vehicle.NextField = route.Next(vehicle.CurrentField, board, pathfinder);
                         vehicle.Progress = 0.0f;
                         vehicle.CurrentSpeed = vehicle.MaxSpeed;
                     }

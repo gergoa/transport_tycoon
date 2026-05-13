@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using MiniTransportTycoon.Core.Cargo;
 using MiniTransportTycoon.Core.Map;
@@ -22,6 +23,14 @@ namespace MiniTransportTycoon.Core.Vehicles
         /// A jármû megjelenített neve.
         /// </summary>
         public string DisplayName { get; set; } = "Vehicle";
+
+        public bool InLeftSlot
+        {
+            get
+            {
+                return CurrentField.SlotL == this;
+            }
+        }
 
         public VehicleState State { get; set; }
         public float elapsedInState { get; set; }
