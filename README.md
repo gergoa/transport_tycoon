@@ -31,11 +31,11 @@ A játék valós időben fut, az idő múlása pedig négy fokozatban állíthat
 ## Képernyőképek a játékból
 
 ### Menü
-![Kép1](link)
+![Kép1](Screenshots/Menu.png)
 
 ### Játék
-![Kép2](link)
+![Kép2](Screenshots/Game.png)
 
 ### Játék vége
-![Kép3](link)
+![Kép3](Screenshots/Gameover.png)
 	
