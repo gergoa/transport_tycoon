@@ -576,7 +576,7 @@ namespace MiniTransportTycoon.UI.Rendering
                         Vector3 treePos = new Vector3(i + offsetX, 0.01f, j + offsetZ);
 
                         ulong id = _nextInstanceId++;
-                        buf.AddInstance(id, new InstanceData(treePos, 0.15f, 0.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
+                        buf.AddInstance(id, new InstanceData(treePos, 0.44f, 0.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
                         state.Instances.Add((buf, id));
                     }
                 }
