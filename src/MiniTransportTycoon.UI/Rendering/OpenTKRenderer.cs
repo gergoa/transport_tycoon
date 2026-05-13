@@ -37,7 +37,7 @@ namespace MiniTransportTycoon.UI.Rendering
     {
         protected Vector2i _windowSize;
         private int _shaderProgram;
-        private WireframeRenderer _wireframeRenderer;
+        private WireframeRenderer? _wireframeRenderer;
         private GLMeshObject _quadMesh;
         private GLMeshObject _testBuildingMesh;
         private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet = new();
@@ -49,20 +49,20 @@ namespace MiniTransportTycoon.UI.Rendering
         // water shading
         private int _waterShaderProgram;
         private int _waterViewProjLoc, _waterTimeLoc, _waterIsInstancedLoc;
-        private DynamicInstanceBuffer _waterBuffer;
+        private DynamicInstanceBuffer? _waterBuffer;
 
         private int _colormapTexID;
         // uniform locations
         private int _viewProjLoc, _isInstancedLoc, _textureLoc, _modelLoc;
 
         // Dynamic instancing
-        private DynamicInstanceBuffer _quadBuffer;
+        private DynamicInstanceBuffer? _quadBuffer;
         private Dictionary<GLMeshObject, DynamicInstanceBuffer> _meshBuffers = new();
-        private TileState[,] _tileStates;
-        private TickField[,] _cachedFields;
+        private TileState[,]? _tileStates;
+        private TickField[,]? _cachedFields;
         public TickField[,] CachedFields
         {
-            get { return _cachedFields; }
+            get { return _cachedFields!; }
             set {  _cachedFields = value; }
         }
 
@@ -72,8 +72,8 @@ namespace MiniTransportTycoon.UI.Rendering
         protected Random r = new();
         protected float _elapsedTime;
 
-        protected Camera.Camera _camera;
-        protected Camera.CameraManipulator _cameraManipulator;
+        protected Camera.Camera? _camera;
+        protected Camera.CameraManipulator? _cameraManipulator;
 
         private bool _moveForward, _moveBackward, _moveLeft, _moveRight;
         private bool _isInitialized = false;
@@ -217,7 +217,7 @@ namespace MiniTransportTycoon.UI.Rendering
             if (!_isInitialized) return;
             _windowSize = new Vector2i(w, h);
             GL.Viewport(0, 0, w, h);
-            _camera.SetAspect((float)w / h);
+            _camera!.SetAspect((float)w / h);
         }
 
         public void Render(TickData data, TimeSpan delta, bool minimap=false)
@@ -228,7 +228,7 @@ namespace MiniTransportTycoon.UI.Rendering
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.UseProgram(_shaderProgram);
-            Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
+            Matrix4 viewProj = _camera!.ViewMatrix * _camera.ProjectionMatrix;
             if (minimap)
             {
                 float mapCenterX = data.Width / 2f;
@@ -341,7 +341,7 @@ namespace MiniTransportTycoon.UI.Rendering
             // we must manually set m_isInstanced for the water shader.
             GL.Uniform1(_waterIsInstancedLoc, 1);
 
-            if (_waterBuffer.Instances.Count > 0)
+            if (_waterBuffer!.Instances.Count > 0)
             {
                 int stride = Marshal.SizeOf<InstanceData>();
                 GL.VertexArrayVertexBuffer(_waterBuffer.Mesh.VaoID, 1, _waterBuffer.VboID, IntPtr.Zero, stride);
@@ -404,7 +404,7 @@ namespace MiniTransportTycoon.UI.Rendering
             if (_quadBuffer != null) _quadBuffer.Clear();
             else _quadBuffer = new DynamicInstanceBuffer(_quadMesh);
 
-            _waterBuffer.Clear();
+            _waterBuffer!.Clear();
             _cachedFields = new TickField[data.Width, data.Height];
             _tileStates = new TileState[data.Width, data.Height];
 
@@ -470,7 +470,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
         private void UpdateTile(int i, int j, TickField field)
         {
-            TileState state = _tileStates[i, j];
+            TileState state = _tileStates![i, j];
 
             foreach (var inst in state.Instances)
             {
@@ -484,13 +484,13 @@ namespace MiniTransportTycoon.UI.Rendering
                 Vector3 bedColor = new Vector3(0.55f, 0.45f, 0.3f);
                 Vector3 bedPos = new Vector3(i + 0.5f, -0.15f, j + 0.5f);
                 ulong bedId = _nextInstanceId++;
-                _quadBuffer.AddInstance(bedId, new InstanceData(bedPos, 1.0f, 0f, 0f, bedColor));
+                _quadBuffer!.AddInstance(bedId, new InstanceData(bedPos, 1.0f, 0f, 0f, bedColor));
                 state.Instances.Add((_quadBuffer, bedId));
 
                 Vector3 waterColor = new Vector3(0.1f, 0.5f, 0.7f);
                 Vector3 waterPos = new Vector3(i + 0.5f, 0.0f, j + 0.5f);
                 ulong waterId = _nextInstanceId++;
-                _waterBuffer.AddInstance(waterId, new InstanceData(waterPos, 1.0f, 0f, 0f, waterColor));
+                _waterBuffer!.AddInstance(waterId, new InstanceData(waterPos, 1.0f, 0f, 0f, waterColor));
                 state.Instances.Add((_waterBuffer, waterId));
             }
             else
@@ -498,7 +498,7 @@ namespace MiniTransportTycoon.UI.Rendering
                 Vector3 color = field.HasStop ? new Vector3(0.99f, 0.01f, 0.02f) : GetColorForFieldType(field.Type);
                 Vector3 quadPos = new Vector3(i + 0.5f, 0f, j + 0.5f);
                 ulong quadId = _nextInstanceId++;
-                _quadBuffer.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, 0f, color));
+                _quadBuffer!.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, 0f, color));
                 state.Instances.Add((_quadBuffer, quadId));
             }
 
@@ -633,13 +633,13 @@ namespace MiniTransportTycoon.UI.Rendering
         public void OrbitCamera(float deltaX, float deltaY)
         {
             const float sens = 0.001f;
-            _cameraManipulator.Rotate(deltaX * sens, deltaY * sens);
+            _cameraManipulator!.Rotate(deltaX * sens, deltaY * sens);
         }
 
         public void ZoomCamera(float delta)
         {
             float factor = delta > 0 ? 0.9f : 1.1f;
-            _cameraManipulator.Zoom(factor);
+            _cameraManipulator!.Zoom(factor);
         }
 
         public void MoveCamera(TimeSpan delta)
@@ -651,13 +651,13 @@ namespace MiniTransportTycoon.UI.Rendering
 
             if (forwardAmount != 0.0f || rightAmount != 0.0f)
             {
-                _cameraManipulator.Pan(rightAmount * panSpeed, forwardAmount * panSpeed);
+                _cameraManipulator!.Pan(rightAmount * panSpeed, forwardAmount * panSpeed);
             }
         }
 
         public Camera.Camera GetCamera()
         {
-            return _camera;
+            return _camera!;
         }
 
         // shadercode management

@@ -166,11 +166,11 @@ namespace MiniTransportTycoon.Game.GameModel
 
             foreach (var field in forestFields.ToList())
             {
-                var tc = field.Forest.TreeCount;
-                field.Forest.Tick(scaledTime);
+                var tc = field.Forest?.TreeCount;
+                field.Forest?.Tick(scaledTime);
 
-                if (field.Forest.TreeCount != tc) FieldChanged?.Invoke(field.X, field.Y, FieldType.FOREST);
-                if (field.Forest.UpdateSpread(scaledTime))
+                if (field.Forest?.TreeCount != tc) FieldChanged?.Invoke(field.X, field.Y, FieldType.FOREST);
+                if (field.Forest?.UpdateSpread(scaledTime) ?? false)
                     TrySpread(field);
             }
             UpdateSpawn(scaledTime);
