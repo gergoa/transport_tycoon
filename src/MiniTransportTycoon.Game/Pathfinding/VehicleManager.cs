@@ -10,9 +10,12 @@ using MiniTransportTycoon.Core.Buildings;
 
 namespace MiniTransportTycoon.Game.Pathfinding
 {
-    internal class VehicleManager
+    /// <summary>
+    /// a járművek kezeléséért felelős osztály, amely a járművek útvonalait, állapotát és viselkedését kezeli a játék során. Ez magában foglalja a járművek mozgását, rakodási és kirakodási folyamatát, valamint a karbantartási költségek kezelését.
+    /// </summary>
+    public class VehicleManager
     {
-        public Dictionary<Route, List<Vehicle>> assignedRoutes = new();
+        private Dictionary<Route, List<Vehicle>> assignedRoutes = new();
         private Dictionary<Vehicle, Route> _vehicleRoutes = new();
 
         private const float transferRate = 5.0f;
@@ -28,7 +31,14 @@ namespace MiniTransportTycoon.Game.Pathfinding
                 v.State = VehicleState.MOVING;
             }
         }
-
+        /// <summary>
+        /// a járművek frissítése minden frame-ben, a jelenlegi állapotuk alapján meghatározva a viselkedésüket (mozgás, rakodás, kirakodás).
+        /// </summary>
+        /// <param name="deltaTime">Az eltelt idő a legutóbbi frissítés óta.</param>
+        /// <param name="board">A játékmező mátrixa.</param>
+        /// <param name="pathfinder">Az útvonaltervező objektum.</param>
+        /// <param name="economy">A gazdasági rendszer kezelője.</param>
+        /// <param name="vehicles">A játékban lévő járművek listája.</param>
         public void UpdateVehicles(float deltaTime, Field[,] board, Pathfinder pathfinder, EconomyManager economy, List<Vehicle> vehicles)
         {
             foreach (var vehicle in vehicles)
@@ -43,15 +53,15 @@ namespace MiniTransportTycoon.Game.Pathfinding
                         break;
 
                     case VehicleState.UNLOADING:
-                        Stop? unloadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        if (unloadStop?.assignedFacility != null)
-                            UpdateUnloadingState(vehicle, unloadStop.assignedFacility, economy, deltaTime);
+                        Stop? unloadStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
+                        if (unloadStop?.AssignedFacility != null)
+                            UpdateUnloadingState(vehicle, unloadStop.AssignedFacility, economy, deltaTime);
                         break;
 
                     case VehicleState.LOADING:
-                        Stop? loadStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
-                        if (loadStop?.assignedFacility != null)
-                            UpdateLoadingState(vehicle, route, loadStop.assignedFacility, board, pathfinder, deltaTime);
+                        Stop? loadStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
+                        if (loadStop?.AssignedFacility != null)
+                            UpdateLoadingState(vehicle, route, loadStop.AssignedFacility, board, pathfinder, deltaTime);
                         break;
                 }
             }
@@ -59,6 +69,7 @@ namespace MiniTransportTycoon.Game.Pathfinding
 
         private void UpdateDrivingState(Vehicle vehicle, Route route, Field[,] board, Pathfinder pathfinder, float deltaTime)
         {
+
             if (vehicle.NextField == null) vehicle.NextField = route.Next(vehicle.CurrentField, board, pathfinder);
 
             vehicle.CurrentSpeed = vehicle.MaxSpeed;
@@ -76,9 +87,9 @@ namespace MiniTransportTycoon.Game.Pathfinding
 
             if (vehicle.Progress >= 1.0f)
             {
-                Stop? currentStop = route.stops.Find(s => s.assignedField == vehicle.CurrentField);
+                Stop? currentStop = route.Stops.Find(s => s.AssignedField == vehicle.CurrentField);
 
-                if (currentStop != null && currentStop.assignedFacility != null)
+                if (currentStop != null && currentStop.AssignedFacility != null)
                 {
                     // MOVING -> UNLOADING
                     vehicle.Progress = 1.0f;
@@ -93,6 +104,13 @@ namespace MiniTransportTycoon.Game.Pathfinding
             }
         }
 
+        /// <summary>
+        /// a jármű kirakodási folyamatának kezelését végzi, ahol a járműben lévő rakományt a megfelelő létesítménybe szállítja, és frissíti a gazdasági rendszert a szállítási tranzakciók alapján.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="facility"></param>
+        /// <param name="economy"></param>
+        /// <param name="deltaTime"></param>
         private void UpdateUnloadingState(Vehicle vehicle, Facility facility, EconomyManager economy, float deltaTime)
         {
             // 1. Find all cargo in the truck that this facility actually wants
@@ -136,6 +154,15 @@ namespace MiniTransportTycoon.Game.Pathfinding
             }
         }
 
+        /// <summary>
+        /// a jármű rakodási folyamatának kezelését végzi, ahol a jármű a létesítményből felveszi a rakományt, amire szüksége van a következő úti céljához, és frissíti a létesítmény készletét ennek megfelelően.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="route"></param>
+        /// <param name="facility"></param>
+        /// <param name="board"></param>
+        /// <param name="pathfinder"></param>
+        /// <param name="deltaTime"></param>
         private void UpdateLoadingState(Vehicle vehicle, Route route, Facility facility, Field[,] board, Pathfinder pathfinder, float deltaTime)
         {
             int currentTotalCargo = 0;
@@ -189,7 +216,13 @@ namespace MiniTransportTycoon.Game.Pathfinding
                 vehicle.elapsedInState -= (totalLoadedThisFrame / transferRate);
             }
         }
-
+        /// <summary>
+        /// a jármű következő mezőre lépésének megkísérlését végzi, ellenőrizve, hogy a célmező szabad-e, és ha igen, akkor frissíti a jármű helyzetét és sebességét ennek megfelelően. Ha a célmező foglalt, akkor a jármű megáll, amíg az útvonal következő mezője el nem szabadul.
+        /// </summary>
+        /// <param name="vehicle"></param>
+        /// <param name="route"></param>
+        /// <param name="board"></param>
+        /// <param name="pathfinder"></param>
         private void TryEnterNextTile(Vehicle vehicle, Route route, Field[,] board, Pathfinder pathfinder)
         {
             if (vehicle.NextField != null)
@@ -223,6 +256,11 @@ namespace MiniTransportTycoon.Game.Pathfinding
             }
         }
 
+        /// <summary>
+        /// a járművek útvonalainak újraszámítását végzi, például amikor egy új útvonalat rendelünk egy járműhöz, vagy amikor a térképen változás történik (például egy új épület épül), ami miatt a járműveknek új útvonalakat kell találniuk a céljaik eléréséhez. Ez a metódus iterál a járműveken, és ha van hozzárendelt útvonaluk, akkor újraszámolja az útvonalukat a jelenlegi helyzetük és a térképen történt változások alapján.
+        /// </summary>
+        /// <param name="pathfinder"></param>
+        /// <param name="vehicles"></param>
         public void RecalculateAllPaths(Pathfinder pathfinder, List<Vehicle> vehicles)
         {
             foreach (var vehicle in vehicles)
@@ -234,7 +272,12 @@ namespace MiniTransportTycoon.Game.Pathfinding
                 }
             }
         }
-
+        /// <summary>
+        /// a járművek által szállított rakomány típusának ellenőrzését végzi, hogy a cél létesítmény elfogadja-e azt a rakománytípust, amelyet a jármű szállít. Ez a metódus ellenőrzi, hogy a létesítmény egy város-e, és ha igen, akkor megnézi, hogy a város keresletében szerepel-e a rakománytípus. Ha a létesítmény egy ipartelep, akkor megnézi, hogy az ipartelep bemeneti követelményei között szerepel-e a rakománytípus.
+        /// </summary>
+        /// <param name="facility"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         private bool FacilityAcceptsCargo(Facility facility, CargoType type)
         {
             if (facility is City c && (c.Demand.ContainsKey(type))) return true;

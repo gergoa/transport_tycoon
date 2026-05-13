@@ -11,11 +11,11 @@ using MiniTransportTycoon.Game.Economy;
 // TODO: Implement merging adjacent cities
 namespace MiniTransportTycoon.Game.GameModel
 {
-    internal static class FacilityManager
+    public static class FacilityManager
     {
         private static readonly Random _random = new Random();
 
-        internal static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
+        public static void TickFacilities(List<Facility> facilities, float deltaTime, GameModel gameModel)
         {
             foreach (var facility in facilities)
             {
@@ -28,7 +28,7 @@ namespace MiniTransportTycoon.Game.GameModel
             }
         }
 
-        internal static bool TryGrowCity(GameModel gameModel, City city)
+        public static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
             int width = gameModel.Width;
@@ -99,7 +99,7 @@ namespace MiniTransportTycoon.Game.GameModel
         }
 
         /*
-        internal static bool TryGrowCity(GameModel gameModel, City city)
+        public static bool TryGrowCity(GameModel gameModel, City city)
         {
             Field[,] board = gameModel.Board;
             int width = gameModel.Width;
@@ -192,7 +192,7 @@ namespace MiniTransportTycoon.Game.GameModel
             return true;
         }
         */
-        private static bool Is3x3Empty(Field[,] board, int cx, int cy)
+        /*private static bool Is3x3Empty(Field[,] board, int cx, int cy)
         {
             for (int dx = -1; dx <= 1; dx++)
             {
@@ -206,24 +206,54 @@ namespace MiniTransportTycoon.Game.GameModel
                 }
             }
             return true;
-        }
+        }*/
 
-        internal static void CleanFacilities(GameModel model)
+        public static void CleanFacilities(GameModel model)
         {
             model.Facilities.Clear();
         }
 
-        internal static void InitializeFacilities(GameModel model)
+        public static void InitializeFacilities(GameModel model)
         {
             var facilities = model.Facilities;
 
             facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 2000, "Metropolis")
             {
-                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1} }
+                Demand = new Dictionary<CargoType, int> { 
+                    { CargoType.Passengers, 1},
+                    //TIER 1
+                    { CargoType.Lumber, 1 },
+                    { CargoType.Steel, 1 },
+                    { CargoType.CopperWire, 1 },
+                    { CargoType.Plastic, 1 },
+                    //TIER 2
+                    { CargoType.Microchips, 1 },
+                    { CargoType.Tools, 1 },
+                    { CargoType.Furniture, 1 },
+                    { CargoType.ProcessedFood, 1 },
+                    //TIER 3
+                    { CargoType.Electronics, 1 },
+                    { CargoType.Automobiles, 1 }
+                }
             });
             facilities.Add(new City(CreateCityBlock(FindEmptyFields(model)), 800, "Smallville")
             {
-                Demand = new Dictionary<CargoType, int> { { CargoType.Passengers, 1 } }
+                Demand = new Dictionary<CargoType, int> {
+                    { CargoType.Passengers, 1},
+                    //TIER 1
+                    { CargoType.Lumber, 1 },
+                    { CargoType.Steel, 1 },
+                    { CargoType.CopperWire, 1 },
+                    { CargoType.Plastic, 1 },
+                    //TIER 2
+                    { CargoType.Microchips, 1 },
+                    { CargoType.Tools, 1 },
+                    { CargoType.Furniture, 1 },
+                    { CargoType.ProcessedFood, 1 },
+                    //TIER 3
+                    { CargoType.Electronics, 1 },
+                    { CargoType.Automobiles, 1 }
+                }
             });
 
             // TIER 0 - raw producers, no input needed
@@ -252,7 +282,7 @@ namespace MiniTransportTycoon.Game.GameModel
             facilities.Add(new Industry(FindEmptyFields(model), CargoType.Electronics, new Dictionary<CargoType, int> { { CargoType.Microchips, 3 }, { CargoType.Plastic, 3 }, { CargoType.Steel, 1 } }) { ProductionRate = 1.0f });
         }
 
-        public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
+        /*public static bool FacilityAcceptsCargo(Facility facility, CargoType type)
         {
             if (facility is City c && c.Demand.ContainsKey(type)) return true;
             if (facility is Industry ind && ind.InputRequirements.ContainsKey(type)) return true;
@@ -272,7 +302,7 @@ namespace MiniTransportTycoon.Game.GameModel
                 if (!industry.InventoryIn.ContainsKey(type)) industry.InventoryIn[type] = 0;
                 industry.InventoryIn[type] += amount;
             }
-        }
+        }*/
         // helper method
         private static List<Field> CreateCityBlock(List<Field> fields)
         {

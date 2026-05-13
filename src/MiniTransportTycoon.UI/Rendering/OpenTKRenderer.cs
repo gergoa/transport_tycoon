@@ -220,7 +220,7 @@ namespace MiniTransportTycoon.UI.Rendering
             _camera.SetAspect((float)w / h);
         }
 
-        public void Render(TickData data, TimeSpan delta)
+        public void Render(TickData data, TimeSpan delta, bool minimap=false)
         {
             _elapsedTime += (float)delta.TotalSeconds;
 
@@ -229,7 +229,18 @@ namespace MiniTransportTycoon.UI.Rendering
 
             GL.UseProgram(_shaderProgram);
             Matrix4 viewProj = _camera.ViewMatrix * _camera.ProjectionMatrix;
-            GL.UniformMatrix4(_viewProjLoc, false, ref viewProj);
+            if (minimap)
+            {
+                float mapCenterX = data.Width / 2f;
+                float mapCenterZ = data.Height / 2f;
+                Vector3 eye = new Vector3(mapCenterX, 50, mapCenterZ);
+                Vector3 target = new Vector3(mapCenterX, 0, mapCenterZ);
+                Vector3 up = new Vector3(0, 0, -1);
+                viewProj = Matrix4.LookAt(eye,target,up) * Matrix4.CreateOrthographic(data.Width, data.Height, 0.1f, 100f);
+            }
+            GL.UniformMatrix4(GL.GetUniformLocation(_shaderProgram, "m_viewProj"),
+                false, 
+                ref viewProj);
 
             // Base Terrain 
             GL.FrontFace(FrontFaceDirection.Cw);

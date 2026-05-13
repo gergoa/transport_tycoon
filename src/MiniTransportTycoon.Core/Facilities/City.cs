@@ -39,7 +39,7 @@ namespace MiniTransportTycoon.Core.Facilities
             this.name = name;
         }
 
-        public void GeneratePassengers(float deltaTime)
+        private void GeneratePassengers(float deltaTime)
         {
             float generatedThisFrame = (Population/1000.0f * PassengerRate) * deltaTime;
             _passengerAccumulator += generatedThisFrame;

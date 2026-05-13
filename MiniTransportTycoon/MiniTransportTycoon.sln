@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Core", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Game", "..\src\MiniTransportTycoon.Game\MiniTransportTycoon.Game.csproj", "{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Tests", "..\tests\MiniTransportTycoon.Tests\MiniTransportTycoon.Tests.csproj", "{22F0F6B1-320F-42EB-B2AE-9BF3DA8CA914}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniTransportTycoon.Test", "MiniTransportTycoon.Test\MiniTransportTycoon.Test.csproj", "{733501DD-DF55-4E05-9E5C-3283ADEA596B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABC625EB-2FF8-FE7D-50D4-5DA6851F3A91}.Release|Any CPU.Build.0 = Release|Any CPU
-		{22F0F6B1-320F-42EB-B2AE-9BF3DA8CA914}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{22F0F6B1-320F-42EB-B2AE-9BF3DA8CA914}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{22F0F6B1-320F-42EB-B2AE-9BF3DA8CA914}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{22F0F6B1-320F-42EB-B2AE-9BF3DA8CA914}.Release|Any CPU.Build.0 = Release|Any CPU
+		{733501DD-DF55-4E05-9E5C-3283ADEA596B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{733501DD-DF55-4E05-9E5C-3283ADEA596B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{733501DD-DF55-4E05-9E5C-3283ADEA596B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{733501DD-DF55-4E05-9E5C-3283ADEA596B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

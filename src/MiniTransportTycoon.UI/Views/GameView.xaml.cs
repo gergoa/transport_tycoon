@@ -13,8 +13,11 @@ namespace MiniTransportTycoon.UI.Views
     public partial class GameView : UserControl
     {
         private IRenderer _renderer;
+        private IRenderer _minimaprenderer;
         private GameViewModel? vm => this.DataContext as GameViewModel;
         private bool _isRendererInitialized = false;
+        private bool _isRenderer2Initialized = false;
+
         private Point _lastMousePosition;
 
         public GameView()
@@ -22,7 +25,9 @@ namespace MiniTransportTycoon.UI.Views
             InitializeComponent();
 
             _renderer = new OpenTKRenderer();
+            _minimaprenderer = new OpenTKRenderer();
             MapRenderControl.Start(new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 6 });
+            MiniMapRenderControl.Start(new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 6 });
         }
 
         private void VehicleNameTextBox_KeyDown(object sender, KeyEventArgs e)
@@ -43,6 +48,22 @@ namespace MiniTransportTycoon.UI.Views
             _renderer.Resize((int)e.NewSize.Width, (int)e.NewSize.Height);
         }
 
+        public void MiniMapRenderControl_OnRender(TimeSpan delta)
+        {
+            if (vm is null) return;
+
+            if (!_isRenderer2Initialized)
+            {
+                _minimaprenderer.Initialize(vm.TickData, vm.Width, vm.Height);
+                _minimaprenderer.Resize(vm.Width, vm.Height);
+                _isRenderer2Initialized = true;
+            }
+
+            _minimaprenderer.Refresh(vm.TickData);
+
+            _minimaprenderer.Render(vm.TickData, delta, true);
+        }
+
         public void MapRenderControl_OnRender(TimeSpan delta)
         {
             if (vm is null) return;
@@ -61,7 +82,6 @@ namespace MiniTransportTycoon.UI.Views
             {
                 _renderer.Initialize(vm.TickData, vm.Width, vm.Height);
                 _renderer.Resize(vm.Width, vm.Height);
-
                 _isRendererInitialized = true;
             }
 
@@ -101,6 +121,8 @@ namespace MiniTransportTycoon.UI.Views
 
             _renderer.MoveCamera(delta);
             _renderer.Render(vm.TickData, delta);
+
+            UpdateMinimapFrustum();
         }
 
         private void MapRenderControl_MouseDown(object sender, MouseButtonEventArgs e)
@@ -133,6 +155,30 @@ namespace MiniTransportTycoon.UI.Views
             _renderer.ZoomCamera(e.Delta);
         }
 
+        private void UpdateMinimapFrustum()
+        {
+            var camera = _renderer?.GetCamera();
+            if (camera == null || MapRenderControl.ActualWidth == 0) return;
+
+            float w = (float)MapRenderControl.ActualWidth;
+            float h = (float)MapRenderControl.ActualHeight;
+
+            Vector2 tl = GetExactMapIntersection(0, 0, w, h, camera);
+            Vector2 tr = GetExactMapIntersection(w, 0, w, h, camera);
+            Vector2 br = GetExactMapIntersection(w, h, w, h, camera);
+            Vector2 bl = GetExactMapIntersection(0, h, w, h, camera);
+
+            float tileSize = 1.0f;
+            float sX = 500f / vm!.Width;
+            float sY = 500f / vm!.Height;
+
+            MinimapFrustum.Points.Clear();
+            MinimapFrustum.Points.Add(new System.Windows.Point((tl.X / tileSize) * sX, (tl.Y / tileSize) * sY));
+            MinimapFrustum.Points.Add(new System.Windows.Point((tr.X / tileSize) * sX, (tr.Y / tileSize) * sY));
+            MinimapFrustum.Points.Add(new System.Windows.Point((br.X / tileSize) * sX, (br.Y / tileSize) * sY));
+            MinimapFrustum.Points.Add(new System.Windows.Point((bl.X / tileSize) * sX, (bl.Y / tileSize) * sY));
+        }
+
 
         private Vector2 GetExactMapIntersection(float mouseX, float mouseY, float screenWidth, float screenHeight, MiniTransportTycoon.UI.Rendering.Camera.Camera camera)
         {
@@ -141,21 +187,21 @@ namespace MiniTransportTycoon.UI.Views
 
             Vector4 clipCoords = new Vector4(ndcX, ndcY, -1.0f, 1.0f);
             Vector4 eyeCoords = clipCoords * Matrix4.Invert(camera.ProjectionMatrix);
-            eyeCoords = new Vector4(eyeCoords.X, eyeCoords.Y, -1.0f, 0.0f);
+            eyeCoords = new Vector4(eyeCoords.X, eyeCoords.Y, eyeCoords.Z, 0.0f);
 
             Vector4 worldRay = eyeCoords * Matrix4.Invert(camera.ViewMatrix);
             Vector3 rayDir = new Vector3(worldRay.X, worldRay.Y, worldRay.Z);
             rayDir.Normalize();
 
-            if (Math.Abs(rayDir.Z) < 0.001f) rayDir.Z = -0.001f;
+            if (Math.Abs(rayDir.Y) < 0.001f) rayDir.Y = -0.001f;
 
-            float t = -camera.Eye.Z / rayDir.Z;
+            float t = -camera.Eye.Y / rayDir.Y;
 
             if (t < 0) t = 1000f;
 
             Vector3 hitPoint = camera.Eye + rayDir * t;
 
-            return new Vector2(hitPoint.X, hitPoint.Y);
+            return new Vector2(hitPoint.X, hitPoint.Z);
         }
     }
 }

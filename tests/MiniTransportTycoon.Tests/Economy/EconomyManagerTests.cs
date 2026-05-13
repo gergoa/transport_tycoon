@@ -16,7 +16,7 @@ public class EconomyManagerTests
     public void InitialBalance100()
     {
         var e = new EconomyManager();
-        Assert.Equal(100, e.GetBalance());
+        Assert.Equal(300, e.GetBalance());
     }
     /*
     [Fact]

@@ -11,14 +11,20 @@ namespace MiniTransportTycoon.Core.Map
         private float _spreadTimer = 0f;
         private const float SpreadInterval = 5f;
 
+        private float growInterval;
+
+        public Forest(Random random)
+        {
+            this.growInterval = random.Next(20,60);
+        }
 
         public void Tick(float deltaTime) 
         {
             _growTimer += deltaTime;
 
-            while (_growTimer >= 5f)
+            while (_growTimer >= growInterval)
             {
-                _growTimer -= 5f;
+                _growTimer -= growInterval;
                 if (TreeCount < 4)
                 {
                     TreeCount++;

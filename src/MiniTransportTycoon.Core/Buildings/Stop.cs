@@ -10,8 +10,11 @@ namespace MiniTransportTycoon.Core.Buildings
 {
     public class Stop
     {
-        public Field assignedField;
-        public Facility? assignedFacility = null;
+        private Field assignedField;
+        private Facility assignedFacility;
+
+        public Field AssignedField => assignedField;
+        public Facility AssignedFacility => assignedFacility;
 
         public Stop(Field field, Facility facility)
         {
