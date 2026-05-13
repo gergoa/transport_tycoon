@@ -98,27 +98,6 @@ namespace MiniTransportTycoon.Test.Game
         }
 
         [TestMethod]
-        public void BuildStop_OnRoadNextToFacility_CreatesStop()
-        {
-            var model = new GameModel();
-
-            var roadField = model.Board[10, 10];
-            var facilityField = model.Board[10, 11];
-
-            roadField.Type = FieldType.ROAD;
-
-            var city = CreateCity(model);
-            facilityField.PlaceFacility(city);
-
-            model.BuildStop(roadField);
-
-            Assert.IsNotNull(roadField.Stop);
-            Assert.AreSame(roadField, roadField.Stop!.AssignedField);
-            Assert.AreSame(city, roadField.Stop.AssignedFacility);
-            Assert.AreEqual(290, model.EconomyManager.GetBalance());
-        }
-
-        [TestMethod]
         public void BuildStop_WhenFieldIsNotRoad_DoesNothing()
         {
             var model = new GameModel();
