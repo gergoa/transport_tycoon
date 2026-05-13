@@ -38,9 +38,10 @@ void main()
     vec3 worldPos = (rotYMat * rotXMat * (aPos * aScale)) + aInstancePos;
 
     // Parametric wave displacement
-    float wave1 = sin(worldPos.x * 2.0 + m_elapsedTime * 1.5) * 0.05;
-    float wave2 = cos(worldPos.z * 2.5 + m_elapsedTime * 1.2) * 0.05;
+    float wave1 = sin(worldPos.x * 2.0 + m_elapsedTime * 1.5) * 0.0088;
+    float wave2 = cos(worldPos.z * 2.5 + m_elapsedTime * 1.2) * 0.0088;
     worldPos.y += wave1 + wave2;
+    worldPos.y = min(0.0, worldPos.y);
 
     gl_Position = m_viewProj * vec4(worldPos, 1.0);
     vs_out_col = aColor;

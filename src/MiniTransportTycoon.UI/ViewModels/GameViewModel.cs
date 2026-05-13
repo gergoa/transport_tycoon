@@ -35,6 +35,7 @@ namespace MiniTransportTycoon.UI.ViewModels
         private List<Stop> _pendingRouteStops = new();
         public TickData TickData => tickMapData;
         public bool MapUpdateNeeded = false;
+        public bool NewGameStarted = true;
 
         public DelegateCommand TickCommand { get; private set; }
         public DelegateCommand NewGameCommand { get; private set; }
@@ -176,6 +177,7 @@ namespace MiniTransportTycoon.UI.ViewModels
 
             NewGameCommand = new DelegateCommand(param => {
                 lock (_model.StateLock) _model.StartNewGame(Width, Height);
+                tickMapData = new(new TickField[Width, Height], model.Vehicles, Width, Height);
                 OnPropertyChanged(nameof(Money));
                 OnPropertyChanged(nameof(Time));
                 _timer.Start();
@@ -409,6 +411,8 @@ namespace MiniTransportTycoon.UI.ViewModels
                     }
                     tickMapData.Height = Height;
                     tickMapData.Width = Width;
+                    MapUpdateNeeded = true;
+                    NewGameStarted = true;
                 }
             });
         }

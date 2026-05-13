@@ -17,92 +17,20 @@ using System.Runtime.InteropServices;
 using SharpGLTF.Schema2;
 using static MiniTransportTycoon.UI.Rendering.Misc.RoadRendering;
 using MiniTransportTycoon.Core.Vehicles;
+using MiniTransportTycoon.UI.Rendering.Utils;
+using MiniTransportTycoon.Core.Cargo;
 
 namespace MiniTransportTycoon.UI.Rendering
 {
-    internal class DynamicInstanceBuffer
-    {
-        public GLMeshObject Mesh;
-        public int VboID;
-        public int Capacity;
-
-        public List<InstanceData> Instances = new();
-        public List<ulong> InstanceIds = new();
-        public Dictionary<ulong, int> InstanceIdToIndex = new();
-        public bool IsDirty = false;
-
-        public DynamicInstanceBuffer(GLMeshObject mesh)
-        {
-            Mesh = mesh;
-            Capacity = 256;
-            GL.CreateBuffers(1, out VboID);
-            // pre allocate buffer
-            GL.NamedBufferData(VboID, Capacity * Marshal.SizeOf<InstanceData>(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
-        }
-
-        public void AddInstance(ulong id, InstanceData data)
-        {
-            int index = Instances.Count;
-            Instances.Add(data);
-            InstanceIds.Add(id);
-            InstanceIdToIndex[id] = index;
-            IsDirty = true;
-        }
-
-        // swap and pop
-        public void RemoveInstance(ulong id)
-        {
-            if (InstanceIdToIndex.TryGetValue(id, out int index))
-            {
-                int lastIndex = Instances.Count - 1;
-                if (index != lastIndex)
-                {
-                    Instances[index] = Instances[lastIndex];
-                    ulong lastId = InstanceIds[lastIndex];
-                    InstanceIds[index] = lastId;
-                    InstanceIdToIndex[lastId] = index;
-                }
-                Instances.RemoveAt(lastIndex);
-                InstanceIds.RemoveAt(lastIndex);
-                InstanceIdToIndex.Remove(id);
-                IsDirty = true;
-            }
-        }
-
-        public void Clear()
-        {
-            Instances.Clear();
-            InstanceIds.Clear();
-            InstanceIdToIndex.Clear();
-            IsDirty = true;
-        }
-
-        public void SyncVBO()
-        {
-            if (!IsDirty) return;
-
-            int requiredBytes = Instances.Count * Marshal.SizeOf<InstanceData>();
-            if (Instances.Count > Capacity)
-            {
-                Capacity = Math.Max(Capacity * 2, Instances.Count);
-                // only reallocate if needed
-                GL.NamedBufferData(VboID, Capacity * Marshal.SizeOf<InstanceData>(), IntPtr.Zero, BufferUsageHint.DynamicDraw);
-            }
-
-            if (Instances.Count > 0)
-            {
-                Span<InstanceData> span = CollectionsMarshal.AsSpan(Instances);
-                // upload compacted range back to vbo
-                GL.NamedBufferSubData(VboID, IntPtr.Zero, requiredBytes, ref MemoryMarshal.GetReference(span));
-            }
-
-            IsDirty = false;
-        }
-    }
-
     internal class TileState
     {
         public List<(DynamicInstanceBuffer Buffer, ulong InstanceId)> Instances = new();
+    }
+    public struct VehicleAsset
+    {
+        public GLMeshObject Mesh;
+        public Vector3 FrontWheelOffset;
+        public Vector3 BackWheelOffset;
     }
 
     internal class OpenTKRenderer : IRenderer
@@ -114,7 +42,8 @@ namespace MiniTransportTycoon.UI.Rendering
         private GLMeshObject _testBuildingMesh;
         private Dictionary<OBJECT_TYPE, List<GLMeshObject>> objectSet = new();
         private Dictionary<RoadShape, GLMeshObject> _roadMeshes = new();
-        private GLMeshObject _testVehicleMesh;
+        private Dictionary<VehicleType, VehicleAsset> _vehicleAssets = new();
+        private GLMeshObject _wheelMesh;
 
 
         // water shading
@@ -131,10 +60,16 @@ namespace MiniTransportTycoon.UI.Rendering
         private Dictionary<GLMeshObject, DynamicInstanceBuffer> _meshBuffers = new();
         private TileState[,] _tileStates;
         private TickField[,] _cachedFields;
+        public TickField[,] CachedFields
+        {
+            get { return _cachedFields; }
+            set {  _cachedFields = value; }
+        }
+
         private ulong _nextInstanceId = 1;
 
 
-
+        protected Random r = new();
         protected float _elapsedTime;
 
         protected Camera.Camera _camera;
@@ -183,18 +118,16 @@ namespace MiniTransportTycoon.UI.Rendering
 
             try
             {
-                MeshData modelData = GlbMeshParser.LoadGlb(modelPath);
-                _testBuildingMesh = GLObjectBuilder.CreateGLObjectFromMesh(modelData);
-                MeshData vehicleData = GlbMeshParser.LoadGlb(vehiclePath);
-                _testVehicleMesh = GLObjectBuilder.CreateGLObjectFromMesh(vehicleData);
+                // vehicles
+                loadVehicle_Models();
 
                 // Forest
                 objectSet[OBJECT_TYPE.FOREST] = loadTreeModels();
 
                 // City buildings
-                objectSet[OBJECT_TYPE.CITY_1] = loadIndustry_T1_Models();
-                objectSet[OBJECT_TYPE.CITY_2] = loadIndustry_T2_Models();
-                objectSet[OBJECT_TYPE.CITY_3] = loadIndustry_T3_Models();
+                objectSet[OBJECT_TYPE.CITY_1] = loadCity_T1_Models();
+                objectSet[OBJECT_TYPE.CITY_2] = loadCity_T2_Models();
+                objectSet[OBJECT_TYPE.CITY_3] = loadCity_T3_Models();
 
                 // Factories
                 objectSet[OBJECT_TYPE.FARM] = loadIndustry_T1_Models();
@@ -313,7 +246,6 @@ namespace MiniTransportTycoon.UI.Rendering
             if (data.Vehicles != null)
             {
                 GL.Uniform1(_isInstancedLoc, 0);
-                GL.BindVertexArray(_testVehicleMesh.VaoID);
 
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, _colormapTexID);
@@ -322,6 +254,8 @@ namespace MiniTransportTycoon.UI.Rendering
                 for (int i = 0; i < data.Vehicles.Count; i++)
                 {
                     var vehicle = data.Vehicles[i];
+                    
+
                     var prev = vehicle.PreviousField;
                     var current = vehicle.CurrentField;
                     var next = vehicle.NextField;
@@ -330,6 +264,7 @@ namespace MiniTransportTycoon.UI.Rendering
                     int prevY = prev != null ? prev.Y : current.Y;
                     int nextX = next != null ? next.X : current.X;
                     int nextY = next != null ? next.Y : current.Y;
+
 
                     RoadOrientation entryEdge = VehicleVisualPaths.GetEdgeFromDelta(prevX - current.X, prevY - current.Y);
                     RoadOrientation exitEdge = VehicleVisualPaths.GetEdgeFromDelta(nextX - current.X, nextY - current.Y);
@@ -355,15 +290,23 @@ namespace MiniTransportTycoon.UI.Rendering
                             out rotationY
                         );
                     }
-                        Matrix4 model = Matrix4.CreateScale(0.25f)
-                          * Matrix4.CreateRotationY(rotationY)
-                          * Matrix4.CreateTranslation(
-                              current.X + 0.5f + localCurvePos.X,
-                              0.2f,
-                              current.Y + 0.5f + localCurvePos.Z
-                          );
+
+                    VehicleAsset asset = GetVehicleAsset(vehicle);
+
+                    Matrix4 model = Matrix4.CreateScale(0.25f)
+                        * Matrix4.CreateRotationY(rotationY)
+                        * Matrix4.CreateTranslation(
+                            current.X + 0.5f + localCurvePos.X,
+                            0.2f,
+                            current.Y + 0.5f + localCurvePos.Z
+                    );
+                    Vector3 globalFrontWheel = (new Vector4(asset.FrontWheelOffset, 1.0f) * model).Xyz;
+                    Vector3 globalBackWheel = (new Vector4(asset.BackWheelOffset, 1.0f) * model).Xyz;
+
+
+                    GL.BindVertexArray(asset.Mesh.VaoID);
                     GL.UniformMatrix4(_modelLoc, false, ref model);
-                    GL.DrawElements(_testVehicleMesh.DrawMode, _testVehicleMesh.Count, DrawElementsType.UnsignedInt, 0);
+                    GL.DrawElements(asset.Mesh.DrawMode, asset.Mesh.Count, DrawElementsType.UnsignedInt, 0);
                 }
                 GL.BindTexture(TextureTarget.Texture2D, 0);
             }
@@ -461,6 +404,41 @@ namespace MiniTransportTycoon.UI.Rendering
                 }
             }
 
+            // Pass 2 for waterbed
+            int width = data.Width;
+            int height = data.Height;
+            Vector3 bedColor = new Vector3(0.55f, 0.45f, 0.3f);
+
+            for (int i = 0; i < width; ++i)
+            {
+                for (int j = 0; j < height; ++j)
+                {
+                    if (_cachedFields[i, j].Type == FieldType.WATER)
+                    {
+
+                        void CheckAndAddWall(int ni, int nj, float wallX, float wallZ, float rotY)
+                        {
+                            if (ni >= 0 && ni < width && nj >= 0 && nj < height)
+                            {
+                                FieldType neighborType = _cachedFields[ni, nj].Type;
+                                if (neighborType != FieldType.WATER)
+                                {
+                                    Vector3 wallPos = new Vector3(wallX, -0.5f, wallZ);
+                                    ulong wallId = _nextInstanceId++;
+
+                                    _quadBuffer.AddInstance(wallId, new InstanceData(wallPos, 1.0f, MathHelper.PiOver2, rotY, bedColor));
+                                }
+                            }
+                        }
+
+                        CheckAndAddWall(i - 1, j, i, j + 0.5f, MathHelper.PiOver2);
+                        CheckAndAddWall(i + 1, j, i + 1.0f, j + 0.5f, -MathHelper.PiOver2);
+                        CheckAndAddWall(i, j - 1, i + 0.5f, j, 0f);
+                        CheckAndAddWall(i, j + 1, i + 0.5f, j + 1.0f, MathHelper.Pi);
+                    }
+                }
+            }
+
             _quadBuffer.SyncVBO();
             _waterBuffer.SyncVBO();
             foreach (var buf in _meshBuffers.Values) buf.SyncVBO();
@@ -500,32 +478,6 @@ namespace MiniTransportTycoon.UI.Rendering
                 ulong waterId = _nextInstanceId++;
                 _waterBuffer.AddInstance(waterId, new InstanceData(waterPos, 1.0f, 0f, 0f, waterColor));
                 state.Instances.Add((_waterBuffer, waterId));
-
-                // coastline walls to main quad buffer
-                int width = _cachedFields.GetLength(0);
-                int height = _cachedFields.GetLength(1);
-
-                void CheckAndAddWall(int ni, int nj, float wallX, float wallZ, float rotY)
-                {
-                    if (ni >= 0 && ni < width && nj >= 0 && nj < height)
-                    {
-                        FieldType neighborType = _cachedFields[ni, nj].Type;
-                        if (neighborType != FieldType.WATER && neighborType != FieldType.EMPTY)
-                        {
-                            Vector3 wallPos = new Vector3(wallX, -0.5f, wallZ);
-                            ulong wallId = _nextInstanceId++;
-
-                            // add rotated instance
-                            _quadBuffer.AddInstance(wallId, new InstanceData(wallPos, 1.0f, MathHelper.PiOver2, rotY, bedColor));
-                            state.Instances.Add((_quadBuffer, wallId));
-                        }
-                    }
-                }
-
-                CheckAndAddWall(i - 1, j, i, j + 0.5f, MathHelper.PiOver2);
-                CheckAndAddWall(i + 1, j, i + 1.0f, j + 0.5f, -MathHelper.PiOver2);
-                CheckAndAddWall(i, j - 1, i + 0.5f, j, 0f);
-                CheckAndAddWall(i, j + 1, i + 0.5f, j + 1.0f, MathHelper.Pi);
             }
             else
             {
@@ -561,7 +513,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
                 if (objectSet.TryGetValue(tier, out var meshTiers) && meshTiers.Count > 0)
                 {
-                    int meshIndex = (i + j) % meshTiers.Count;
+                    int meshIndex = (r.Next(100) + i + j) % meshTiers.Count;
                     var buf = GetOrMakeBuffer(meshTiers[meshIndex]);
 
                     Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
@@ -579,7 +531,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
                 if (objectSet.TryGetValue(factoryType, out var meshTiers) && meshTiers.Count > 0)
                 {
-                    int meshIndex = (i + j) % meshTiers.Count;
+                    int meshIndex = (r.Next(100) + i + j) % meshTiers.Count;
                     var buf = GetOrMakeBuffer(meshTiers[meshIndex]);
 
                     Vector3 buildingPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
@@ -608,7 +560,7 @@ namespace MiniTransportTycoon.UI.Rendering
                         Vector3 treePos = new Vector3(i + offsetX, 0.01f, j + offsetZ);
 
                         ulong id = _nextInstanceId++;
-                        buf.AddInstance(id, new InstanceData(treePos, 1.0f, 0.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
+                        buf.AddInstance(id, new InstanceData(treePos, 0.15f, 0.0f, rotY, new Vector3(0.1f, 0.5f, 0.15f)));
                         state.Instances.Add((buf, id));
                     }
                 }
@@ -777,6 +729,50 @@ namespace MiniTransportTycoon.UI.Rendering
             return gLMeshObject;
         }
 
+        private void loadVehicle_Models()
+        {
+            string baseDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Vehicles");
+
+            // Load the default wheel mesh
+            _wheelMesh = loadObject(Path.Combine(baseDir, "wheel-default.glb"));
+
+            VehicleAsset MakeAsset(string fileName)
+            {
+                return new VehicleAsset
+                {
+                    Mesh = loadObject(Path.Combine(baseDir, $"{fileName}.glb")),
+                    FrontWheelOffset = new Vector3(0.2f, 0.1f, 0.4f),
+                    BackWheelOffset = new Vector3(0.2f, 0.1f, -0.4f)
+                };
+            }
+
+            // Buses
+            _vehicleAssets[VehicleType.SmallBus] = MakeAsset("delivery");
+            _vehicleAssets[VehicleType.LargeBus] = MakeAsset("delivery");
+
+            // Tier 0 Trucks
+            _vehicleAssets[VehicleType.LightTier0Truck] = MakeAsset("suv");
+            _vehicleAssets[VehicleType.HeavyTier0Truck] = MakeAsset("truck-flat");
+
+            // Tier 1 Trucks
+            _vehicleAssets[VehicleType.LightTier1Truck] = MakeAsset("truck");
+            _vehicleAssets[VehicleType.HeavyTier1Truck] = MakeAsset("delivery");
+
+            // Tier 2 Trucks
+            _vehicleAssets[VehicleType.LightTier2Truck] = MakeAsset("van");
+            _vehicleAssets[VehicleType.HeavyTier2Truck] = MakeAsset("delivery-flat");
+
+            // Tier 3 Trucks
+            _vehicleAssets[VehicleType.LightTier3Truck] = MakeAsset("hatchback-sports");
+            _vehicleAssets[VehicleType.HeavyTier3Truck] = MakeAsset("suv-luxury");
+
+            foreach (var asset in _vehicleAssets.Values)
+            {
+                ConfigureInstancedVAO(asset.Mesh.VaoID);
+            }
+            ConfigureInstancedVAO(_wheelMesh.VaoID);
+        }
+
         private List<GLMeshObject> loadTreeModels()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -784,18 +780,60 @@ namespace MiniTransportTycoon.UI.Rendering
             string assetsPath = Path.Combine(baseDirectory, "Assets", "Trees");
 
             treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_plateau_fixed.glb")));
+            treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_simple_fixed.glb")));
+            treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_tall_fixed.glb")));
+            treeModels.Add(loadObject(Path.Combine(assetsPath, "tree_thin_fixed.glb")));
+
             return treeModels;
+        }
+
+        private List<GLMeshObject> loadCity_T1_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> cityModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-type-g.glb")));
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-type-j.glb")));
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-type-m.glb")));
+
+            return cityModels;
+        }
+
+        private List<GLMeshObject> loadCity_T2_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> cityModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-c.glb")));
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-j.glb")));
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-l.glb")));
+
+            return cityModels;
+        }
+
+        private List<GLMeshObject> loadCity_T3_Models()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            List<GLMeshObject> cityModels = new();
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-a.glb")));
+            cityModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-d.glb")));
+
+            return cityModels;
         }
 
         private List<GLMeshObject> loadIndustry_T1_Models()
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
-            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "IndustryBuildings");
 
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-g.glb")));
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-j.glb")));
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-type-m.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-k.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-p.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-i.glb")));
 
             return industryModels;
         }
@@ -804,11 +842,12 @@ namespace MiniTransportTycoon.UI.Rendering
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
-            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "IndustryBuildings");
 
             industryModels.Add(loadObject(Path.Combine(assetsPath, "building-c.glb")));
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-j.glb")));
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-l.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-s.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-e.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-k.glb")));
 
             return industryModels;
         }
@@ -817,10 +856,12 @@ namespace MiniTransportTycoon.UI.Rendering
         {
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
             List<GLMeshObject> industryModels = new();
-            string assetsPath = Path.Combine(baseDirectory, "Assets", "Buildings");
+            string assetsPath = Path.Combine(baseDirectory, "Assets", "IndustryBuildings");
 
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-a.glb")));
-            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-skyscraper-d.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-f.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-q.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "building-a.glb")));
+            industryModels.Add(loadObject(Path.Combine(assetsPath, "chimney-medium.glb")));
 
             return industryModels;
         }
@@ -857,6 +898,16 @@ namespace MiniTransportTycoon.UI.Rendering
                 FieldType.CITY => new Vector3(0.8f, 0.3f, 0.3f),
                 _ => new Vector3(1.0f, 0.0f, 1.0f)
             };
+        }
+
+        private VehicleAsset GetVehicleAsset(Vehicle vehicle)
+        {
+            if (_vehicleAssets.TryGetValue(vehicle.Type, out VehicleAsset asset))
+            {
+                return asset;
+            }
+
+            return _vehicleAssets.Values.First();
         }
     }
 }

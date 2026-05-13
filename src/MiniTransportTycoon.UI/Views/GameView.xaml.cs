@@ -47,6 +47,16 @@ namespace MiniTransportTycoon.UI.Views
         {
             if (vm is null) return;
 
+            if (vm.NewGameStarted && _isRendererInitialized)
+            {
+                if (_renderer is OpenTKRenderer r)
+                {
+                    r.CachedFields = null;
+                    vm.NewGameStarted = false;
+                }
+
+            }
+
             if (!_isRendererInitialized)
             {
                 _renderer.Initialize(vm.TickData, vm.Width, vm.Height);

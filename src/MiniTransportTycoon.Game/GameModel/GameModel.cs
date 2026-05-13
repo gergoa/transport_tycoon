@@ -24,8 +24,8 @@ namespace MiniTransportTycoon.Game.GameModel
         private Task? _simulationTask;
 
         // gamemodel data
-        private int width = 95;
-        private int height = 95;
+        private int width = 75;
+        private int height = 75;
         private float _spawnTimer = 0f;
         private const float SpawnInterval = 20f;
         private Field[,] board = null!;
@@ -150,8 +150,10 @@ namespace MiniTransportTycoon.Game.GameModel
 
             foreach (var field in forestFields.ToList())
             {
+                var tc = field.Forest.TreeCount;
                 field.Forest.Tick(scaledTime);
 
+                if (field.Forest.TreeCount != tc) FieldChanged?.Invoke(field.X, field.Y, FieldType.FOREST);
                 if (field.Forest.UpdateSpread(scaledTime))
                     TrySpread(field);
             }
