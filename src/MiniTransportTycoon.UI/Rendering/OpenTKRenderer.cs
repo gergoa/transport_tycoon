@@ -781,12 +781,6 @@ namespace MiniTransportTycoon.UI.Rendering
             // Tier 3 Trucks
             _vehicleAssets[VehicleType.LightTier3Truck] = MakeAsset("hatchback-sports");
             _vehicleAssets[VehicleType.HeavyTier3Truck] = MakeAsset("suv-luxury");
-
-            foreach (var asset in _vehicleAssets.Values)
-            {
-                ConfigureInstancedVAO(asset.Mesh.VaoID);
-            }
-            ConfigureInstancedVAO(_wheelMesh.VaoID);
         }
 
         private List<GLMeshObject> loadTreeModels()
