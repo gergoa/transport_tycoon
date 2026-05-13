@@ -384,6 +384,7 @@ namespace MiniTransportTycoon.UI.Rendering
 
             // sync to GPU if data is dirty
             if (_quadBuffer != null) _quadBuffer.SyncVBO();
+            if (_waterBuffer != null) _waterBuffer.SyncVBO();
             foreach (var buf in _meshBuffers.Values) buf.SyncVBO();
         }
 
