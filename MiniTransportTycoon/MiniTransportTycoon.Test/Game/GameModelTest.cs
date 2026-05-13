@@ -28,8 +28,8 @@ namespace MiniTransportTycoon.Test.Game
             var model = new GameModel();
 
             Assert.IsNotNull(model.Board);
-            Assert.AreEqual(130, model.Width);
-            Assert.AreEqual(130, model.Height);
+            Assert.AreEqual(75, model.Width);
+            Assert.AreEqual(75, model.Height);
             Assert.AreEqual(300, model.EconomyManager.GetBalance());
             Assert.IsFalse(model.IsGameOver);
             Assert.IsTrue(model.Facilities.Count > 0);
