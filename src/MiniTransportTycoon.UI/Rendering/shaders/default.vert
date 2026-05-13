@@ -16,6 +16,7 @@ uniform int m_isInstanced;
 out vec3 vs_out_col;
 out vec2 vs_out_texCoord;
 out vec3 vs_out_normal;
+out vec3 vs_out_wp;
 
 const float PI = 3.14159265359;
 
@@ -71,6 +72,11 @@ void main()
     
     mat3 invTranspose = transpose(inverse(mat3(model)));
     vs_out_normal = invTranspose * aNormal;
-    
-    gl_Position = m_viewProj * model * vec4(aPosition, 1.0);
+
+    vec4 worldPos = model * vec4(aPosition, 1.0);
+    vs_out_wp = worldPos.xyz;
+
+    gl_Position = m_viewProj * worldPos;
+
+
 }

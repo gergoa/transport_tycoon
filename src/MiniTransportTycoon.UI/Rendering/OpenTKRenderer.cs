@@ -492,7 +492,7 @@ namespace MiniTransportTycoon.UI.Rendering
             }
             else
             {
-                Vector3 color = GetColorForFieldType(field.Type);
+                Vector3 color = field.HasStop ? new Vector3(0.99f, 0.01f, 0.02f) : GetColorForFieldType(field.Type);
                 Vector3 quadPos = new Vector3(i + 0.5f, 0f, j + 0.5f);
                 ulong quadId = _nextInstanceId++;
                 _quadBuffer.AddInstance(quadId, new InstanceData(quadPos, 1.0f, 0f, 0f, color));
@@ -510,7 +510,8 @@ namespace MiniTransportTycoon.UI.Rendering
                     Vector3 roadPos = new Vector3(i + 0.5f, 0.01f, j + 0.5f);
 
                     ulong id = _nextInstanceId++;
-                    buf.AddInstance(id, new InstanceData(roadPos, 1.0f, 0.0f, rotY, new Vector3(0.5f, 0.5f, 0.5f)));
+                    Vector3 roadColor = field.HasStop ? new Vector3(0.99f, 0.01f, 0.02f) : new Vector3(0.5f, 0.5f, 0.5f);
+                    buf.AddInstance(id, new InstanceData(roadPos, 1.0f, 0.0f, rotY, roadColor));
                     state.Instances.Add((buf, id));
                 }
             }
