@@ -139,20 +139,75 @@
                                                         </Style>
                                                     </StackPanel.Style>
 
-                                                    <Button Content="Small Bus" Command="{Binding BuySmallBusCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                    <Button Content="Large Bus" Command="{Binding BuyLargeBusCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Command="{Binding BuySmallBusCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Small Bus" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Passengers" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
 
-                                                    <Button Content="Small Raw Material Truck" Command="{Binding BuyLightTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                    <Button Content="Large Raw Material Truck" Command="{Binding BuyHeavyTier0TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Command="{Binding BuyLargeBusCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Large Bus" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Passengers" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
 
-                                                    <Button Content="Small Processing Truck" Command="{Binding BuyLightTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                    <Button Content="Large Processing Truck" Command="{Binding BuyHeavyTier1TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Command="{Binding BuyLightTier0TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Small Raw Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Wood, Ore, Coal, Oil, Grain" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
 
-                                                    <Button Content="Small Industrial Truck" Command="{Binding BuyLightTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                    <Button Content="Large Industrial Truck" Command="{Binding BuyHeavyTier2TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Command="{Binding BuyHeavyTier0TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Large Raw Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Wood, Ore, Coal, Oil, Grain" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
 
-                                                    <Button Content="Small High-Tech Truck" Command="{Binding BuyLightTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
-                                                    <Button Content="Large High-Tech Truck" Command="{Binding BuyHeavyTier3TruckCommand}" Style="{StaticResource ToolbarButton}"/>
+                                                    <Button Command="{Binding BuyLightTier1TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Small Tier 1 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Lumber, Wire, Plastic, Steel" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Command="{Binding BuyHeavyTier1TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Large Tier 1 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Lumber, Wire, Plastic, Steel" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Command="{Binding BuyLightTier2TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Small Tier 2 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Food, Microchips, Tools, Furniture" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Command="{Binding BuyHeavyTier2TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Large Tier 2 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Food, Microchips, Tools, Furniture" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Command="{Binding BuyLightTier3TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Small Tier 3 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Automobiles, Electronics" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Command="{Binding BuyHeavyTier3TruckCommand}" Style="{StaticResource ToolbarButton}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Large Tier 3 Truck" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                                            <TextBlock Text="Automobiles, Electronics" FontSize="10" Foreground="#B8FFF2" HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
                                                 </StackPanel>
 
                                                 <!-- ROUTE SELECTION -->
